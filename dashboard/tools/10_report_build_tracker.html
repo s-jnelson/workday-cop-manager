@@ -1,0 +1,1455 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workday Finance - Report Build Workstream Tracker</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #07030f;
+  --bg-card: rgba(20,7,41,0.85);
+  --bg-panel: rgba(14,5,30,0.90);
+  --border: rgba(161,0,255,0.28);
+  --accent: #4ade80;
+  --teal: #C561F6;
+  --text: #f2ecff;
+  --text-muted: #9d88b8;
+  --text-dim: #5a4470;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --purple: #e879f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+#header{background:linear-gradient(135deg,#1a0533 0%,#0d0220 100%);border-top:4px solid #4ade80;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;min-height:54px;}
+#header h1{font-size:14px;font-weight:700;color:var(--text);letter-spacing:0.3px;white-space:nowrap;margin-right:4px;}
+.ptabs{display:flex;gap:4px;align-items:center;}
+.ptab{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;}
+.ptab:hover{border-color:var(--accent);color:var(--text);}
+.ptab.active{background:rgba(161,0,255,0.22);border-color:var(--accent);color:#fff;}
+#hdr-spacer{flex:1;}
+#last-saved{font-size:10px;color:var(--text-dim);white-space:nowrap;}
+.hbtn{background:rgba(161,0,255,0.15);border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;white-space:nowrap;}
+.hbtn:hover{background:rgba(161,0,255,0.3);color:var(--text);border-color:var(--accent);}
+.hbtn.primary{background:rgba(161,0,255,0.35);border-color:var(--accent);color:#fff;}
+.hbtn.primary:hover{background:rgba(161,0,255,0.55);}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* LEFT PANEL */
+#left{width:40%;display:flex;flex-direction:column;border-right:1px solid var(--border);min-width:200px;background:var(--bg-panel);}
+#task-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+#task-scroll::-webkit-scrollbar{width:5px;}
+#task-scroll::-webkit-scrollbar-track{background:transparent;}
+#task-scroll::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+
+/* SPLITTER */
+#splitter{width:5px;background:rgba(161,0,255,0.15);cursor:col-resize;flex-shrink:0;transition:background .15s;}
+#splitter:hover{background:rgba(161,0,255,0.45);}
+
+/* RIGHT PANEL */
+#right{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+#g-hdr-wrap{overflow:hidden;flex-shrink:0;background:var(--bg-panel);border-bottom:1px solid var(--border);}
+#g-body-wrap{flex:1;overflow:auto;position:relative;}
+#g-body-wrap::-webkit-scrollbar{width:5px;height:5px;}
+#g-body-wrap::-webkit-scrollbar-track{background:transparent;}
+#g-body-wrap::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+
+/* STATUS BAR */
+#status-bar{background:rgba(14,5,30,0.95);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:18px;align-items:center;flex-shrink:0;font-size:11px;color:var(--text-muted);}
+.stat-item{display:flex;align-items:center;gap:5px;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TASK LIST ROWS */
+.tl-row{display:flex;align-items:center;gap:6px;padding:0 8px;cursor:pointer;border-bottom:1px solid rgba(161,0,255,0.08);user-select:none;position:relative;}
+.tl-row:hover{background:rgba(161,0,255,0.07);}
+.tl-row.ph-row{height:28px;background:rgba(20,7,41,0.9);cursor:pointer;position:sticky;top:0;z-index:3;border-bottom:1px solid rgba(161,0,255,0.2);}
+.tl-row.gr-row{height:22px;background:rgba(14,5,30,0.7);padding-left:20px;}
+.tl-row.task-row{height:34px;padding-left:14px;}
+.tl-row.sub-row{height:30px;padding-left:38px;background:rgba(7,3,15,0.5);}
+.ph-name{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
+.ph-pct{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:4px;}
+.ph-prog{height:3px;border-radius:2px;background:rgba(161,0,255,0.2);flex:1;margin-left:6px;}
+.ph-prog-fill{height:100%;border-radius:2px;transition:width .3s;}
+.gr-name{font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.3px;}
+.gr-count{font-size:9px;color:var(--text-dim);margin-left:4px;}
+.gr-pct{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:4px;color:var(--text-muted);background:rgba(255,255,255,0.07);}
+.gr-prog{height:2px;border-radius:1px;background:rgba(255,255,255,0.08);flex:1;margin:0 6px;}
+.gr-prog-fill{height:100%;border-radius:1px;transition:width .3s;}
+.sub-progress{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.sub-pct-chip{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;font-weight:600;color:var(--text-muted);}
+.task-mini-prog{height:3px;width:48px;border-radius:2px;background:rgba(255,255,255,0.1);flex-shrink:0;}
+.task-mini-prog-fill{height:100%;border-radius:2px;transition:width .3s;}
+.chevron{font-size:9px;color:var(--text-dim);width:12px;flex-shrink:0;transition:transform .15s;}
+.drag-handle{color:var(--text-dim);font-size:12px;cursor:grab;flex-shrink:0;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.status-dot.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.status-dot.clickable:hover{transform:scale(1.5);box-shadow:0 0 7px currentColor;}
+.pct-popover{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.45);border-radius:7px;z-index:300;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,0.65);overflow:hidden;min-width:168px;}
+.pct-opt{padding:7px 14px;cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text-muted);transition:background .1s;}
+.pct-opt:hover{background:rgba(161,0,255,0.18);color:var(--text);}
+.pct-opt.pct-active{background:rgba(161,0,255,0.12);color:var(--text);}
+.pct-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.id-badge{font-family:monospace;font-size:9px;background:rgba(161,0,255,0.15);border:1px solid rgba(161,0,255,0.2);padding:1px 4px;border-radius:3px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;max-width:100px;overflow:hidden;text-overflow:ellipsis;}
+.task-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text-muted);}
+.owner-chip{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;font-weight:500;color:#fff;}
+.week-badge{font-size:9px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.expand-btn{font-size:9px;color:var(--text-dim);cursor:pointer;padding:1px 3px;border-radius:2px;flex-shrink:0;background:rgba(161,0,255,0.1);border:1px solid rgba(161,0,255,0.2);}
+.expand-btn:hover{color:var(--text);background:rgba(161,0,255,0.25);}
+
+.priority-ind{width:3px;height:20px;border-radius:2px;flex-shrink:0;}
+
+/* GANTT */
+#g-hdr{position:relative;}
+.g-ph-band{position:absolute;top:0;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;overflow:hidden;}
+.g-wk-row{display:flex;margin-top:18px;}
+.g-wk-cell{width:36px;flex-shrink:0;font-size:9px;color:var(--text-dim);text-align:center;border-right:1px solid rgba(161,0,255,0.08);padding:2px 0;height:20px;line-height:16px;}
+.g-wk-cell.cur-wk{color:var(--accent);font-weight:700;border-right-color:rgba(161,0,255,0.35);}
+#g-body{position:relative;}
+.g-row{position:relative;border-bottom:1px solid rgba(161,0,255,0.06);}
+.g-row.g-ph{height:28px;background:rgba(20,7,41,0.6);}
+.g-row.g-gr{height:22px;background:rgba(14,5,30,0.4);}
+.g-row.g-task{height:34px;}
+.g-row.g-sub{height:30px;background:rgba(7,3,15,0.3);}
+.g-col-grid{position:absolute;top:0;bottom:0;width:1px;background:rgba(161,0,255,0.06);}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:18px;border-radius:3px;cursor:grab;min-width:4px;transition:filter .15s;z-index:2;}
+.g-bar:hover{filter:brightness(1.25);}
+.g-bar.g-sub-bar{height:12px;border-radius:2px;}
+.g-bar:active{cursor:grabbing;}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:rgba(250,204,21,0.7);z-index:5;pointer-events:none;}
+.g-today::before{content:'';position:absolute;top:0;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid rgba(250,204,21,0.7);}
+.g-ph-bg{position:absolute;top:0;bottom:0;opacity:0.04;pointer-events:none;}
+/* DEPENDENCY CHIPS & HIGHLIGHTS */
+.dep-chips{display:flex;flex-wrap:wrap;gap:3px;padding:2px 2px 5px 36px;}
+.dep-chip{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:1px 6px 1px 4px;border-radius:3px;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap;font-weight:500;}
+.dep-chip.pred{border-color:rgba(251,191,36,0.45);color:#fbbf24;background:rgba(251,191,36,0.07);}
+.dep-chip.pred:hover{background:rgba(251,191,36,0.22);border-color:rgba(251,191,36,0.7);}
+.dep-chip.cross{border-color:rgba(161,0,255,0.45);color:#C561F6;background:rgba(161,0,255,0.07);}
+.dep-chip.cross:hover{background:rgba(161,0,255,0.2);border-color:rgba(161,0,255,0.7);}
+.dep-chip.succ{border-color:rgba(74,222,128,0.4);color:#4ade80;background:rgba(74,222,128,0.06);}
+.dep-chip.succ:hover{background:rgba(74,222,128,0.18);}
+/* Gantt bar dep highlights */
+.g-bar.dep-focus{outline:2px solid rgba(255,255,255,0.8);outline-offset:1px;z-index:8;}
+.g-bar.dep-pred{outline:2px solid #fbbf24;outline-offset:1px;z-index:7;filter:brightness(1.2);}
+.g-bar.dep-succ{outline:2px solid #4ade80;outline-offset:1px;z-index:7;filter:brightness(1.15);}
+/* Task list row dep highlights */
+.tl-row.dep-focus{background:rgba(255,255,255,0.06)!important;outline:1px solid rgba(255,255,255,0.25);}
+.tl-row.dep-pred{background:rgba(251,191,36,0.08)!important;border-left:2px solid #fbbf24!important;}
+.tl-row.dep-succ{background:rgba(74,222,128,0.07)!important;border-left:2px solid #4ade80!important;}
+
+/* MODAL */
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(7,3,15,0.85);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#modal{background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:10px;width:620px;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);}
+#modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#modal-hdr h2{font-size:13px;font-weight:600;}
+#modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;}
+#modal-close:hover{color:var(--text);}
+#modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+#modal-body::-webkit-scrollbar{width:5px;}
+#modal-body::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+.form-row{display:flex;gap:10px;margin-bottom:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;}
+.form-group label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;}
+.form-group input,.form-group select,.form-group textarea{background:rgba(161,0,255,0.08);border:1px solid rgba(161,0,255,0.25);color:var(--text);padding:6px 9px;border-radius:5px;font-size:12px;font-family:inherit;outline:none;width:100%;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(161,0,255,0.6);background:rgba(161,0,255,0.12);}
+.form-group textarea{resize:vertical;min-height:56px;}
+.form-group select option{background:#0e051e;}
+#modal-ftr{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.btn{padding:7px 16px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#07030f;}
+.btn-primary:hover{background:#8c00e0;}
+.btn-cancel{background:rgba(255,255,255,0.08);color:var(--text-muted);border:1px solid var(--border);}
+.btn-cancel:hover{background:rgba(255,255,255,0.14);color:var(--text);}
+.btn-danger{background:rgba(248,113,113,0.15);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+.btn-danger:hover{background:rgba(248,113,113,0.3);}
+
+/* CONTEXT MENU */
+#ctx-menu{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:6px;z-index:200;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.6);display:none;}
+.ctx-item{padding:7px 14px;cursor:pointer;font-size:12px;color:var(--text-muted);transition:all .12s;}
+.ctx-item:hover{background:rgba(161,0,255,0.15);color:var(--text);}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+.ctx-item.danger{color:var(--red);}
+.ctx-item.danger:hover{background:rgba(248,113,113,0.15);}
+
+/* TOOLTIP */
+.g-tooltip{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:5px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:50;max-width:200px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0e051e;border:1px solid rgba(161,0,255,0.5);color:var(--text);padding:9px 18px;border-radius:6px;font-size:12px;z-index:1000;animation:toastIn .2s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Subtask add form inline */
+.sub-form{padding:6px 14px;background:rgba(161,0,255,0.05);border-bottom:1px solid rgba(161,0,255,0.1);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>Workday Finance - Report Build Workstream Tracker</h1>
+  <div class="ptabs" id="ptabs">
+    <button class="ptab active" data-phase="all">All</button>
+    <button class="ptab" data-phase="Plan">Plan</button>
+    <button class="ptab" data-phase="Architect">Architect</button>
+    <button class="ptab" data-phase="Configure">Configure</button>
+    <button class="ptab" data-phase="Test">Test</button>
+    <button class="ptab" data-phase="Deploy">Deploy</button>
+  </div>
+  <div id="hdr-spacer"></div>
+  <span id="last-saved"></span>
+  <button class="hbtn" onclick="confirmReset()">Reset</button>
+  <button class="hbtn" onclick="document.getElementById('import-input').click()">Import</button>
+  <input type="file" id="import-input" accept=".xlsx,.xls" style="display:none" onchange="doImport(this)">
+  <button class="hbtn" onclick="doExport()">Export</button>
+  <button class="hbtn primary" onclick="openNewTaskModal()">+ Add</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- LEFT PANEL -->
+  <div id="left">
+    <div id="task-scroll">
+      <div id="task-list"></div>
+    </div>
+  </div>
+
+  <!-- SPLITTER -->
+  <div id="splitter"></div>
+
+  <!-- RIGHT PANEL (GANTT) -->
+  <div id="right">
+    <div id="g-hdr-wrap">
+      <div id="g-hdr"></div>
+    </div>
+    <div id="g-body-wrap">
+      <div id="g-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <div class="stat-item"><strong id="stat-total">0</strong>&nbsp;tasks</div>
+  <div class="stat-item"><span class="stat-dot" style="background:#4ade80"></span><strong id="stat-complete">0</strong>&nbsp;at 100%</div>
+  <div class="stat-item"><span class="stat-dot" style="background:#818cf8"></span><strong id="stat-inprog">0</strong>&nbsp;in progress</div>
+  <div class="stat-item"><span class="stat-dot" style="background:rgba(90,68,112,0.8)"></span><strong id="stat-blocked">0</strong>&nbsp;not started</div>
+  <div class="stat-item" style="margin-left:12px;gap:6px;">
+    <span style="font-size:10px;color:var(--text-dim)">Project:</span>
+    <span id="stat-proj-pct" style="font-size:11px;font-weight:700;color:var(--green)">0%</span>
+    <div style="width:80px;height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;"><div id="stat-proj-bar" style="height:100%;border-radius:3px;background:var(--green);width:0%;transition:width .4s;"></div></div>
+  </div>
+  <div class="stat-item" style="margin-left:auto;font-size:10px;color:var(--text-dim)">Ctrl+Z: Undo &nbsp;|&nbsp; N: New task &nbsp;|&nbsp; E: Export &nbsp;|&nbsp; Esc: Close modal</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-ov">
+  <div id="modal">
+    <div id="modal-hdr">
+      <h2 id="modal-title">Edit Task</h2>
+      <button id="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:3">
+          <label>Task Name</label>
+          <input type="text" id="f-task" placeholder="Task description...">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>ID</label>
+          <input type="text" id="f-id" placeholder="DC-P1-G1-001">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phase</label>
+          <select id="f-phase">
+            <option value="Plan">Plan</option>
+            <option value="Architect">Architect</option>
+            <option value="Configure">Configure</option>
+            <option value="Test">Test</option>
+            <option value="Deploy">Deploy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Group</label>
+          <input type="text" id="f-group" placeholder="Group name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Owner</label>
+          <select id="f-owner">
+            <option>Conversion Lead</option>
+            <option>Data Analyst</option>
+            <option>Workday Architect</option>
+            <option>Business Analyst</option>
+            <option>Client IT</option>
+            <option>Client Data Owner</option>
+            <option>Project Manager</option>
+            <option>Project Coordinator</option>
+            <option>Controller</option>
+            <option>AP Manager</option>
+            <option>Fixed Asset Manager</option>
+            <option>Workday Configurator</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="0">0%</option>
+            <option value="25">25%</option>
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Week</label>
+          <select id="f-start" style="font-size:12px"></select>
+        </div>
+        <div class="form-group">
+          <label>Duration (weeks)</label>
+          <input type="number" id="f-dur" min="1" max="104" value="1">
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="f-priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Dependencies (comma-separated IDs)</label>
+          <textarea id="f-deps" rows="2" placeholder="DC-P1-G1-001, DC-P1-G2-001"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Cross-WS Dependencies</label>
+          <textarea id="f-crossdeps" rows="2" placeholder="RPT-P3-G3-001, INT-P4-G1-001"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="f-notes" rows="3" placeholder="Additional context..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div id="modal-ftr">
+      <button class="btn btn-danger" id="modal-del-btn" onclick="deleteCurrentTask()">Delete</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" data-action="edit">Edit</div>
+  <div class="ctx-item" data-action="addSub">Add Subtask</div>
+  <div class="ctx-item" data-action="addBelow">Add Task Below</div>
+  <div class="ctx-item" data-action="duplicate">Duplicate</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" data-action="delete">Delete</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="dep">Set Dependency</div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const PHASES = ['Plan','Architect','Configure','Test','Deploy'];
+const PHASE_COLORS = {Plan:'#3b82f6',Architect:'#0d9488',Configure:'#f59e0b',Test:'#a855f7',Deploy:'#22c55e'};
+const PHASE_RANGES = {Plan:[1,4],Architect:[5,10],Configure:[11,18],Test:[19,24],Deploy:[25,28]};
+const STATUS_COLORS = {'0':'rgba(90,68,112,0.55)','25':'#fbbf24','50':'#818cf8','75':'#C561F6','100':'#4ade80'};
+const STATUS_LABELS  = {'0':'0%','25':'25%','50':'50%','75':'75%','100':'100%'};
+function migrateStatus(s) {
+  const map = {complete:'100',in_progress:'50',blocked:'25',not_started:'0'};
+  return map[s] || (['0','25','50','75','100'].includes(String(s)) ? String(s) : '0');
+}
+const CELL_W = 36;
+const TOTAL_WEEKS = 28;
+const ROW_H = 34;
+const SUB_H = 30;
+const PH_ROW_H = 28;
+const GR_ROW_H = 22;
+const OWNER_COLORS = {
+  'Reporting Lead':'#15803d','Report Developer':'#0f766e','Workday Architect':'#1d4ed8',
+  'Business Analyst':'#b45309','Finance Analyst':'#b45309','Project Manager':'#15803d',
+  'Controller':'#ca8a04','AP Manager':'#a16207','AR Manager':'#7c3aed',
+  'FP&A Manager':'#4338ca','IT Security Admin':'#b91c1c','Change Manager':'#0f766e',
+  'CFO':'#ca8a04','Executive Sponsor':'#7c3aed',
+};
+const PRIORITY_COLORS = {high:'#f87171',medium:'#fbbf24',low:'#4ade80'};
+const HISTORY_MAX = 20;
+const PROJECT_START = new Date('2026-02-02');
+const currentWeek = Math.max(1, Math.min(28,
+  Math.ceil((Date.now() - PROJECT_START.getTime()) / (7*24*60*60*1000))
+));
+function weekToDate(w){return new Date(Date.UTC(2026,1,2+(w-1)*7));}
+function weekLabel(w){const d=weekToDate(w);return(d.getUTCMonth()+1)+'/'+d.getUTCDate();}
+function weekRange(s,dur){const f=d=>(d.getUTCMonth()+1)+'/'+d.getUTCDate();const sd=weekToDate(s);const ed=new Date(weekToDate(s+(dur||1)-1).getTime()+6*86400000);return f(sd)+' – '+f(ed);}
+
+// ============================================================
+// SEED DATA
+// ============================================================
+const SEED_TASKS = [
+  // â”€â”€ PHASE 1: PLAN (Weeks 1-4) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id:'RPT-P1-G1-001', phase:'Plan', group:'Mobilization', task:'Reporting workstream kickoff', owner:'Reporting Lead', startWeek:1, duration:1, status:'0', dependencies:[], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P1-G1-001a', task:'Review reporting scope in project charter', owner:'Reporting Lead', startWeek:1, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P1-G1-001b', task:'Confirm reporting team roles and assignments', owner:'Reporting Lead', startWeek:1, duration:0.5, status:'0', dependencies:['RPT-P1-G1-001a'], priority:'high', notes:'' },
+    { id:'RPT-P1-G1-001c', task:'Set up reporting workstream shared folder', owner:'Project Manager', startWeek:1, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P1-G1-001d', task:'Distribute Report Design Standards Guide to team', owner:'Reporting Lead', startWeek:1, duration:0.5, status:'0', dependencies:['RPT-P1-G1-001c'], priority:'high', notes:'Standards guide published by CoP — covers naming, fields, security, performance' },
+  ]},
+  { id:'RPT-P1-G2-001', phase:'Plan', group:'Report Inventory', task:'Compile report inventory from finance teams', owner:'Reporting Lead', startWeek:1, duration:2, status:'0', dependencies:[], crossDeps:[], priority:'high', notes:'Target: 20 reports + 4 dashboards. Interview all finance sub-teams.', subtasks:[
+    { id:'RPT-P1-G2-001a', task:'Interview Controller team on financial statement report needs', owner:'Business Analyst', startWeek:1, duration:1, status:'0', dependencies:[], priority:'high', notes:'Income statement, Balance Sheet, Cash Flow, Trial Balance' },
+    { id:'RPT-P1-G2-001b', task:'Interview AP/AR teams on operational report needs', owner:'Business Analyst', startWeek:1, duration:1, status:'0', dependencies:[], priority:'high', notes:'AP Aging, AR Aging, payment summaries' },
+    { id:'RPT-P1-G2-001c', task:'Interview FP&A team on budget/planning report needs', owner:'Business Analyst', startWeek:2, duration:1, status:'0', dependencies:[], priority:'high', notes:'Budget vs Actual, department status, trend reports' },
+    { id:'RPT-P1-G2-001d', task:'Interview Fixed Asset team on asset report needs', owner:'Business Analyst', startWeek:2, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P1-G2-001e', task:'Interview compliance team on audit/regulatory report needs', owner:'Business Analyst', startWeek:2, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'1099, audit trail, security access' },
+    { id:'RPT-P1-G2-001f', task:'Compile and consolidate report inventory list', owner:'Reporting Lead', startWeek:2, duration:1, status:'0', dependencies:['RPT-P1-G2-001e'], priority:'high', notes:'' },
+    { id:'RPT-P1-G2-001g', task:'Client sign-off on report inventory', owner:'Controller', startWeek:2, duration:0.5, status:'0', dependencies:['RPT-P1-G2-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P1-G3-001', phase:'Plan', group:'Report Strategy', task:'Classify reports: Standard vs. Custom vs. Prism', owner:'Reporting Lead', startWeek:2, duration:1, status:'0', dependencies:['RPT-P1-G2-001'], crossDeps:[], priority:'high', notes:'Standard = Workday delivered; Custom = Report Writer/Composite; Prism = data augmentation', subtasks:[
+    { id:'RPT-P1-G3-001a', task:'Map each report to Workday standard report equivalent (if exists)', owner:'Workday Architect', startWeek:2, duration:1, status:'0', dependencies:[], priority:'high', notes:'Check Workday Community for standard financial reports' },
+    { id:'RPT-P1-G3-001b', task:'Identify gaps requiring custom Report Writer reports', owner:'Reporting Lead', startWeek:3, duration:0.5, status:'0', dependencies:['RPT-P1-G3-001a'], priority:'high', notes:'' },
+    { id:'RPT-P1-G3-001c', task:'Document final classification and build approach per report', owner:'Reporting Lead', startWeek:3, duration:0.5, status:'0', dependencies:['RPT-P1-G3-001b'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P1-G3-002', phase:'Plan', group:'Report Strategy', task:'Define report security group strategy', owner:'IT Security Admin', startWeek:3, duration:1, status:'0', dependencies:['RPT-P1-G2-001'], crossDeps:[], priority:'high', notes:'Who can see what — Finance, AP, AR, FP&A, Executive, Audit', subtasks:[
+    { id:'RPT-P1-G3-002a', task:'Document security groups that need access to each report', owner:'IT Security Admin', startWeek:3, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P1-G3-002b', task:'Design security group matrix (report × role)', owner:'Reporting Lead', startWeek:3, duration:0.5, status:'0', dependencies:['RPT-P1-G3-002a'], priority:'high', notes:'' },
+    { id:'RPT-P1-G3-002c', task:'Client approval of report security matrix', owner:'Controller', startWeek:4, duration:0.5, status:'0', dependencies:['RPT-P1-G3-002b'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P1-G4-001', phase:'Plan', group:'Report Strategy', task:'Create report build schedule and prioritize', owner:'Project Manager', startWeek:4, duration:1, status:'0', dependencies:['RPT-P1-G3-001','RPT-P1-G3-002'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P1-G4-001a', task:'Prioritize reports: P1 (go-live required), P2 (go-live nice), P3 (post-go-live)', owner:'Reporting Lead', startWeek:4, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P1-G4-001b', task:'Build report workstream schedule (weeks 5-24)', owner:'Project Manager', startWeek:4, duration:0.5, status:'0', dependencies:['RPT-P1-G4-001a'], priority:'high', notes:'' },
+  ]},
+
+  // â”€â”€ PHASE 2: ARCHITECT (Weeks 5-10) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id:'RPT-P2-G1-001', phase:'Architect', group:'Financial Statement Reports', task:'Business requirements — Financial Statement reports (R001-R005)', owner:'Reporting Lead', startWeek:5, duration:2, status:'0', dependencies:['RPT-P1-G3-001'], crossDeps:[], priority:'high', notes:'P1 reports — required for go-live', subtasks:[
+    { id:'RPT-P2-G1-001a', task:'BRD: R001 Income Statement (P&L) — fields, periods, filters, drilldown', owner:'Finance Analyst', startWeek:5, duration:1, status:'0', dependencies:[], priority:'high', notes:'Required: Company, Cost Center, Account, Period, YTD. Drilldown to journal lines.' },
+    { id:'RPT-P2-G1-001b', task:'BRD: R002 Balance Sheet — assets, liabilities, equity sections', owner:'Finance Analyst', startWeek:5, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G1-001c', task:'BRD: R003 Cash Flow Statement — direct or indirect method', owner:'Finance Analyst', startWeek:5, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G1-001d', task:'BRD: R004 Trial Balance — all accounts, zero-balance suppression', owner:'Finance Analyst', startWeek:6, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G1-001e', task:'BRD: R005 GL Summary by Cost Center — period and YTD', owner:'Finance Analyst', startWeek:6, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G1-001f', task:'Tech spec for R001-R005: data source, business object, calculated fields', owner:'Reporting Lead', startWeek:6, duration:1, status:'0', dependencies:['RPT-P2-G1-001e'], priority:'high', notes:'' },
+    { id:'RPT-P2-G1-001g', task:'Controller sign-off on financial statement BRDs', owner:'Controller', startWeek:7, duration:0.5, status:'0', dependencies:['RPT-P2-G1-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P2-G2-001', phase:'Architect', group:'AP/AR Reports', task:'Business requirements — AP/AR reports (R006-R011)', owner:'Reporting Lead', startWeek:5, duration:3, status:'0', dependencies:['RPT-P1-G3-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P2-G2-001a', task:'BRD: R006 AP Aging Report — aging buckets, supplier filter, dispute flag', owner:'AP Manager', startWeek:5, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'Buckets: Current, 1-30, 31-60, 61-90, 90+' },
+    { id:'RPT-P2-G2-001b', task:'BRD: R007 Supplier Payment Summary — by period, method, status', owner:'AP Manager', startWeek:5, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G2-001c', task:'BRD: R008 Invoice Approval Status — workflow stage, approver, aging', owner:'AP Manager', startWeek:6, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G2-001d', task:'BRD: R009 AR Aging Report — aging buckets, customer filter, collection status', owner:'AR Manager', startWeek:5, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G2-001e', task:'BRD: R010 Customer Statement — open AR, payment history, contact', owner:'AR Manager', startWeek:6, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G2-001f', task:'BRD: R011 Revenue Recognition Report — deferred vs. recognized', owner:'Controller', startWeek:6, duration:1, status:'0', dependencies:[], priority:'high', notes:'Complex — depends on revenue recognition policy' },
+    { id:'RPT-P2-G2-001g', task:'Tech spec for R006-R011 and client sign-off', owner:'Reporting Lead', startWeek:7, duration:1, status:'0', dependencies:['RPT-P2-G2-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P2-G3-001', phase:'Architect', group:'Budget & Fixed Asset Reports', task:'Business requirements — Budget, Fixed Asset, Compliance (R012-R020)', owner:'Reporting Lead', startWeek:7, duration:2, status:'0', dependencies:['RPT-P1-G3-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'RPT-P2-G3-001a', task:'BRD: R012 Budget vs. Actual by Cost Center — variance, % variance', owner:'FP&A Manager', startWeek:7, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G3-001b', task:'BRD: R013 Operating Expense Trend — 12-month rolling, category', owner:'FP&A Manager', startWeek:7, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G3-001c', task:'BRD: R014 Department Budget Status — by manager, RAG status', owner:'FP&A Manager', startWeek:7, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G3-001d', task:'BRD: R015 Fixed Asset Register — all assets, status, location', owner:'Finance Analyst', startWeek:7, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G3-001e', task:'BRD: R016 Depreciation Schedule — by asset class, method, period', owner:'Finance Analyst', startWeek:8, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G3-001f', task:'BRD: R017 Asset Disposition Report — disposals, gain/loss', owner:'Finance Analyst', startWeek:8, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G3-001g', task:'BRD: R018 1099 Preparation Report — eligible suppliers, YTD payments', owner:'Controller', startWeek:8, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'Tax compliance — must be P1' },
+    { id:'RPT-P2-G3-001h', task:'BRD: R019 Audit Trail Report — who did what, when, to what', owner:'IT Security Admin', startWeek:8, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'Compliance requirement' },
+    { id:'RPT-P2-G3-001i', task:'BRD: R020 Security Access Report — user roles and permissions', owner:'IT Security Admin', startWeek:8, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'SOX compliance' },
+    { id:'RPT-P2-G3-001j', task:'Tech spec for R012-R020 and sign-off', owner:'Reporting Lead', startWeek:8, duration:1, status:'0', dependencies:['RPT-P2-G3-001i'], priority:'medium', notes:'' },
+  ]},
+  { id:'RPT-P2-G4-001', phase:'Architect', group:'Dashboard Design', task:'Design executive and operational dashboards (D001-D004)', owner:'Reporting Lead', startWeek:8, duration:2, status:'0', dependencies:['RPT-P2-G1-001','RPT-P2-G2-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P2-G4-001a', task:'Design D001: CFO Finance Dashboard — KPI tiles, summary charts', owner:'Reporting Lead', startWeek:8, duration:1, status:'0', dependencies:[], priority:'high', notes:'Include: Cash position, AR/AP aging summary, budget variance, revenue trend' },
+    { id:'RPT-P2-G4-001b', task:'Design D002: AP Manager Dashboard — invoice queue, aging, payment status', owner:'AP Manager', startWeek:8, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G4-001c', task:'Design D003: AR Manager Dashboard — collection status, aging, DSO trend', owner:'AR Manager', startWeek:9, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P2-G4-001d', task:'Design D004: FP&A Dashboard — budget vs. actual, expense trends', owner:'FP&A Manager', startWeek:9, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P2-G4-001e', task:'Client stakeholder approval of all dashboard wireframes', owner:'CFO', startWeek:10, duration:1, status:'0', dependencies:['RPT-P2-G4-001d'], priority:'high', notes:'' },
+  ]},
+
+  // â”€â”€ PHASE 3: CONFIGURE (Weeks 11-18) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id:'RPT-P3-G1-001', phase:'Configure', group:'Financial Statement Build', task:'Build R001-R005: Financial Statement reports', owner:'Reporting Lead', startWeek:11, duration:3, status:'0', dependencies:['RPT-P2-G1-001'], crossDeps:['DC-P3-G3-001'], priority:'high', notes:'P1 — required for go-live. Build only after COA and Cost Centers loaded in sandbox.', subtasks:[
+    { id:'RPT-P3-G1-001a', task:'Build R001: Income Statement (P&L) in Workday Report Writer', owner:'Report Developer', startWeek:11, duration:2, status:'0', dependencies:[], priority:'high', notes:'Business Object: Ledger Account. Add period selector prompt. Add cost center filter.' },
+    { id:'RPT-P3-G1-001b', task:'Configure R001: security group assignment (Controller role)', owner:'IT Security Admin', startWeek:12, duration:0.5, status:'0', dependencies:['RPT-P3-G1-001a'], priority:'high', notes:'' },
+    { id:'RPT-P3-G1-001c', task:'Build R002: Balance Sheet with section groupings', owner:'Report Developer', startWeek:11, duration:2, status:'0', dependencies:[], priority:'high', notes:'Use financial account group hierarchy for Assets/Liabilities/Equity sections' },
+    { id:'RPT-P3-G1-001d', task:'Build R003: Cash Flow Statement', owner:'Reporting Lead', startWeek:12, duration:2, status:'0', dependencies:[], priority:'high', notes:'Use Workday Cash Flow report as base. Customize for indirect method.' },
+    { id:'RPT-P3-G1-001e', task:'Build R004: Trial Balance with account range prompts', owner:'Report Developer', startWeek:12, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P3-G1-001f', task:'Build R005: GL Summary by Cost Center with period/YTD', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P3-G1-001g', task:'Assign security groups to R002-R005', owner:'IT Security Admin', startWeek:13, duration:1, status:'0', dependencies:['RPT-P3-G1-001f'], priority:'high', notes:'' },
+    { id:'RPT-P3-G1-001h', task:'Unit test R001-R005 with sandbox data', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:['RPT-P3-G1-001g'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P3-G2-001', phase:'Configure', group:'AP/AR Report Build', task:'Build R006-R011: AP/AR Operational reports', owner:'Reporting Lead', startWeek:12, duration:3, status:'0', dependencies:['RPT-P2-G2-001'], crossDeps:['DC-P3-G3-001'], priority:'high', notes:'Requires Supplier, Customer, AP, AR data loaded in sandbox', subtasks:[
+    { id:'RPT-P3-G2-001a', task:'Build R006: AP Aging Report with aging bucket columns', owner:'Report Developer', startWeek:12, duration:1, status:'0', dependencies:[], priority:'high', notes:'Business Object: Supplier Invoice. Calculated fields for aging buckets.' },
+    { id:'RPT-P3-G2-001b', task:'Build R007: Supplier Payment Summary', owner:'Report Developer', startWeek:12, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G2-001c', task:'Build R008: Invoice Approval Status Report', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:[], priority:'medium', notes:'Include workflow business process steps' },
+    { id:'RPT-P3-G2-001d', task:'Build R009: AR Aging Report with aging buckets', owner:'Report Developer', startWeek:12, duration:1, status:'0', dependencies:[], priority:'high', notes:'Business Object: Customer Invoice. Mirror structure of AP Aging.' },
+    { id:'RPT-P3-G2-001e', task:'Build R010: Customer Statement Report', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G2-001f', task:'Build R011: Revenue Recognition Report (complex)', owner:'Reporting Lead', startWeek:14, duration:2, status:'0', dependencies:[], priority:'high', notes:'Requires Revenue Category and Schedule configuration first' },
+    { id:'RPT-P3-G2-001g', task:'Assign security groups to R006-R011 per security matrix', owner:'IT Security Admin', startWeek:14, duration:1, status:'0', dependencies:['RPT-P3-G2-001f'], priority:'high', notes:'' },
+    { id:'RPT-P3-G2-001h', task:'Unit test R006-R011 with sandbox data', owner:'Report Developer', startWeek:14, duration:1, status:'0', dependencies:['RPT-P3-G2-001g'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P3-G3-001', phase:'Configure', group:'Budget, FA & Compliance Build', task:'Build R012-R020: Budget, Fixed Asset, and Compliance reports', owner:'Reporting Lead', startWeek:13, duration:4, status:'0', dependencies:['RPT-P2-G3-001'], crossDeps:['DC-P3-G3-001'], priority:'medium', notes:'', subtasks:[
+    { id:'RPT-P3-G3-001a', task:'Build R012: Budget vs. Actual by Cost Center', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:[], priority:'high', notes:'Requires budget loaded via integration I005. Use Budget Operational Report object.' },
+    { id:'RPT-P3-G3-001b', task:'Build R013: Operating Expense Trend (12-month)', owner:'Report Developer', startWeek:13, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G3-001c', task:'Build R014: Department Budget Status Report', owner:'Report Developer', startWeek:14, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G3-001d', task:'Build R015: Fixed Asset Register', owner:'Report Developer', startWeek:14, duration:1, status:'0', dependencies:[], priority:'medium', notes:'Business Object: Asset. Requires Fixed Asset data loaded first.' },
+    { id:'RPT-P3-G3-001e', task:'Build R016: Depreciation Schedule by asset class', owner:'Report Developer', startWeek:15, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G3-001f', task:'Build R017: Asset Disposition Report', owner:'Report Developer', startWeek:15, duration:0.5, status:'0', dependencies:[], priority:'low', notes:'' },
+    { id:'RPT-P3-G3-001g', task:'Build R018: 1099 Preparation Report', owner:'Report Developer', startWeek:15, duration:1, status:'0', dependencies:[], priority:'high', notes:'Tax compliance P1. Business Object: Supplier. Filter: 1099-eligible suppliers, YTD threshold.' },
+    { id:'RPT-P3-G3-001h', task:'Build R019: Audit Trail Report', owner:'Report Developer', startWeek:15, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'Use Workday Audit Logs business object' },
+    { id:'RPT-P3-G3-001i', task:'Build R020: Security Access Report', owner:'IT Security Admin', startWeek:15, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P3-G3-001j', task:'Assign security groups and unit test R012-R020', owner:'Report Developer', startWeek:16, duration:1, status:'0', dependencies:['RPT-P3-G3-001i'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P3-G4-001', phase:'Configure', group:'Dashboard Build', task:'Build D001-D004: Dashboards', owner:'Reporting Lead', startWeek:15, duration:3, status:'0', dependencies:['RPT-P2-G4-001','RPT-P3-G1-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P3-G4-001a', task:'Build D001: CFO Finance Dashboard — configure worklet layout', owner:'Reporting Lead', startWeek:15, duration:2, status:'0', dependencies:[], priority:'high', notes:'Add report worklets for P&L, Balance Sheet, Cash Flow. Add KPI tiles: AR days, AP days, cash.' },
+    { id:'RPT-P3-G4-001b', task:'Build D002: AP Manager Dashboard', owner:'Report Developer', startWeek:15, duration:1, status:'0', dependencies:[], priority:'high', notes:'Worklets: AP Aging, Invoice Queue, Payment Status this week' },
+    { id:'RPT-P3-G4-001c', task:'Build D003: AR Manager Dashboard', owner:'Report Developer', startWeek:16, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P3-G4-001d', task:'Build D004: FP&A Dashboard', owner:'Report Developer', startWeek:16, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G4-001e', task:'Assign security groups to all dashboards', owner:'IT Security Admin', startWeek:17, duration:0.5, status:'0', dependencies:['RPT-P3-G4-001d'], priority:'high', notes:'' },
+    { id:'RPT-P3-G4-001f', task:'Stakeholder review of dashboards in sandbox', owner:'CFO', startWeek:17, duration:0.5, status:'0', dependencies:['RPT-P3-G4-001e'], priority:'high', notes:'' },
+    { id:'RPT-P3-G4-001g', task:'Incorporate stakeholder feedback and finalize dashboards', owner:'Reporting Lead', startWeek:17, duration:1, status:'0', dependencies:['RPT-P3-G4-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P3-G5-001', phase:'Configure', group:'Report Catalog', task:'Build report catalog and user guide', owner:'Reporting Lead', startWeek:17, duration:1, status:'0', dependencies:['RPT-P3-G3-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'RPT-P3-G5-001a', task:'Document report catalog (name, purpose, access, filters)', owner:'Business Analyst', startWeek:17, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P3-G5-001b', task:'Create user quick-reference guide for top 5 reports', owner:'Change Manager', startWeek:17, duration:1, status:'0', dependencies:['RPT-P3-G5-001a'], priority:'medium', notes:'' },
+    { id:'RPT-P3-G5-001c', task:'Publish report catalog to SharePoint/intranet', owner:'Project Manager', startWeek:18, duration:0.5, status:'0', dependencies:['RPT-P3-G5-001b'], priority:'medium', notes:'' },
+  ]},
+
+  // â”€â”€ PHASE 4: TEST (Weeks 19-24) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id:'RPT-P4-G1-001', phase:'Test', group:'SIT', task:'System Integration Testing — all 20 reports + 4 dashboards', owner:'Reporting Lead', startWeek:19, duration:3, status:'0', dependencies:['RPT-P3-G4-001','RPT-P3-G3-001'], crossDeps:['DC-P4-G1-001','INT-P4-G1-001'], priority:'high', notes:'SIT: validate data accuracy from loaded conversion data and integration feeds', subtasks:[
+    { id:'RPT-P4-G1-001a', task:'SIT: Validate R001-R005 data accuracy against GL source', owner:'Finance Analyst', startWeek:19, duration:1, status:'0', dependencies:[], priority:'high', notes:'Reconcile P&L to trial balance. Balance Sheet must balance to zero.' },
+    { id:'RPT-P4-G1-001b', task:'SIT: Validate R006-R011 data accuracy against AP/AR subledgers', owner:'Report Developer', startWeek:19, duration:1, status:'0', dependencies:[], priority:'high', notes:'AP aging totals must reconcile to GL AP account' },
+    { id:'RPT-P4-G1-001c', task:'SIT: Validate R012-R020 data accuracy', owner:'Report Developer', startWeek:20, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G1-001d', task:'SIT: Validate dashboards load and display correct data', owner:'Reporting Lead', startWeek:20, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P4-G1-001e', task:'SIT: Security testing — run-as Finance, AP, AR, FP&A roles', owner:'IT Security Admin', startWeek:20, duration:1, status:'0', dependencies:[], priority:'high', notes:'Confirm: each role sees only what the security matrix allows' },
+    { id:'RPT-P4-G1-001f', task:'SIT: Performance testing — run large reports with full data volume', owner:'Report Developer', startWeek:21, duration:1, status:'0', dependencies:['RPT-P4-G1-001e'], priority:'medium', notes:'Target: all reports run in < 60 seconds with production data volume' },
+    { id:'RPT-P4-G1-001g', task:'Document and resolve all SIT defects', owner:'Reporting Lead', startWeek:21, duration:1, status:'0', dependencies:['RPT-P4-G1-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P4-G2-001', phase:'Test', group:'UAT', task:'User Acceptance Testing — report sign-off by business owners', owner:'Controller', startWeek:22, duration:2, status:'0', dependencies:['RPT-P4-G1-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P4-G2-001a', task:'UAT: Controller validates R001-R005 financial statements', owner:'Controller', startWeek:22, duration:1, status:'0', dependencies:[], priority:'high', notes:'Compare to prior system month-end package' },
+    { id:'RPT-P4-G2-001b', task:'UAT: AP Manager validates R006-R008 AP reports', owner:'AP Manager', startWeek:22, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P4-G2-001c', task:'UAT: AR Manager validates R009-R011 AR reports', owner:'AR Manager', startWeek:22, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P4-G2-001d', task:'UAT: FP&A Manager validates R012-R014 budget reports', owner:'FP&A Manager', startWeek:22, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G2-001e', task:'UAT: Finance validates R015-R020 (FA + Compliance reports)', owner:'Finance Analyst', startWeek:22, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G2-001f', task:'UAT: Executive stakeholders validate dashboards D001-D004', owner:'CFO', startWeek:23, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P4-G2-001g', task:'Document UAT sign-off per report', owner:'Reporting Lead', startWeek:23, duration:0.5, status:'0', dependencies:['RPT-P4-G2-001f'], priority:'high', notes:'' },
+    { id:'RPT-P4-G2-001h', task:'Remediate UAT defects and obtain final sign-off', owner:'Report Developer', startWeek:24, duration:1, status:'0', dependencies:['RPT-P4-G2-001g'], priority:'high', notes:'' },
+  ]},
+  { id:'RPT-P4-G3-001', phase:'Test', group:'Training Prep', task:'Prepare report user training materials', owner:'Change Manager', startWeek:23, duration:1, status:'0', dependencies:['RPT-P4-G2-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'RPT-P4-G3-001a', task:'Create training deck: running financial statements', owner:'Change Manager', startWeek:23, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G3-001b', task:'Create training deck: AP/AR operational reports', owner:'Change Manager', startWeek:23, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G3-001c', task:'Create training deck: dashboards and KPI interpretation', owner:'Reporting Lead', startWeek:24, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P4-G3-001d', task:'Schedule and deliver end-user report training sessions', owner:'Change Manager', startWeek:24, duration:1, status:'0', dependencies:['RPT-P4-G3-001c'], priority:'medium', notes:'' },
+  ]},
+
+  // â”€â”€ PHASE 5: DEPLOY (Weeks 25-28) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  { id:'RPT-P5-G1-001', phase:'Deploy', group:'Production Publish', task:'Publish all reports and dashboards to production', owner:'Reporting Lead', startWeek:25, duration:1, status:'0', dependencies:['RPT-P4-G2-001'], crossDeps:['DC-P5-G2-001'], priority:'high', notes:'Publish after production conversion data is confirmed', subtasks:[
+    { id:'RPT-P5-G1-001a', task:'Recreate R001-R005 in production tenant (copy from sandbox)', owner:'Report Developer', startWeek:25, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P5-G1-001b', task:'Recreate R006-R011 in production tenant', owner:'Report Developer', startWeek:25, duration:1, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P5-G1-001c', task:'Recreate R012-R020 in production tenant', owner:'Report Developer', startWeek:25, duration:1, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P5-G1-001d', task:'Recreate D001-D004 dashboards in production', owner:'Reporting Lead', startWeek:25, duration:0.5, status:'0', dependencies:[], priority:'high', notes:'' },
+    { id:'RPT-P5-G1-001e', task:'Assign all security groups in production', owner:'IT Security Admin', startWeek:25, duration:0.5, status:'0', dependencies:['RPT-P5-G1-001d'], priority:'high', notes:'' },
+    { id:'RPT-P5-G1-001f', task:'Smoke test all reports in production with go-live data', owner:'Report Developer', startWeek:26, duration:0.5, status:'0', dependencies:['RPT-P5-G1-001e'], priority:'high', notes:'' },
+    { id:'RPT-P5-G1-001g', task:'Controller sign-off on production financial statements', owner:'Controller', startWeek:26, duration:0.5, status:'0', dependencies:['RPT-P5-G1-001f'], priority:'high', notes:'Milestone: confirmed before Go/No-Go decision' },
+  ]},
+  { id:'RPT-P5-G2-001', phase:'Deploy', group:'Hypercare', task:'Post-go-live reporting support and optimization', owner:'Reporting Lead', startWeek:27, duration:2, status:'0', dependencies:['RPT-P5-G1-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'RPT-P5-G2-001a', task:'Support finance users on report questions during hypercare', owner:'Report Developer', startWeek:27, duration:2, status:'0', dependencies:[], priority:'high', notes:'SLA: respond within 4 business hours' },
+    { id:'RPT-P5-G2-001b', task:'Monitor and optimize report performance in production', owner:'Reporting Lead', startWeek:27, duration:2, status:'0', dependencies:[], priority:'medium', notes:'Identify any slow reports and tune prompts/filters' },
+    { id:'RPT-P5-G2-001c', task:'Deliver report catalog and user guides to all teams', owner:'Change Manager', startWeek:27, duration:0.5, status:'0', dependencies:[], priority:'medium', notes:'' },
+    { id:'RPT-P5-G2-001d', task:'Prepare reporting closure report and post-implementation roadmap', owner:'Reporting Lead', startWeek:28, duration:1, status:'0', dependencies:[], priority:'medium', notes:'Include: P3 reports deferred to post-go-live, optimization backlog' },
+    { id:'RPT-P5-G2-001e', task:'Archive reporting workpapers and documentation', owner:'Project Manager', startWeek:28, duration:0.5, status:'0', dependencies:['RPT-P5-G2-001d'], priority:'low', notes:'' },
+  ]},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let tasks = [];
+let history = [];
+let currentFilter = 'all';
+let collapsedPhases = {};
+let collapsedGroups = {};
+let expandedTasks = {};
+let modalTask = null;
+let isNewTask = false;
+let ctxTask = null;
+let dragState = null;
+let splitterDragging = false;
+let saveTimer = null;
+let tooltipEl = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const saved = localStorage.getItem('cop_rpt_tracker');
+  if (saved) {
+    try { tasks = JSON.parse(saved); }
+    catch { tasks = JSON.parse(JSON.stringify(SEED_TASKS)); }
+  } else {
+    tasks = JSON.parse(JSON.stringify(SEED_TASKS));
+  }
+  tasks.forEach(t => { t.status = migrateStatus(t.status); (t.subtasks||[]).forEach(s => { s.status = migrateStatus(s.status); }); });
+  updateLastSaved();
+  setupPhaseTabListeners();
+  setupSplitter();
+  setupScrollSync();
+  setupKeyboard();
+  setupContextMenu();
+  setupMouseGlobal();
+  renderAll();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function ownerColor(o) { return OWNER_COLORS[o] || '#4b5563'; }
+
+function findTask(id) {
+  for (const t of tasks) {
+    if (t.id === id) return t;
+    if (t.subtasks) for (const s of t.subtasks) if (s.id === id) return s;
+  }
+  return null;
+}
+
+function findParent(id) {
+  for (const t of tasks) {
+    if (t.subtasks) for (const s of t.subtasks) if (s.id === id) return t;
+  }
+  return null;
+}
+
+function removeTask(id) {
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx >= 0) { tasks.splice(idx, 1); return; }
+  for (const t of tasks) {
+    if (t.subtasks) {
+      const si = t.subtasks.findIndex(s => s.id === id);
+      if (si >= 0) { t.subtasks.splice(si, 1); return; }
+    }
+  }
+}
+
+function genId(phase) {
+  const pMap = {Plan:'P1',Architect:'P2',Configure:'P3',Test:'P4',Deploy:'P5'};
+  const prefix = 'DC-' + (pMap[phase]||'P1') + '-G9-';
+  let n = 1;
+  while (findTask(prefix + String(n).padStart(3,'0'))) n++;
+  return prefix + String(n).padStart(3,'0');
+}
+
+function phaseComplete(phase) {
+  const pt = tasks.filter(t => t.phase === phase);
+  if (!pt.length) return 0;
+  const allT = [];
+  pt.forEach(t => { allT.push(t); (t.subtasks||[]).forEach(s => allT.push(s)); });
+  return Math.round(allT.reduce((acc,t) => acc + parseInt(t.status||0), 0) / allT.length);
+}
+
+function groupComplete(phase, group) {
+  const gTasks = tasks.filter(t => t.phase === phase && t.group === group);
+  const all = [];
+  gTasks.forEach(t => { all.push(t); (t.subtasks||[]).forEach(s => all.push(s)); });
+  if (!all.length) return 0;
+  return Math.round(all.reduce((acc,t) => acc + parseInt(t.status||0), 0) / all.length);
+}
+function taskSubComplete(task) {
+  if (!task.subtasks || !task.subtasks.length) return parseInt(task.status||0);
+  return Math.round(task.subtasks.reduce((acc,s) => acc + parseInt(s.status||0), 0) / task.subtasks.length);
+}
+function projectComplete() {
+  const all = allTasksFlat();
+  if (!all.length) return 0;
+  return Math.round(all.reduce((acc,t) => acc + parseInt(t.status||0), 0) / all.length);
+}
+function allTasksFlat() {
+  const flat = [];
+  tasks.forEach(t => { flat.push(t); (t.subtasks||[]).forEach(s => flat.push(s)); });
+  return flat;
+}
+
+// ============================================================
+// ROW BUILDER
+// ============================================================
+function buildRows() {
+  const rows = [];
+  const phases = (currentFilter === 'all') ? PHASES : [currentFilter];
+  for (const phase of phases) {
+    const phaseTasks = tasks.filter(t => t.phase === phase);
+    if (!phaseTasks.length) continue;
+    rows.push({type:'phase', phase});
+    if (!collapsedPhases[phase]) {
+      const groups = [...new Set(phaseTasks.map(t => t.group))];
+      for (const group of groups) {
+        rows.push({type:'group', phase, group});
+        if (!collapsedGroups[phase+'::'+group]) {
+          const gTasks = phaseTasks.filter(t => t.group === group);
+          for (const task of gTasks) {
+            rows.push({type:'task', task});
+            if (expandedTasks[task.id] && task.subtasks && task.subtasks.length) {
+              for (const sub of task.subtasks) {
+                rows.push({type:'subtask', task:sub, parent:task});
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+let _pctPopEl = null;
+function showPctPopover(e, id) {
+  hidePctPopover();
+  const task = findTask(id);
+  if (!task) return;
+  const div = document.createElement('div');
+  div.className = 'pct-popover';
+  [['0','0%'],['25','25%'],['50','50%'],['75','75%'],['100','100%']].forEach(([val,label]) => {
+    const row = document.createElement('div');
+    row.className = 'pct-opt' + (task.status === val ? ' pct-active' : '');
+    const dot = document.createElement('span');
+    dot.className = 'pct-dot';
+    dot.style.background = STATUS_COLORS[val];
+    row.appendChild(dot);
+    row.appendChild(document.createTextNode(label));
+    row.onclick = ev => { ev.stopPropagation(); setPct(id, val); hidePctPopover(); };
+    div.appendChild(row);
+  });
+  document.body.appendChild(div);
+  _pctPopEl = div;
+  let x = e.clientX + 10, y = e.clientY - 4;
+  if (x + 180 > window.innerWidth) x = e.clientX - 188;
+  if (y + 185 > window.innerHeight) y = window.innerHeight - 190;
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+  setTimeout(() => document.addEventListener('click', hidePctPopover, {once:true}), 0);
+}
+function hidePctPopover() {
+  if (_pctPopEl) { _pctPopEl.remove(); _pctPopEl = null; }
+  document.removeEventListener('click', hidePctPopover);
+}
+function setPct(id, pct) {
+  const task = findTask(id);
+  if (!task) return;
+  pushHistory();
+  task.status = pct;
+  save();
+  renderAll();
+}
+function renderAll() {
+  const rows = buildRows();
+  renderTaskList(rows);
+  renderGantt(rows);
+  updateStatusBar();
+
+}
+
+// ============================================================
+// TASK LIST
+// ============================================================
+function renderTaskList(rows) {
+  const tl = document.getElementById('task-list');
+  let html = '';
+  for (const row of rows) {
+    if (row.type === 'phase') {
+      const pct = phaseComplete(row.phase);
+      const col = PHASE_COLORS[row.phase];
+      const arrow = collapsedPhases[row.phase] ? '▶' : '▼';
+      html += `<div class="tl-row ph-row" data-ph="${row.phase}" onclick="togglePhase('${row.phase}')" style="border-left:3px solid ${col}">
+        <span class="chevron" style="color:${col}">${arrow}</span>
+        <span class="ph-name" style="color:${col}">${row.phase}</span>
+        <span class="ph-pct" style="background:${col}22;color:${col}">${pct}%</span>
+        <div class="ph-prog" style="flex:1"><div class="ph-prog-fill" style="width:${pct}%;background:${col}"></div></div>
+      </div>`;
+    } else if (row.type === 'group') {
+      const grKey = row.phase+'::'+row.group;
+      const gCount = tasks.filter(t=>t.phase===row.phase&&t.group===row.group).length;
+      const arrow = collapsedGroups[grKey] ? '▶' : '▼';
+      const grPct = groupComplete(row.phase, row.group);
+      const grCol = grPct === 100 ? 'var(--green)' : grPct > 0 ? (PHASE_COLORS[row.phase]||'var(--accent)') : 'rgba(255,255,255,0.2)';
+      html += `<div class="tl-row gr-row" data-grk="${grKey}" onclick="toggleGroup('${grKey}')">
+        <span class="chevron">${arrow}</span>
+        <span class="gr-name">${row.group}</span>
+        <span class="gr-count">(${gCount})</span>
+        <span class="gr-pct" style="color:${grCol}">${grPct}%</span>
+        <div class="gr-prog"><div class="gr-prog-fill" style="width:${grPct}%;background:${grCol}"></div></div>
+      </div>`;
+    } else if (row.type === 'task') {
+      const t = row.task;
+      const oc = ownerColor(t.owner);
+      const sc = STATUS_COLORS[t.status];
+      const hasSub = t.subtasks && t.subtasks.length > 0;
+      const expArrow = expandedTasks[t.id] ? '▼' : '▶';
+      const pc = PRIORITY_COLORS[t.priority] || '#4b5563';
+      let depsHtml = '';
+      const allDepIds = (t.dependencies||[]).concat(t.crossDeps||[]);
+      if (allDepIds.length) {
+        const predChips = (t.dependencies||[]).map(d =>
+          `<span class="dep-chip pred" onclick="event.stopPropagation();scrollToTask('${d}')" onmouseenter="event.stopPropagation();focusDeps('${d}')" onmouseleave="clearDepFocus()" title="Depends on ${d}">&#x2190; ${d}</span>`
+        ).join('');
+        const crossChips = (t.crossDeps||[]).map(d =>
+          `<span class="dep-chip cross" onclick="event.stopPropagation();scrollToTask('${d}')" onmouseenter="event.stopPropagation();focusDeps('${d}')" onmouseleave="clearDepFocus()" title="Cross-workstream dep: ${d}">&#x2197; ${d}</span>`
+        ).join('');
+        depsHtml = `<div class="dep-chips">${predChips}${crossChips}</div>`;
+      }
+      html += `<div>
+        <div class="tl-row task-row" data-id="${t.id}" oncontextmenu="showCtxMenu(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))">
+          <span class="drag-handle">⠿</span>
+          <span class="priority-ind" style="background:${pc}"></span>
+          <span class="status-dot clickable" style="background:${sc}" onclick="event.stopPropagation();showPctPopover(event,'${t.id}')" title="Click to update % complete"></span>
+          <span class="id-badge">${t.id}</span>
+          <span class="task-name" title="${escHtml(t.task)}">${escHtml(t.task)}</span>
+          ${t.owner ? `<span class="owner-chip" style="background:${oc}22;border:1px solid ${oc}44;color:${oc}">${shortOwner(t.owner)}</span>` : ''}
+          <span class="week-badge" title="${weekLabel(t.startWeek)} - ${weekLabel(t.startWeek+t.duration-1)}">${weekRange(t.startWeek,t.duration)}</span>
+          ${hasSub ? `<span class="sub-progress"><div class="task-mini-prog" title="${taskSubComplete(t)}% of subtasks complete"><div class="task-mini-prog-fill" style="width:${taskSubComplete(t)}%;background:${taskSubComplete(t)===100?'var(--green)':'var(--accent)'}"></div></div><span class="sub-pct-chip" style="color:${taskSubComplete(t)===100?'var(--green)':'var(--text-muted)'}">${taskSubComplete(t)}%</span><span class="expand-btn" onclick="event.stopPropagation();toggleExpand('${t.id}')">${expArrow}</span></span>` : ''}
+        </div>
+        ${depsHtml}
+      </div>`;
+    } else if (row.type === 'subtask') {
+      const t = row.task;
+      const oc = ownerColor(t.owner);
+      const sc = STATUS_COLORS[t.status];
+      html += `<div>
+        <div class="tl-row sub-row" data-id="${t.id}" oncontextmenu="showCtxMenu(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))">
+          <span class="status-dot clickable" style="background:${sc}" onclick="event.stopPropagation();showPctPopover(event,'${t.id}')" title="Click to update % complete"></span>
+          <span class="id-badge" style="font-size:8px">${t.id}</span>
+          <span class="sub-name" title="${escHtml(t.task)}">${escHtml(t.task)}</span>
+          ${t.owner ? `<span class="owner-chip" style="background:${oc}22;border:1px solid ${oc}44;color:${oc}">${shortOwner(t.owner)}</span>` : ''}
+          <span class="week-badge" title="${weekLabel(t.startWeek)} - ${weekLabel(t.startWeek+(t.duration||1)-1)}">${weekRange(t.startWeek,t.duration||1)}</span>
+        </div>
+      </div>`;
+    }
+  }
+  tl.innerHTML = html;
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shortOwner(o) {
+  const m = {'Conversion Lead':'CL','Data Analyst':'DA','Workday Architect':'WA','Business Analyst':'BA',
+    'Client IT':'IT','Client Data Owner':'CDO','Project Manager':'PM','Project Coordinator':'PC',
+    'Controller':'CTL','AP Manager':'APM','Fixed Asset Manager':'FAM','Workday Configurator':'WC'};
+  return m[o] || o.split(' ').map(w=>w[0]).join('').toUpperCase();
+}
+
+function togglePhase(ph) { collapsedPhases[ph] = !collapsedPhases[ph]; renderAll(); }
+function toggleGroup(k) { collapsedGroups[k] = !collapsedGroups[k]; renderAll(); }
+function toggleExpand(id) { expandedTasks[id] = !expandedTasks[id]; renderAll(); }
+
+// ============================================================
+// GANTT HEADER
+// ============================================================
+function renderGanttHeader() {
+  const totalW = TOTAL_WEEKS * CELL_W;
+  let html = `<div style="position:relative;height:38px;width:${totalW}px;">`;
+  // Phase bands
+  for (const [ph, [s, e]] of Object.entries(PHASE_RANGES)) {
+    const left = (s-1) * CELL_W;
+    const width = (e-s+1) * CELL_W;
+    const col = PHASE_COLORS[ph];
+    html += `<div class="g-ph-band" style="left:${left}px;width:${width}px;background:${col}22;border-bottom:2px solid ${col};color:${col};font-size:9px;letter-spacing:0.3px;">${ph.toUpperCase()}</div>`;
+  }
+  // Week labels
+  html += `<div class="g-wk-row" style="position:absolute;top:18px;left:0;">`;
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const isCur = w === currentWeek;
+    html += `<div class="g-wk-cell${isCur?' cur-wk':''}" title="Week ${w}">${weekLabel(w)}</div>`;
+  }
+  html += `</div></div>`;
+  document.getElementById('g-hdr').innerHTML = html;
+}
+
+// ============================================================
+// GANTT BODY
+// ============================================================
+function renderGantt(rows) {
+  renderGanttHeader();
+  const totalW = TOTAL_WEEKS * CELL_W;
+  const gbody = document.getElementById('g-body');
+
+  // Calculate total height
+  let totalH = 0;
+  for (const row of rows) {
+    if (row.type === 'phase') totalH += PH_ROW_H;
+    else if (row.type === 'group') totalH += GR_ROW_H;
+    else if (row.type === 'task') totalH += ROW_H;
+    else if (row.type === 'subtask') totalH += SUB_H;
+  }
+
+  let html = `<div style="width:${totalW}px;position:relative;min-height:${totalH}px;">`;
+
+  // Phase background bands
+  for (const [ph, [s, e]] of Object.entries(PHASE_RANGES)) {
+    const left = (s-1)*CELL_W;
+    const width = (e-s+1)*CELL_W;
+    const col = PHASE_COLORS[ph];
+    html += `<div class="g-ph-bg" style="left:${left}px;width:${width}px;height:100%;position:absolute;background:${col};top:0;"></div>`;
+  }
+
+  // Column grid lines
+  for (let w = 0; w < TOTAL_WEEKS; w++) {
+    html += `<div class="g-col-grid" style="left:${w*CELL_W}px;top:0;height:100%;position:absolute;"></div>`;
+  }
+
+  // Today line
+  const todayX = (currentWeek - 1) * CELL_W + CELL_W/2;
+  html += `<div class="g-today" style="left:${todayX}px;"></div>`;
+
+  // Rows
+  for (const row of rows) {
+    if (row.type === 'phase') {
+      const col = PHASE_COLORS[row.phase];
+      html += `<div class="g-row g-ph" style="border-left:3px solid ${col};height:${PH_ROW_H}px;"></div>`;
+    } else if (row.type === 'group') {
+      html += `<div class="g-row g-gr" style="height:${GR_ROW_H}px;"></div>`;
+    } else if (row.type === 'task') {
+      const t = row.task;
+      const left = (t.startWeek - 1) * CELL_W;
+      const width = Math.max(t.duration * CELL_W, 4);
+      const col = STATUS_COLORS[t.status];
+      const phCol = PHASE_COLORS[t.phase] || '#A100FF';
+      html += `<div class="g-row g-task" style="height:${ROW_H}px;">
+        <div class="g-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${col};border-left:2px solid ${phCol};"
+          title="${escHtml(t.task)} | ${t.owner} | ${weekLabel(t.startWeek)} - ${weekLabel(t.startWeek+t.duration-1)} | ${STATUS_LABELS[t.status]}"
+          onmousedown="barMouseDown(event,'${t.id}')"
+          ondblclick="openModal(findTask('${t.id}'))"
+          onmouseenter="showTooltip(event,'${escHtml(t.task)}','${t.owner}',${t.startWeek},${t.startWeek+t.duration-1},'${STATUS_LABELS[t.status]}');focusDeps('${t.id}')"
+          onmouseleave="hideTooltip();clearDepFocus()">
+          <span style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;max-width:calc(100% - 8px);">${width > 36 ? escHtml(shortOwner(t.owner)) : ''}</span>
+        </div>
+      </div>`;
+    } else if (row.type === 'subtask') {
+      const t = row.task;
+      const left = (t.startWeek - 1) * CELL_W;
+      const dur = t.duration || 1;
+      const width = Math.max(dur * CELL_W, 4);
+      const col = STATUS_COLORS[t.status];
+      html += `<div class="g-row g-sub" style="height:${SUB_H}px;">
+        <div class="g-bar g-sub-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${col};opacity:0.75;"
+          title="${escHtml(t.task)} | ${t.owner||''} | ${weekLabel(t.startWeek)} - ${weekLabel(t.startWeek+dur-1)} | ${STATUS_LABELS[t.status]}"
+          onmousedown="barMouseDown(event,'${t.id}')"
+          ondblclick="openModal(findTask('${t.id}'))"
+          onmouseenter="showTooltip(event,'${escHtml(t.task)}','${t.owner||''}',${t.startWeek},${t.startWeek+dur-1},'${STATUS_LABELS[t.status]}')"
+          onmouseleave="hideTooltip()">
+        </div>
+      </div>`;
+    }
+  }
+
+
+  html += `</div>`;
+  gbody.innerHTML = html;
+}
+
+
+
+// ============================================================
+// GANTT BAR DRAG
+// ============================================================
+function barMouseDown(e, id) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const task = findTask(id);
+  if (!task) return;
+  const startX = e.clientX;
+  const origWeek = task.startWeek;
+  dragState = {task, startX, origWeek};
+}
+
+function setupMouseGlobal() {
+  document.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    const dx = e.clientX - dragState.startX;
+    const weeksDelta = Math.round(dx / CELL_W);
+    const maxDur = dragState.task.duration || 1;
+    const newWeek = Math.max(1, Math.min(TOTAL_WEEKS - maxDur + 1, dragState.origWeek + weeksDelta));
+    dragState.task.startWeek = newWeek;
+    const bar = document.querySelector(`.g-bar[data-id="${dragState.task.id}"]`);
+    if (bar) bar.style.left = ((newWeek-1)*CELL_W)+'px';
+  });
+  document.addEventListener('mouseup', e => {
+    if (dragState) {
+      pushHistory();
+      renderAll();
+      dragState = null;
+      save();
+    }
+    if (splitterDragging) {
+      splitterDragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+function showTooltip(e, name, owner, s, end, status) {
+  hideTooltip();
+  tooltipEl = document.createElement('div');
+  tooltipEl.className = 'g-tooltip';
+  tooltipEl.innerHTML = `<strong>${name}</strong><br>${owner}<br>${weekLabel(s)} - ${weekLabel(end)}<br><span style="color:var(--text-muted)">${status}</span>`;
+  document.body.appendChild(tooltipEl);
+  posTooltip(e);
+}
+
+function posTooltip(e) {
+  if (!tooltipEl) return;
+  tooltipEl.style.left = (e.clientX + 12) + 'px';
+  tooltipEl.style.top = (e.clientY - 10) + 'px';
+}
+
+function hideTooltip() {
+  if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+}
+
+document.addEventListener('mousemove', e => { if (tooltipEl) posTooltip(e); });
+
+// ============================================================
+// STATUS BAR
+// ============================================================
+function updateStatusBar() {
+  const flat = allTasksFlat();
+  document.getElementById('stat-total').textContent = flat.length;
+  document.getElementById('stat-complete').textContent = flat.filter(t=>t.status==='100').length;
+  document.getElementById('stat-inprog').textContent = flat.filter(t=>t.status==='25'||t.status==='50'||t.status==='75').length;
+  document.getElementById('stat-blocked').textContent = flat.filter(t=>t.status==='0').length;
+  const pct = projectComplete();
+  const pctEl = document.getElementById('stat-proj-pct');
+  const barEl = document.getElementById('stat-proj-bar');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (barEl) barEl.style.width = pct + '%';
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(task, isNew) {
+  if (!task) return;
+  modalTask = task;
+  isNewTask = !!isNew;
+  document.getElementById('modal-title').textContent = isNew ? 'New Task' : 'Edit Task';
+  document.getElementById('f-task').value = task.task || '';
+  document.getElementById('f-id').value = task.id || '';
+  document.getElementById('f-phase').value = task.phase || 'Plan';
+  document.getElementById('f-group').value = task.group || '';
+  document.getElementById('f-owner').value = task.owner || 'Conversion Lead';
+  document.getElementById('f-status').value = task.status || '0';
+  buildWeekSelect(task.startWeek || 1);
+  document.getElementById('f-dur').value = task.duration || 1;
+  document.getElementById('f-priority').value = task.priority || 'medium';
+  document.getElementById('f-deps').value = (task.dependencies||[]).join(', ');
+  document.getElementById('f-crossdeps').value = (task.crossDeps||[]).join(', ');
+  document.getElementById('f-notes').value = task.notes || '';
+  document.getElementById('modal-del-btn').style.display = isNew ? 'none' : '';
+  document.getElementById('modal-ov').style.display = 'flex';
+}
+
+function openNewTaskModal() {
+  const phase = (currentFilter === 'all') ? 'Plan' : currentFilter;
+  const newTask = {
+    id: genId(phase),
+    phase, group:'General', task:'', owner:'Conversion Lead',
+    startWeek:1, duration:1, status:'0',
+    dependencies:[], crossDeps:[], notes:'', priority:'medium', subtasks:[]
+  };
+  openModal(newTask, true);
+}
+
+function closeModal() {
+  document.getElementById('modal-ov').style.display = 'none';
+  modalTask = null;
+}
+
+function buildWeekSelect(selected){const sel=document.getElementById('f-start');if(!sel||sel.tagName!=='SELECT')return;const yw=86400000*7;const ys=new Date(Date.UTC(new Date().getUTCFullYear(),0,1));while(ys.getUTCDay()!==1)ys.setUTCDate(ys.getUTCDate()+1);const pm=new Date(Date.UTC(2026,1,2)).getTime();sel.innerHTML='';for(let i=0;i<104;i++){const ws=new Date(ys.getTime()+i*yw);const we=new Date(ws.getTime()+6*86400000);const wn=Math.round((ws.getTime()-pm)/yw)+1;const o=document.createElement('option');o.value=wn;o.textContent=(ws.getUTCMonth()+1)+'/'+ws.getUTCDate()+' – '+(we.getUTCMonth()+1)+'/'+we.getUTCDate();if(wn<1)o.disabled=true;sel.appendChild(o);}sel.value=selected||1;}
+
+function saveModal() {
+  if (!modalTask) return;
+  pushHistory();
+  modalTask.task = document.getElementById('f-task').value.trim();
+  modalTask.id = document.getElementById('f-id').value.trim() || modalTask.id;
+  modalTask.phase = document.getElementById('f-phase').value;
+  modalTask.group = document.getElementById('f-group').value.trim() || 'General';
+  modalTask.owner = document.getElementById('f-owner').value;
+  modalTask.status = document.getElementById('f-status').value;
+  modalTask.startWeek = parseInt(document.getElementById('f-start').value)||1;
+  modalTask.duration = Math.max(1, Math.min(104, parseInt(document.getElementById('f-dur').value)||1));
+  modalTask.priority = document.getElementById('f-priority').value;
+  modalTask.dependencies = document.getElementById('f-deps').value.split(',').map(s=>s.trim()).filter(Boolean);
+  modalTask.crossDeps = document.getElementById('f-crossdeps').value.split(',').map(s=>s.trim()).filter(Boolean);
+  modalTask.notes = document.getElementById('f-notes').value.trim();
+  if (isNewTask) {
+    if (!modalTask.subtasks) modalTask.subtasks = [];
+    tasks.push(modalTask);
+  }
+  closeModal();
+  renderAll();
+  save();
+}
+
+function deleteCurrentTask() {
+  if (!modalTask) return;
+  if (!confirm('Delete this task?')) return;
+  pushHistory();
+  removeTask(modalTask.id);
+  closeModal();
+  renderAll();
+  save();
+}
+
+document.getElementById('modal-ov').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-ov')) closeModal();
+});
+
+// ============================================================
+// CONTEXT MENU
+// ============================================================
+function showCtxMenu(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxTask = findTask(id);
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  let x = e.clientX, y = e.clientY;
+  const mw = 160, mh = 200;
+  if (x + mw > window.innerWidth) x = window.innerWidth - mw - 4;
+  if (y + mh > window.innerHeight) y = window.innerHeight - mh - 4;
+  menu.style.left = x+'px';
+  menu.style.top = y+'px';
+}
+
+function setupContextMenu() {
+  document.getElementById('ctx-menu').addEventListener('click', e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    document.getElementById('ctx-menu').style.display = 'none';
+    if (!ctxTask) return;
+    if (action === 'edit') {
+      openModal(ctxTask);
+    } else if (action === 'addSub') {
+      const sub = {
+        id: ctxTask.id + String.fromCharCode(97 + (ctxTask.subtasks||[]).length),
+        task:'New Subtask', owner:ctxTask.owner, startWeek:ctxTask.startWeek,
+        duration:1, status:'0', dependencies:[], priority:'medium', notes:''
+      };
+      if (!ctxTask.subtasks) ctxTask.subtasks = [];
+      ctxTask.subtasks.push(sub);
+      expandedTasks[ctxTask.id] = true;
+      pushHistory(); renderAll(); save();
+    } else if (action === 'addBelow') {
+      const phase = ctxTask.phase || 'Plan';
+      const newT = {
+        id:genId(phase), phase, group:ctxTask.group||'General',
+        task:'New Task', owner:ctxTask.owner, startWeek:ctxTask.startWeek,
+        duration:1, status:'0', dependencies:[], crossDeps:[],
+        notes:'', priority:'medium', subtasks:[]
+      };
+      const idx = tasks.findIndex(t=>t.id===ctxTask.id);
+      if (idx>=0) tasks.splice(idx+1,0,newT);
+      else tasks.push(newT);
+      pushHistory(); renderAll(); save();
+    } else if (action === 'duplicate') {
+      const dup = JSON.parse(JSON.stringify(ctxTask));
+      dup.id = genId(dup.phase||'Plan');
+      dup.task = dup.task + ' (copy)';
+      if (dup.subtasks) dup.subtasks.forEach((s,i)=>{s.id=dup.id+(String.fromCharCode(97+i));});
+      const idx = tasks.findIndex(t=>t.id===ctxTask.id);
+      if (idx>=0) tasks.splice(idx+1,0,dup);
+      else tasks.push(dup);
+      pushHistory(); renderAll(); save();
+    } else if (action === 'delete') {
+      if (!confirm('Delete this task?')) return;
+      pushHistory();
+      removeTask(ctxTask.id);
+      renderAll(); save();
+    } else if (action === 'dep') {
+      const depId = prompt('Enter dependency task ID:');
+      if (depId && depId.trim()) {
+        if (!ctxTask.dependencies) ctxTask.dependencies = [];
+        if (!ctxTask.dependencies.includes(depId.trim())) {
+          ctxTask.dependencies.push(depId.trim());
+          pushHistory(); renderAll(); save();
+        }
+      }
+    }
+    ctxTask = null;
+  });
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('ctx-menu').contains(e.target)) {
+      document.getElementById('ctx-menu').style.display = 'none';
+    }
+  });
+}
+
+// ============================================================
+// PHASE TABS
+// ============================================================
+function setupPhaseTabListeners() {
+  document.querySelectorAll('.ptab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.phase;
+      renderAll();
+    });
+  });
+}
+
+// ============================================================
+// SPLITTER
+// ============================================================
+function setupSplitter() {
+  const splitter = document.getElementById('splitter');
+  splitter.addEventListener('mousedown', e => {
+    splitterDragging = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!splitterDragging) return;
+    const main = document.getElementById('main');
+    const rect = main.getBoundingClientRect();
+    const pct = Math.max(20, Math.min(75, (e.clientX - rect.left) / rect.width * 100));
+    document.getElementById('left').style.width = pct + '%';
+  });
+}
+
+// ============================================================
+// SCROLL SYNC
+// ============================================================
+function setupScrollSync() {
+  let scrollSyncing = false;
+  const taskScroll = document.getElementById('task-scroll');
+  const ganttBodyWrap = document.getElementById('g-body-wrap');
+  const ganttHdr = document.getElementById('g-hdr-wrap');
+
+  taskScroll.addEventListener('scroll', () => {
+    if (scrollSyncing) return;
+    scrollSyncing = true;
+    ganttBodyWrap.scrollTop = taskScroll.scrollTop;
+    scrollSyncing = false;
+  });
+
+  ganttBodyWrap.addEventListener('scroll', () => {
+    if (scrollSyncing) return;
+    scrollSyncing = true;
+    taskScroll.scrollTop = ganttBodyWrap.scrollTop;
+    ganttHdr.scrollLeft = ganttBodyWrap.scrollLeft;
+    scrollSyncing = false;
+
+  });
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+function setupKeyboard() {
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if ((e.key === 'n' || e.key === '+') && !e.ctrlKey) openNewTaskModal();
+    if (e.key === 'e' && !e.ctrlKey) doExport();
+    if (e.key === 'Escape') closeModal();
+    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+  });
+}
+
+// ============================================================
+// HISTORY / UNDO
+// ============================================================
+function pushHistory() {
+  history.push(JSON.stringify(tasks));
+  if (history.length > HISTORY_MAX) history.shift();
+}
+
+function undo() {
+  if (!history.length) { showToast('Nothing to undo'); return; }
+  tasks = JSON.parse(history.pop());
+  renderAll();
+  showToast('Undo successful');
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem('cop_rpt_tracker', JSON.stringify(tasks));
+    localStorage.setItem('cop_rpt_tracker_saved', new Date().toISOString());
+    updateLastSaved();
+  }, 500);
+}
+
+function updateLastSaved() {
+  const ts = localStorage.getItem('cop_rpt_tracker_saved');
+  const el = document.getElementById('last-saved');
+  if (el && ts) el.textContent = 'Saved ' + new Date(ts).toLocaleTimeString();
+}
+
+function confirmReset() {
+  if (!confirm('Reset all data to defaults? This cannot be undone.')) return;
+  tasks = JSON.parse(JSON.stringify(SEED_TASKS));
+  history = [];
+  expandedTasks = {};
+  collapsedPhases = {};
+  collapsedGroups = {};
+  localStorage.removeItem('cop_rpt_tracker');
+  localStorage.removeItem('cop_rpt_tracker_saved');
+  renderAll();
+  showToast('Reset to defaults');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, duration) {
+  duration = duration || 3500;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+// ============================================================
+// IMPORT
+// ============================================================
+function doImport(inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if (!rows.length) { showToast('Empty file'); return; }
+      const headers = rows[0].map(h => String(h||'').toLowerCase().replace(/\s+/g,''));
+      let imported = 0, updated = 0, errors = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const idIdx = headers.indexOf('id');
+        if (idIdx < 0 || !row[idIdx]) continue;
+        try {
+          const obj = {};
+          ['id','phase','group','task','owner','startweek','duration','status','dependencies','crossdeps','notes','priority','parentid']
+            .forEach(k => { const idx = headers.indexOf(k); obj[k] = idx >= 0 ? row[idx] : undefined; });
+          const existing = findTask(String(obj.id));
+          const taskObj = {
+            id: String(obj.id),
+            phase: obj.phase || 'Plan',
+            group: obj.group || 'General',
+            task: obj.task || '',
+            owner: obj.owner || '',
+            startWeek: parseInt(obj.startweek) || 1,
+            duration: parseInt(obj.duration) || 1,
+            status: obj.status || 'not_started',
+            dependencies: obj.dependencies ? String(obj.dependencies).split(',').map(s=>s.trim()).filter(Boolean) : [],
+            crossDeps: obj.crossdeps ? String(obj.crossdeps).split(',').map(s=>s.trim()).filter(Boolean) : [],
+            notes: obj.notes || '',
+            priority: obj.priority || 'medium',
+            subtasks: existing ? (existing.subtasks || []) : []
+          };
+          if (obj.parentid) {
+            const parent = findTask(String(obj.parentid));
+            if (parent) {
+              if (!parent.subtasks) parent.subtasks = [];
+              const subIdx = parent.subtasks.findIndex(s => s.id === taskObj.id);
+              if (subIdx >= 0) { Object.assign(parent.subtasks[subIdx], taskObj); updated++; }
+              else { const st = {...taskObj}; delete st.subtasks; parent.subtasks.push(st); imported++; }
+            }
+          } else if (existing) {
+            Object.assign(existing, taskObj); updated++;
+          } else {
+            tasks.push(taskObj); imported++;
+          }
+        } catch(ex) { errors++; }
+      }
+      inputEl.value = '';
+      showToast(`Imported ${imported} tasks, updated ${updated}${errors?', '+errors+' errors':''}`);
+      pushHistory(); renderAll(); save();
+    } catch(ex) {
+      showToast('Import failed: ' + ex.message);
+      inputEl.value = '';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function doExport() {
+  if (typeof XLSX === 'undefined') { showToast('XLSX library not loaded'); return; }
+  const wb = XLSX.utils.book_new();
+  const cols = ['id','phase','group','task','owner','startWeek','duration','status','dependencies','crossDeps','notes','priority'];
+
+  const flat = [];
+  tasks.forEach(t => {
+    flat.push({...t, dependencies:(t.dependencies||[]).join(','), crossDeps:(t.crossDeps||[]).join(',')});
+    (t.subtasks||[]).forEach(s => flat.push({
+      ...s,
+      phase: t.phase,
+      group: t.group,
+      dependencies: (s.dependencies||[]).join(','),
+      crossDeps: '',
+      parentid: t.id
+    }));
+  });
+
+  const allCols = [...cols, 'parentid'];
+  const allRows = [allCols, ...flat.map(t => allCols.map(c => t[c] !== undefined ? t[c] : ''))];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(allRows), 'All Tasks');
+
+  PHASES.forEach(phase => {
+    const phRows = [allCols, ...flat.filter(t=>t.phase===phase).map(t=>allCols.map(c=>t[c]!==undefined?t[c]:''))];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(phRows), phase);
+  });
+
+  const summaryRows = [['Phase','Total','Complete','In Progress','Blocked','Not Started']];
+  PHASES.forEach(phase => {
+    const pt = tasks.filter(t => t.phase === phase);
+    summaryRows.push([
+      phase, pt.length,
+      pt.filter(t=>t.status==='complete').length,
+      pt.filter(t=>t.status==='in_progress').length,
+      pt.filter(t=>t.status==='blocked').length,
+      pt.filter(t=>t.status==='not_started').length
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Summary');
+
+  XLSX.writeFile(wb, 'rpt_report_tracker_export.xlsx');
+  showToast('Exported successfully');
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

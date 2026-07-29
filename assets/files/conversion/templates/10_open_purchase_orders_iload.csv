@@ -1,0 +1,15 @@
+INSTRUCTIONS,"Open POs are purchase orders with remaining open balance at cutover. Include only POs with Open_Amount > 0. Validate with: python workday_financial_validator.py open_purchase_orders this_file.csv 3",,,,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,ACME-US,SUPP-00001,PO-2025-00441,1,2025-08-01,USD,Office Supplies Q4,100,45.00,4500.00,2250.00,CC-1001,SPEND-OFFICE,Net30,Office supplies for Chicago HQ
+Company,Supplier_ID,PO_Number,PO_Line_Number,PO_Date,Currency,Line_Description,Quantity_Ordered,Unit_Price,Extended_Amount,Open_Amount,Cost_Center,Spend_Category,Payment_Terms,Memo
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+NOTES:,"PO_Number + PO_Line_Number together form the unique key. Multi-line POs require one row per line",,,,,,,,,,,,,,,,
+NOTES:,"Quantity_Ordered: Total quantity on the PO line, not remaining quantity",,,,,,,,,,,,,,,,
+NOTES:,"Extended_Amount: Quantity_Ordered * Unit_Price (total line value)",,,,,,,,,,,,,,,,
+NOTES:,"Open_Amount: The remaining unbilled/unreceived amount. Must be <= Extended_Amount",,,,,,,,,,,,,,,,
+NOTES:,Supplier_ID: Must exactly match a Supplier_ID from the Supplier Master load,,,,,,,,,,,,,,,,
+NOTES:,Spend_Category: Must match a valid Workday Spend Category Reference ID in your tenant,,,,,,,,,,,,,,,,
+NOTES:,"Reconciliation check: Sum of Open_Amount = Open PO commitments/encumbrances per legacy system",,,,,,,,,,,,,,,,
+NOTES:,"Load order: Object 9 — load AFTER Supplier Master. Can load in parallel with Open AP Invoices",,,,,,,,,,,,,,,,

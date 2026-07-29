@@ -1,0 +1,6 @@
+VendorCode,VendorName,VendorType,FederalTaxNum,CurrencyCode,PayTerms,PayMethod,VendorAddress1,VendorCity,VendorState,VendorZip,VendorCountry,ContactEmail,ContactPhone,AccountManager,CreditLimit,OnHold,ActiveFlag
+V-10001,Acme Corporation,SUP,12-3456789,USD,NET30,ACH,123 Main Street,Springfield,IL,62701,USA,ap@acme.com,217-555-0100,John Smith,50000.00,N,Y
+V-10002,Global Supplies Inc,SUP,98-7654321,USD,NET45,CHECK,456 Oak Avenue,Chicago,IL,60601,USA,billing@globalsupplies.com,312-555-0200,Jane Doe,75000.00,N,Y
+V-10003,Tech Solutions LLC,SVC,45-6789012,USD,NET30,WIRE,789 Tech Park,Austin,TX,78701,USA,invoices@techsolutions.com,512-555-0300,Bob Johnson,100000.00,N,Y
+V-10004,Office Depot,SUP,23-4567890,USD,NET15,EFT,1000 Office Blvd,Naperville,IL,60540,USA,business@officedepot.com,800-555-0400,,25000.00,N,Y
+V-10005,Strategic Consulting Partners,SVC,67-8901234,USD,NET60,ACH,2000 Consulting Way,New York,NY,10001,USA,billing@scp.com,212-555-0500,Alice Lee,200000.00,N,Y

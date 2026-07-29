@@ -1,0 +1,219 @@
+[
+  {
+    "id": "8d30ea98-6f2f-4625-91a7-b0e41fbad157",
+    "name": "Alex Rivera",
+    "email": "alex.rivera@accenture.com",
+    "enterprise_id": "alex.rivera",
+    "focus_area": "integrations",
+    "level": "Senior Consultant",
+    "certifications": ["Workday Integration Fundamentals","Workday Pro Integrations"],
+    "modules": ["Studio","Core Connectors","EIB","REST API"],
+    "utilization_pct": 80,
+    "active_projects": 2,
+    "years_experience": 5,
+    "location": "Chicago, IL",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Integration Lead","allocation_pct":60,"rolloff_date":"2026-09-30"},
+      {"project_name":"Meridian Bank","role":"Integration SME","allocation_pct":20,"rolloff_date":"2026-08-15"}
+    ],
+    "ai_use_case_ids": ["44ad0db7-11f6-4f97-a81e-85131a9c9b0e"],
+    "initiative_ids": ["bededa80-6054-4ab6-82a5-44f4a837be13","5c749843-8dbb-455f-bec8-e16d113c5045"]
+  },
+  {
+    "id": "507ca5c1-cd9f-409c-80c4-209c3a0a7ffd",
+    "name": "Jordan Kim",
+    "email": "jordan.kim@accenture.com",
+    "enterprise_id": "jordan.kim",
+    "focus_area": "integrations",
+    "level": "Consultant",
+    "certifications": ["Workday Integration Fundamentals"],
+    "modules": ["EIB","Core Connectors","Document Transformation"],
+    "utilization_pct": 75,
+    "active_projects": 1,
+    "years_experience": 2,
+    "location": "New York, NY",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Integration Analyst","allocation_pct":75,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": [],
+    "initiative_ids": ["5c749843-8dbb-455f-bec8-e16d113c5045"]
+  },
+  {
+    "id": "94fa5242-9889-4050-98d5-8c83522483e7",
+    "name": "Morgan Patel",
+    "email": "morgan.patel@accenture.com",
+    "enterprise_id": "morgan.patel",
+    "focus_area": "integrations",
+    "level": "Manager",
+    "certifications": ["Workday Pro Integrations","Workday Pro Financials"],
+    "modules": ["Studio","PECI","PICOF","RaaS","SOAP","REST"],
+    "utilization_pct": 65,
+    "active_projects": 3,
+    "years_experience": 8,
+    "location": "Dallas, TX",
+    "project_assignments": [
+      {"project_name":"Apex Healthcare","role":"Integration Lead","allocation_pct":45,"rolloff_date":"2026-12-31"},
+      {"project_name":"Meridian Bank","role":"Integration Lead","allocation_pct":20,"rolloff_date":"2026-08-15"},
+      {"project_name":"NovaCorp Industries","role":"Integration Advisor","allocation_pct":0,"rolloff_date":""}
+    ],
+    "ai_use_case_ids": ["44ad0db7-11f6-4f97-a81e-85131a9c9b0e","afcff157-4cad-489f-ae81-24bbae06e603"],
+    "initiative_ids": ["bededa80-6054-4ab6-82a5-44f4a837be13","5c749843-8dbb-455f-bec8-e16d113c5045","7a27406c-0a24-4298-a5ed-686552d129cc"]
+  },
+  {
+    "id": "15443398-5288-4cbb-a8ea-3107616c05af",
+    "name": "Casey Thompson",
+    "email": "casey.thompson@accenture.com",
+    "enterprise_id": "casey.thompson",
+    "focus_area": "conversion",
+    "level": "Senior Consultant",
+    "certifications": ["Workday Pro Financials"],
+    "modules": ["iLoad","Data Migration","Spreadsheet Import"],
+    "utilization_pct": 85,
+    "active_projects": 2,
+    "years_experience": 6,
+    "location": "Atlanta, GA",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Conversion Lead","allocation_pct":85,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": ["fc341b1c-249f-4caf-934d-9f6ea3b5e7ee","b2c7f4a1-3d8e-4f92-a1b5-9c0e2f3d8a7b"],
+    "initiative_ids": ["a5625d1f-b87a-431c-9397-70baa934ca3d","bededa80-6054-4ab6-82a5-44f4a837be13"]
+  },
+  {
+    "id": "c0ca34aa-cbbb-4994-a4b0-c545aca52ae5",
+    "name": "Riley Nakamura",
+    "email": "riley.nakamura@accenture.com",
+    "enterprise_id": "riley.nakamura",
+    "focus_area": "conversion",
+    "level": "Consultant",
+    "certifications": ["Workday Fundamentals"],
+    "modules": ["iLoad","Spreadsheet Import","Data Validation"],
+    "utilization_pct": 90,
+    "active_projects": 2,
+    "years_experience": 3,
+    "location": "Seattle, WA",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Conversion Analyst","allocation_pct":90,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": [],
+    "initiative_ids": ["a5625d1f-b87a-431c-9397-70baa934ca3d"]
+  },
+  {
+    "id": "4743a470-d764-43d1-a91c-a468fd242aab",
+    "name": "Drew Williams",
+    "email": "drew.williams@accenture.com",
+    "enterprise_id": "drew.williams",
+    "focus_area": "conversion",
+    "level": "Senior Manager",
+    "certifications": ["Workday Pro Financials","Workday Pro HCM"],
+    "modules": ["iLoad","CCB","Data Migration Strategy","Cutover Planning"],
+    "utilization_pct": 60,
+    "active_projects": 4,
+    "years_experience": 10,
+    "location": "San Francisco, CA",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Conversion Lead","allocation_pct":30,"rolloff_date":"2026-09-30"},
+      {"project_name":"Apex Healthcare","role":"Conversion Lead","allocation_pct":30,"rolloff_date":"2026-12-31"},
+      {"project_name":"Meridian Bank","role":"Conversion SME","allocation_pct":0,"rolloff_date":""},
+      {"project_name":"Pacific Retail Group","role":"Conversion PM","allocation_pct":0,"rolloff_date":"2027-03-31"}
+    ],
+    "ai_use_case_ids": ["fc341b1c-249f-4caf-934d-9f6ea3b5e7ee"],
+    "initiative_ids": ["a5625d1f-b87a-431c-9397-70baa934ca3d","bededa80-6054-4ab6-82a5-44f4a837be13","7a27406c-0a24-4298-a5ed-686552d129cc"]
+  },
+  {
+    "id": "fb6a7ab5-ed55-47ab-bcd7-ceb37fcf0316",
+    "name": "Sam Chen",
+    "email": "sam.chen@accenture.com",
+    "enterprise_id": "sam.chen",
+    "focus_area": "reporting",
+    "level": "Senior Consultant",
+    "certifications": ["Workday Report Writer","Workday Pro Financials"],
+    "modules": ["Custom Reports","Matrix Reports","Composite Reports","Prism Analytics"],
+    "utilization_pct": 78,
+    "active_projects": 2,
+    "years_experience": 5,
+    "location": "Boston, MA",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Report Developer","allocation_pct":78,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": ["e0f1838e-ab89-45ee-b7d8-da73db81b8d1","3bc7eafa-b8c2-4fe6-9b20-04a62ef1bb02"],
+    "initiative_ids": ["8deb3f5b-cd58-45b2-85a4-056dfe1357ac","bededa80-6054-4ab6-82a5-44f4a837be13"]
+  },
+  {
+    "id": "e4a4cc80-9047-4dab-b542-44bd1952a994",
+    "name": "Avery Martinez",
+    "email": "avery.martinez@accenture.com",
+    "enterprise_id": "avery.martinez",
+    "focus_area": "reporting",
+    "level": "Consultant",
+    "certifications": ["Workday Report Writer"],
+    "modules": ["Standard Reports","Custom Reports","Dashboard Reports"],
+    "utilization_pct": 82,
+    "active_projects": 2,
+    "years_experience": 2,
+    "location": "Phoenix, AZ",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Report Developer","allocation_pct":82,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": [],
+    "initiative_ids": ["8deb3f5b-cd58-45b2-85a4-056dfe1357ac"]
+  },
+  {
+    "id": "034cfb9f-ac40-4fe1-821c-f40b4a933b0b",
+    "name": "Taylor Brooks",
+    "email": "taylor.brooks@accenture.com",
+    "enterprise_id": "taylor.brooks",
+    "focus_area": "reporting",
+    "level": "Manager",
+    "certifications": ["Workday Pro Financials","Workday Adaptive Planning"],
+    "modules": ["Prism Analytics","Discovery Boards","BIRT","Composite Reports","Calculated Fields"],
+    "utilization_pct": 70,
+    "active_projects": 3,
+    "years_experience": 7,
+    "location": "Denver, CO",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Reporting Lead","allocation_pct":45,"rolloff_date":"2026-09-30"},
+      {"project_name":"Apex Healthcare","role":"Reporting Lead","allocation_pct":25,"rolloff_date":"2026-12-31"}
+    ],
+    "ai_use_case_ids": ["e0f1838e-ab89-45ee-b7d8-da73db81b8d1","3bc7eafa-b8c2-4fe6-9b20-04a62ef1bb02"],
+    "initiative_ids": ["8deb3f5b-cd58-45b2-85a4-056dfe1357ac","7a27406c-0a24-4298-a5ed-686552d129cc","bededa80-6054-4ab6-82a5-44f4a837be13"]
+  },
+  {
+    "id": "b432a988-287c-43a4-bbf0-d469bf30c7d7",
+    "name": "Quinn Rodriguez",
+    "email": "quinn.rodriguez@accenture.com",
+    "enterprise_id": "quinn.rodriguez",
+    "focus_area": "extend",
+    "level": "Senior Consultant",
+    "certifications": ["Workday Extend","Workday Pro Financials"],
+    "modules": ["App Design","Orchestrations","Business Objects","Related Actions"],
+    "utilization_pct": 88,
+    "active_projects": 2,
+    "years_experience": 4,
+    "location": "Minneapolis, MN",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Extend Developer","allocation_pct":88,"rolloff_date":"2026-09-30"}
+    ],
+    "ai_use_case_ids": ["032896ad-839f-4c58-b2ec-8fd59336a48f","e4d395ec-f1bf-4f9c-a3e4-bc0d3ea8411b"],
+    "initiative_ids": ["ba801150-aab6-4a0f-b674-61701f6b7a9f","bededa80-6054-4ab6-82a5-44f4a837be13"]
+  },
+  {
+    "id": "ccb1d862-c8f0-4547-b583-8e5b16a89df6",
+    "name": "Reese Johnson",
+    "email": "reese.johnson@accenture.com",
+    "enterprise_id": "reese.johnson",
+    "focus_area": "extend",
+    "level": "Manager",
+    "certifications": ["Workday Extend","Workday Pro Financials","Workday Studio"],
+    "modules": ["App Design","Orchestrations","Delivered Processes","Custom Validations","REST API"],
+    "utilization_pct": 72,
+    "active_projects": 3,
+    "years_experience": 9,
+    "location": "Austin, TX",
+    "project_assignments": [
+      {"project_name":"NovaCorp Industries","role":"Extend Lead","allocation_pct":50,"rolloff_date":"2026-09-30"},
+      {"project_name":"Meridian Bank","role":"Extend SME","allocation_pct":22,"rolloff_date":"2026-08-15"}
+    ],
+    "ai_use_case_ids": ["032896ad-839f-4c58-b2ec-8fd59336a48f","e4d395ec-f1bf-4f9c-a3e4-bc0d3ea8411b"],
+    "initiative_ids": ["ba801150-aab6-4a0f-b674-61701f6b7a9f","7a27406c-0a24-4298-a5ed-686552d129cc","bededa80-6054-4ab6-82a5-44f4a837be13"]
+  }
+]

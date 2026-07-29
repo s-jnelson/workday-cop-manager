@@ -1,0 +1,1454 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workday Finance — Integration Workstream Tracker</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #07030f;
+  --bg-card: rgba(20,7,41,0.85);
+  --bg-panel: rgba(14,5,30,0.90);
+  --border: rgba(161,0,255,0.28);
+  --accent: #C561F6;
+  --teal: #C561F6;
+  --text: #f2ecff;
+  --text-muted: #9d88b8;
+  --text-dim: #5a4470;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --purple: #e879f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+#header{background:linear-gradient(135deg,#1a0533 0%,#0d0220 100%);border-top:4px solid #C561F6;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;min-height:54px;}
+#header h1{font-size:14px;font-weight:700;color:var(--text);letter-spacing:0.3px;white-space:nowrap;margin-right:4px;}
+.ptabs{display:flex;gap:4px;align-items:center;}
+.ptab{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;}
+.ptab:hover{border-color:var(--accent);color:var(--text);}
+.ptab.active{background:rgba(161,0,255,0.22);border-color:var(--accent);color:#fff;}
+#hdr-spacer{flex:1;}
+#last-saved{font-size:10px;color:var(--text-dim);white-space:nowrap;}
+.hbtn{background:rgba(161,0,255,0.15);border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;white-space:nowrap;}
+.hbtn:hover{background:rgba(161,0,255,0.3);color:var(--text);border-color:var(--accent);}
+.hbtn.primary{background:rgba(161,0,255,0.35);border-color:var(--accent);color:#fff;}
+.hbtn.primary:hover{background:rgba(161,0,255,0.55);}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* LEFT PANEL */
+#left{width:40%;display:flex;flex-direction:column;border-right:1px solid var(--border);min-width:200px;background:var(--bg-panel);}
+#task-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+#task-scroll::-webkit-scrollbar{width:5px;}
+#task-scroll::-webkit-scrollbar-track{background:transparent;}
+#task-scroll::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+
+/* SPLITTER */
+#splitter{width:5px;background:rgba(161,0,255,0.15);cursor:col-resize;flex-shrink:0;transition:background .15s;}
+#splitter:hover{background:rgba(161,0,255,0.45);}
+
+/* RIGHT PANEL */
+#right{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+#g-hdr-wrap{overflow:hidden;flex-shrink:0;background:var(--bg-panel);border-bottom:1px solid var(--border);}
+#g-body-wrap{flex:1;overflow:auto;position:relative;}
+#g-body-wrap::-webkit-scrollbar{width:5px;height:5px;}
+#g-body-wrap::-webkit-scrollbar-track{background:transparent;}
+#g-body-wrap::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+
+/* STATUS BAR */
+#status-bar{background:rgba(14,5,30,0.95);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:18px;align-items:center;flex-shrink:0;font-size:11px;color:var(--text-muted);}
+.stat-item{display:flex;align-items:center;gap:5px;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TASK LIST ROWS */
+.tl-row{display:flex;align-items:center;gap:6px;padding:0 8px;cursor:pointer;border-bottom:1px solid rgba(161,0,255,0.08);user-select:none;position:relative;}
+.tl-row:hover{background:rgba(161,0,255,0.07);}
+.tl-row.ph-row{height:28px;background:rgba(20,7,41,0.9);cursor:pointer;position:sticky;top:0;z-index:3;border-bottom:1px solid rgba(161,0,255,0.2);}
+.tl-row.gr-row{height:22px;background:rgba(14,5,30,0.7);padding-left:20px;}
+.tl-row.task-row{height:34px;padding-left:14px;}
+.tl-row.sub-row{height:30px;padding-left:38px;background:rgba(7,3,15,0.5);}
+.ph-name{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
+.ph-pct{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:4px;}
+.ph-prog{height:3px;border-radius:2px;background:rgba(161,0,255,0.2);flex:1;margin-left:6px;}
+.ph-prog-fill{height:100%;border-radius:2px;transition:width .3s;}
+.gr-name{font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:0.3px;}
+.gr-count{font-size:9px;color:var(--text-dim);margin-left:4px;}
+.chevron{font-size:9px;color:var(--text-dim);width:12px;flex-shrink:0;transition:transform .15s;}
+.drag-handle{color:var(--text-dim);font-size:12px;cursor:grab;flex-shrink:0;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.id-badge{font-family:monospace;font-size:9px;background:rgba(161,0,255,0.15);border:1px solid rgba(161,0,255,0.2);padding:1px 4px;border-radius:3px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;max-width:100px;overflow:hidden;text-overflow:ellipsis;}
+.task-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text-muted);}
+.owner-chip{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;font-weight:500;color:#fff;}
+.week-badge{font-size:9px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.expand-btn{font-size:9px;color:var(--text-dim);cursor:pointer;padding:1px 3px;border-radius:2px;flex-shrink:0;background:rgba(161,0,255,0.1);border:1px solid rgba(161,0,255,0.2);}
+.expand-btn:hover{color:var(--text);background:rgba(161,0,255,0.25);}
+.dep-line{font-size:9px;color:var(--text-dim);padding-left:14px;padding-bottom:2px;line-height:1.3;}
+.cross-dep-line{font-size:9px;color:var(--amber);padding-left:14px;padding-bottom:2px;}
+.priority-ind{width:3px;height:20px;border-radius:2px;flex-shrink:0;}
+
+/* GANTT */
+#g-hdr{position:relative;}
+.g-ph-band{position:absolute;top:0;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;overflow:hidden;}
+.g-wk-row{display:flex;margin-top:18px;}
+.g-wk-cell{width:36px;flex-shrink:0;font-size:9px;color:var(--text-dim);text-align:center;border-right:1px solid rgba(161,0,255,0.08);padding:2px 0;height:20px;line-height:16px;}
+.g-wk-cell.cur-wk{color:var(--accent);font-weight:700;border-right-color:rgba(161,0,255,0.35);}
+#g-body{position:relative;}
+.g-row{position:relative;border-bottom:1px solid rgba(161,0,255,0.06);}
+.g-row.g-ph{height:28px;background:rgba(20,7,41,0.6);}
+.g-row.g-gr{height:22px;background:rgba(14,5,30,0.4);}
+.g-row.g-task{height:34px;}
+.g-row.g-sub{height:30px;background:rgba(7,3,15,0.3);}
+.g-col-grid{position:absolute;top:0;bottom:0;width:1px;background:rgba(161,0,255,0.06);}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:18px;border-radius:3px;cursor:grab;min-width:4px;transition:filter .15s;z-index:2;}
+.g-bar:hover{filter:brightness(1.25);}
+.g-bar.g-sub-bar{height:12px;border-radius:2px;}
+.g-bar:active{cursor:grabbing;}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:rgba(250,204,21,0.7);z-index:5;pointer-events:none;}
+.g-today::before{content:'';position:absolute;top:0;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid rgba(250,204,21,0.7);}
+.g-ph-bg{position:absolute;top:0;bottom:0;opacity:0.04;pointer-events:none;}
+.g-dep-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:4;overflow:visible;}
+
+/* MODAL */
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(7,3,15,0.85);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#modal{background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:10px;width:620px;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);}
+#modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#modal-hdr h2{font-size:13px;font-weight:600;}
+#modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;}
+#modal-close:hover{color:var(--text);}
+#modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+#modal-body::-webkit-scrollbar{width:5px;}
+#modal-body::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+.form-row{display:flex;gap:10px;margin-bottom:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;}
+.form-group label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;}
+.form-group input,.form-group select,.form-group textarea{background:rgba(161,0,255,0.08);border:1px solid rgba(161,0,255,0.25);color:var(--text);padding:6px 9px;border-radius:5px;font-size:12px;font-family:inherit;outline:none;width:100%;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(161,0,255,0.6);background:rgba(161,0,255,0.12);}
+.form-group textarea{resize:vertical;min-height:56px;}
+.form-group select option{background:#0e051e;}
+#modal-ftr{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.btn{padding:7px 16px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#8c00e0;}
+.btn-cancel{background:rgba(255,255,255,0.08);color:var(--text-muted);border:1px solid var(--border);}
+.btn-cancel:hover{background:rgba(255,255,255,0.14);color:var(--text);}
+.btn-danger{background:rgba(248,113,113,0.15);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+.btn-danger:hover{background:rgba(248,113,113,0.3);}
+
+/* CONTEXT MENU */
+#ctx-menu{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:6px;z-index:200;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.6);display:none;}
+.ctx-item{padding:7px 14px;cursor:pointer;font-size:12px;color:var(--text-muted);transition:all .12s;}
+.ctx-item:hover{background:rgba(161,0,255,0.15);color:var(--text);}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+.ctx-item.danger{color:var(--red);}
+.ctx-item.danger:hover{background:rgba(248,113,113,0.15);}
+
+/* TOOLTIP */
+.g-tooltip{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:5px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:50;max-width:200px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0e051e;border:1px solid rgba(161,0,255,0.5);color:var(--text);padding:9px 18px;border-radius:6px;font-size:12px;z-index:1000;animation:toastIn .2s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Subtask add form inline */
+.sub-form{padding:6px 14px;background:rgba(161,0,255,0.05);border-bottom:1px solid rgba(161,0,255,0.1);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>Workday Finance — Integration Workstream Tracker</h1>
+  <div class="ptabs" id="ptabs">
+    <button class="ptab active" data-phase="all">All</button>
+    <button class="ptab" data-phase="Plan">Plan</button>
+    <button class="ptab" data-phase="Architect">Architect</button>
+    <button class="ptab" data-phase="Configure">Configure</button>
+    <button class="ptab" data-phase="Test">Test</button>
+    <button class="ptab" data-phase="Deploy">Deploy</button>
+  </div>
+  <div id="hdr-spacer"></div>
+  <span id="last-saved"></span>
+  <button class="hbtn" onclick="confirmReset()">Reset</button>
+  <button class="hbtn" onclick="document.getElementById('import-input').click()">Import</button>
+  <input type="file" id="import-input" accept=".xlsx,.xls" style="display:none" onchange="doImport(this)">
+  <button class="hbtn" onclick="doExport()">Export</button>
+  <button class="hbtn primary" onclick="openNewTaskModal()">+ Add</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- LEFT PANEL -->
+  <div id="left">
+    <div id="task-scroll">
+      <div id="task-list"></div>
+    </div>
+  </div>
+
+  <!-- SPLITTER -->
+  <div id="splitter"></div>
+
+  <!-- RIGHT PANEL (GANTT) -->
+  <div id="right">
+    <div id="g-hdr-wrap">
+      <div id="g-hdr"></div>
+    </div>
+    <div id="g-body-wrap">
+      <div id="g-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <div class="stat-item"><strong id="stat-total">0</strong>&nbsp;tasks</div>
+  <div class="stat-item"><span class="stat-dot" style="background:#4ade80"></span><strong id="stat-complete">0</strong>&nbsp;complete</div>
+  <div class="stat-item"><span class="stat-dot" style="background:#A100FF"></span><strong id="stat-inprog">0</strong>&nbsp;in progress</div>
+  <div class="stat-item"><span class="stat-dot" style="background:#f87171"></span><strong id="stat-blocked">0</strong>&nbsp;blocked</div>
+  <div class="stat-item" style="margin-left:auto;font-size:10px;color:var(--text-dim)">Ctrl+Z: Undo &nbsp;|&nbsp; N: New task &nbsp;|&nbsp; E: Export &nbsp;|&nbsp; Esc: Close modal</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-ov">
+  <div id="modal">
+    <div id="modal-hdr">
+      <h2 id="modal-title">Edit Task</h2>
+      <button id="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-body">
+      <div class="form-row">
+        <div class="form-group" style="flex:3">
+          <label>Task Name</label>
+          <input type="text" id="f-task" placeholder="Task description...">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>ID</label>
+          <input type="text" id="f-id" placeholder="DC-P1-G1-001">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phase</label>
+          <select id="f-phase">
+            <option value="Plan">Plan</option>
+            <option value="Architect">Architect</option>
+            <option value="Configure">Configure</option>
+            <option value="Test">Test</option>
+            <option value="Deploy">Deploy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Group</label>
+          <input type="text" id="f-group" placeholder="Group name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Owner</label>
+          <select id="f-owner">
+            <option>Conversion Lead</option>
+            <option>Data Analyst</option>
+            <option>Workday Architect</option>
+            <option>Business Analyst</option>
+            <option>Client IT</option>
+            <option>Client Data Owner</option>
+            <option>Project Manager</option>
+            <option>Project Coordinator</option>
+            <option>Controller</option>
+            <option>AP Manager</option>
+            <option>Fixed Asset Manager</option>
+            <option>Workday Configurator</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="not_started">Not Started</option>
+            <option value="in_progress">In Progress</option>
+            <option value="complete">Complete</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Week (1-28)</label>
+          <input type="number" id="f-start" min="1" max="28" value="1">
+        </div>
+        <div class="form-group">
+          <label>Duration (weeks)</label>
+          <input type="number" id="f-dur" min="1" max="28" value="1">
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="f-priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Dependencies (comma-separated IDs)</label>
+          <textarea id="f-deps" rows="2" placeholder="DC-P1-G1-001, DC-P1-G2-001"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Cross-WS Dependencies</label>
+          <textarea id="f-crossdeps" rows="2" placeholder="RPT-P3-G3-001, INT-P4-G1-001"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="f-notes" rows="3" placeholder="Additional context..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div id="modal-ftr">
+      <button class="btn btn-danger" id="modal-del-btn" onclick="deleteCurrentTask()">Delete</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" data-action="edit">Edit</div>
+  <div class="ctx-item" data-action="addSub">Add Subtask</div>
+  <div class="ctx-item" data-action="addBelow">Add Task Below</div>
+  <div class="ctx-item" data-action="duplicate">Duplicate</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" data-action="delete">Delete</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="dep">Set Dependency</div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const PHASES = ['Plan','Architect','Configure','Test','Deploy'];
+const PHASE_COLORS = {Plan:'#3b82f6',Architect:'#0d9488',Configure:'#f59e0b',Test:'#a855f7',Deploy:'#22c55e'};
+const PHASE_RANGES = {Plan:[1,4],Architect:[5,10],Configure:[11,18],Test:[19,24],Deploy:[25,28]};
+const STATUS_COLORS = {not_started:'rgba(90,68,112,0.55)',in_progress:'#A100FF',complete:'#4ade80',blocked:'#f87171'};
+const STATUS_LABELS = {not_started:'Not Started',in_progress:'In Progress',complete:'Complete',blocked:'Blocked'};
+const CELL_W = 36;
+const TOTAL_WEEKS = 28;
+const ROW_H = 34;
+const SUB_H = 30;
+const PH_ROW_H = 28;
+const GR_ROW_H = 22;
+const OWNER_COLORS = {
+  'Integration Lead':'#7c3aed','Integration Developer':'#0f766e','Workday Architect':'#1d4ed8',
+  'Business Analyst':'#b45309','Client IT':'#c2410c','Project Manager':'#15803d',
+  'Integration Architect':'#4338ca','Security Admin':'#b91c1c','DevOps':'#0f766e',
+  'QA Analyst':'#b45309','Change Manager':'#ca8a04',
+};
+const PRIORITY_COLORS = {high:'#f87171',medium:'#fbbf24',low:'#4ade80'};
+const HISTORY_MAX = 20;
+const PROJECT_START = new Date('2026-02-02');
+const currentWeek = Math.max(1, Math.min(28, Math.ceil((Date.now() - PROJECT_START.getTime()) / (7*24*60*60*1000))));
+
+// ============================================================
+// SEED DATA
+// ============================================================
+const SEED_TASKS = [
+  // ── PHASE 1: PLAN (Weeks 1-4) ─────────────────────────────────────────
+  { id:'INT-P1-G1-001', phase:'Plan', group:'Mobilization', task:'Integration workstream kickoff', owner:'Integration Lead', startWeek:1, duration:1, status:'not_started', dependencies:[], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P1-G1-001a', task:'Review and accept project charter integration scope', owner:'Integration Lead', startWeek:1, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G1-001b', task:'Confirm integration team roles and assignments', owner:'Integration Lead', startWeek:1, duration:1, status:'not_started', dependencies:['INT-P1-G1-001a'], priority:'high', notes:'' },
+    { id:'INT-P1-G1-001c', task:'Set up integration working folder and Wiki', owner:'Project Manager', startWeek:1, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P1-G2-001', phase:'Plan', group:'Integration Inventory', task:'Compile full integration inventory from client', owner:'Integration Lead', startWeek:1, duration:2, status:'not_started', dependencies:[], crossDeps:[], priority:'high', notes:'Target: 15 integrations. Gather from IT, Finance, and Procurement teams.', subtasks:[
+    { id:'INT-P1-G2-001a', task:'Interview Finance IT on existing interfaces and feeds', owner:'Business Analyst', startWeek:1, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G2-001b', task:'Interview AP/AR teams on current integration touchpoints', owner:'Business Analyst', startWeek:1, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G2-001c', task:'Document all integrations in integration inventory tracker', owner:'Integration Lead', startWeek:2, duration:1, status:'not_started', dependencies:['INT-P1-G2-001a','INT-P1-G2-001b'], priority:'high', notes:'' },
+    { id:'INT-P1-G2-001d', task:'Confirm integration list with client IT sign-off', owner:'Client IT', startWeek:2, duration:1, status:'not_started', dependencies:['INT-P1-G2-001c'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P1-G2-002', phase:'Plan', group:'Integration Inventory', task:'Score integration complexity and prioritize build order', owner:'Integration Lead', startWeek:2, duration:1, status:'not_started', dependencies:['INT-P1-G2-001'], crossDeps:[], priority:'high', notes:'Criteria: data volume, transformation complexity, error sensitivity, go-live dependency', subtasks:[
+    { id:'INT-P1-G2-002a', task:'Apply complexity scoring matrix to each integration', owner:'Integration Lead', startWeek:2, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G2-002b', task:'Rank integrations High/Medium/Low complexity', owner:'Integration Lead', startWeek:2, duration:1, status:'not_started', dependencies:['INT-P1-G2-002a'], priority:'high', notes:'' },
+    { id:'INT-P1-G2-002c', task:'Confirm build priority order with project team', owner:'Project Manager', startWeek:3, duration:1, status:'not_started', dependencies:['INT-P1-G2-002b'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P1-G3-001', phase:'Plan', group:'Architecture Decisions', task:'Select integration technology for each integration', owner:'Integration Architect', startWeek:2, duration:2, status:'not_started', dependencies:['INT-P1-G2-001'], crossDeps:[], priority:'high', notes:'Options: Workday Studio, EIB (Enterprise Interface Builder), Core Connector, REST/SOAP API', subtasks:[
+    { id:'INT-P1-G3-001a', task:'Evaluate Studio vs EIB for each outbound integration', owner:'Integration Architect', startWeek:2, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Studio: complex transforms; EIB: simple extracts' },
+    { id:'INT-P1-G3-001b', task:'Evaluate API vs EIB for inbound integrations', owner:'Integration Architect', startWeek:2, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G3-001c', task:'Document architecture decision for each integration', owner:'Integration Lead', startWeek:3, duration:1, status:'not_started', dependencies:['INT-P1-G3-001a','INT-P1-G3-001b'], priority:'high', notes:'' },
+    { id:'INT-P1-G3-001d', task:'Client IT review and approval of architecture decisions', owner:'Client IT', startWeek:3, duration:1, status:'not_started', dependencies:['INT-P1-G3-001c'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P1-G4-001', phase:'Plan', group:'ISU Planning', task:'Plan ISU and security domain setup', owner:'Security Admin', startWeek:3, duration:1, status:'not_started', dependencies:['INT-P1-G3-001'], crossDeps:[], priority:'high', notes:'ISU = Integration System User. Each integration type needs specific domain security policies.', subtasks:[
+    { id:'INT-P1-G4-001a', task:'Document required ISU accounts per integration', owner:'Security Admin', startWeek:3, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G4-001b', task:'Document required domain security policies per ISU', owner:'Security Admin', startWeek:3, duration:1, status:'not_started', dependencies:['INT-P1-G4-001a'], priority:'high', notes:'' },
+    { id:'INT-P1-G4-001c', task:'Confirm ISU naming convention with client', owner:'Integration Lead', startWeek:4, duration:1, status:'not_started', dependencies:['INT-P1-G4-001b'], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P1-G4-002', phase:'Plan', group:'ISU Planning', task:'Create integration workstream project schedule', owner:'Project Manager', startWeek:4, duration:1, status:'not_started', dependencies:['INT-P1-G2-002','INT-P1-G3-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P1-G4-002a', task:'Build integration build and test schedule', owner:'Project Manager', startWeek:4, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P1-G4-002b', task:'Identify dependencies on conversion and tenant configuration', owner:'Integration Lead', startWeek:4, duration:1, status:'not_started', dependencies:['INT-P1-G4-002a'], priority:'high', notes:'' },
+  ]},
+
+  // ── PHASE 2: ARCHITECT (Weeks 5-10) ──────────────────────────────────
+  { id:'INT-P2-G1-001', phase:'Architect', group:'Security Design', task:'Design ISU security configuration', owner:'Security Admin', startWeek:5, duration:2, status:'not_started', dependencies:['INT-P1-G4-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P2-G1-001a', task:'Design ISU_GL_Export security policy set', owner:'Security Admin', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Domains: Get: Integration Events, Put: Integration Event Result' },
+    { id:'INT-P2-G1-001b', task:'Design ISU_Bank_Import security policy set', owner:'Security Admin', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Domains: Put: Financials - Banking' },
+    { id:'INT-P2-G1-001c', task:'Design ISU_Supplier_Invoice security policy set', owner:'Security Admin', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G1-001d', task:'Design ISU_Payment_Out security policy set', owner:'Security Admin', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G1-001e', task:'Design ISU for remaining 11 integrations', owner:'Security Admin', startWeek:6, duration:2, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G1-001f', task:'Document complete ISU security matrix', owner:'Security Admin', startWeek:6, duration:1, status:'not_started', dependencies:['INT-P2-G1-001e'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P2-G2-001', phase:'Architect', group:'Functional Specs', task:'Complete functional integration specs — all 15 integrations', owner:'Integration Lead', startWeek:5, duration:3, status:'not_started', dependencies:['INT-P1-G3-001'], crossDeps:[], priority:'high', notes:'One functional spec per integration', subtasks:[
+    { id:'INT-P2-G2-001a', task:'Functional spec: I001 GL Journal Entry Outbound (Studio)', owner:'Integration Lead', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Source: Workday Posted Journals → Target: ERP/Reporting system. Fields: Date, Period, Company, Cost Center, Account, Amount.' },
+    { id:'INT-P2-G2-001b', task:'Functional spec: I002 Bank Statement Inbound (EIB)', owner:'Integration Developer', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Source: Bank (BAI2/MT940) → Target: Workday Cash Management' },
+    { id:'INT-P2-G2-001c', task:'Functional spec: I003 Supplier Invoice Inbound (Studio)', owner:'Integration Developer', startWeek:5, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Source: AP automation tool or EDI → Target: Workday Supplier Invoices' },
+    { id:'INT-P2-G2-001d', task:'Functional spec: I004 Payment Outbound (Studio)', owner:'Integration Lead', startWeek:6, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Source: Workday AP Payments → Target: Bank payment file (ACH/NACHA/SEPA)' },
+    { id:'INT-P2-G2-001e', task:'Functional spec: I005 Budget Import (EIB)', owner:'Integration Developer', startWeek:6, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Source: Adaptive Planning/Excel → Target: Workday Budget' },
+    { id:'INT-P2-G2-001f', task:'Functional spec: I006 Fixed Asset Outbound (Studio)', owner:'Integration Developer', startWeek:6, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001g', task:'Functional spec: I007 Intercompany Billing (Studio)', owner:'Integration Lead', startWeek:6, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G2-001h', task:'Functional spec: I008 Tax Data Outbound (EIB)', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001i', task:'Functional spec: I009 Expense Report Export (EIB)', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001j', task:'Functional spec: I010 Customer Invoice Outbound (Studio)', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001k', task:'Functional spec: I011 Cash Position Report (EIB)', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001l', task:'Functional spec: I012 AR Cash Application Inbound (Studio)', owner:'Integration Lead', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G2-001m', task:'Functional spec: I013 Purchasing/PO Outbound (Studio)', owner:'Integration Developer', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001n', task:'Functional spec: I014 AP Aging Extract (EIB)', owner:'Integration Developer', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G2-001o', task:'Functional spec: I015 FP&A Data API Integration', owner:'Integration Lead', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'REST API to/from Adaptive Planning or equivalent' },
+    { id:'INT-P2-G2-001p', task:'Client review and sign-off on all functional specs', owner:'Client IT', startWeek:9, duration:1, status:'not_started', dependencies:['INT-P2-G2-001a','INT-P2-G2-001d','INT-P2-G2-001l'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P2-G3-001', phase:'Architect', group:'Technical Specs', task:'Complete technical integration specs — all 15 integrations', owner:'Integration Lead', startWeek:7, duration:3, status:'not_started', dependencies:['INT-P2-G2-001'], crossDeps:[], priority:'high', notes:'Tech spec includes: XSLT design, ISU, endpoints, error handling, scheduling', subtasks:[
+    { id:'INT-P2-G3-001a', task:'Tech spec: I001 GL Journal Entry Outbound', owner:'Integration Lead', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'XSLT: Extract from wbsvc:getJournalLines. Transform to flat file. Schedule: daily 2am.' },
+    { id:'INT-P2-G3-001b', task:'Tech spec: I002 Bank Statement Inbound', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'EIB: inbound from SFTP. BAI2 parser. Map to Workday Cash Reconciliation.' },
+    { id:'INT-P2-G3-001c', task:'Tech spec: I003 Supplier Invoice Inbound', owner:'Integration Developer', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P2-G3-001d', task:'Tech spec: I004 Payment Outbound', owner:'Integration Lead', startWeek:7, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'NACHA/ACH format. Include prenote logic.' },
+    { id:'INT-P2-G3-001e', task:'Tech spec: I005-I008 (Budget, Fixed Asset, Interco, Tax)', owner:'Integration Developer', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G3-001f', task:'Tech spec: I009-I012 (Expense, Customer Invoice, Cash, AR)', owner:'Integration Developer', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G3-001g', task:'Tech spec: I013-I015 (PO, AP Aging, FP&A API)', owner:'Integration Developer', startWeek:8, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G3-001h', task:'Design error notification and alerting (email/webhook per integration)', owner:'Integration Lead', startWeek:9, duration:1, status:'not_started', dependencies:['INT-P2-G3-001a'], priority:'high', notes:'All integrations must have failure alerting' },
+    { id:'INT-P2-G3-001i', task:'Client IT review and sign-off on all technical specs', owner:'Client IT', startWeek:9, duration:1, status:'not_started', dependencies:['INT-P2-G3-001g'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P2-G4-001', phase:'Architect', group:'Integration Gallery', task:'Set up Workday Integration Gallery and catalog', owner:'Integration Lead', startWeek:10, duration:1, status:'not_started', dependencies:['INT-P2-G3-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'INT-P2-G4-001a', task:'Configure integration gallery naming convention', owner:'Integration Lead', startWeek:10, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P2-G4-001b', task:'Create placeholders for all 15 integrations in sandbox', owner:'Integration Developer', startWeek:10, duration:1, status:'not_started', dependencies:['INT-P2-G4-001a'], priority:'medium', notes:'' },
+  ]},
+
+  // ── PHASE 3: CONFIGURE (Weeks 11-18) ────────────────────────────────
+  { id:'INT-P3-G1-001', phase:'Configure', group:'ISU Setup', task:'Create ISU accounts in sandbox tenant', owner:'Security Admin', startWeek:11, duration:1, status:'not_started', dependencies:['INT-P2-G1-001'], crossDeps:[], priority:'high', notes:'Required before any integration can be built or tested', subtasks:[
+    { id:'INT-P3-G1-001a', task:'Create ISU_GL_Export system user', owner:'Security Admin', startWeek:11, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001b', task:'Assign domain security policies to ISU_GL_Export', owner:'Security Admin', startWeek:11, duration:0.5, status:'not_started', dependencies:['INT-P3-G1-001a'], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001c', task:'Create ISU_Bank_Import system user and assign policies', owner:'Security Admin', startWeek:11, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001d', task:'Create ISU_Supplier_Invoice system user and assign policies', owner:'Security Admin', startWeek:11, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001e', task:'Create ISU_Payment_Out system user and assign policies', owner:'Security Admin', startWeek:11, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001f', task:'Create ISU accounts for remaining 11 integrations', owner:'Security Admin', startWeek:12, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G1-001g', task:'Test ISU authentication and API access for each ISU', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:['INT-P3-G1-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P3-G2-001', phase:'Configure', group:'Integration Build — High Priority', task:'Build I001: GL Journal Entry Outbound (Studio)', owner:'Integration Lead', startWeek:11, duration:2, status:'not_started', dependencies:['INT-P3-G1-001','INT-P2-G3-001'], crossDeps:['DC-P3-G3-001'], priority:'high', notes:'Critical path — finance reconciliation depends on this', subtasks:[
+    { id:'INT-P3-G2-001a', task:'Copy CoP GL integration template from asset library', owner:'Integration Lead', startWeek:11, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001b', task:'Configure SOAP web service call (wbsvc:getJournalLines)', owner:'Integration Lead', startWeek:11, duration:1, status:'not_started', dependencies:['INT-P3-G2-001a'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001c', task:'Build XSLT transformation to target file format', owner:'Integration Lead', startWeek:11, duration:1, status:'not_started', dependencies:['INT-P3-G2-001b'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001d', task:'Configure SFTP output delivery with client credentials', owner:'Integration Developer', startWeek:12, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-001c'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001e', task:'Configure error notification (email on failure)', owner:'Integration Developer', startWeek:12, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001f', task:'Unit test with sample posted journal data', owner:'Integration Lead', startWeek:12, duration:1, status:'not_started', dependencies:['INT-P3-G2-001d'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-001g', task:'Peer review and document I001 spec sheet', owner:'Integration Developer', startWeek:12, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-001f'], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P3-G2-002', phase:'Configure', group:'Integration Build — High Priority', task:'Build I002: Bank Statement Inbound (EIB)', owner:'Integration Developer', startWeek:11, duration:2, status:'not_started', dependencies:['INT-P3-G1-001','INT-P2-G3-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P3-G2-002a', task:'Configure EIB inbound from client SFTP', owner:'Integration Developer', startWeek:11, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G2-002b', task:'Map BAI2 fields to Workday Cash Reconciliation fields', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:['INT-P3-G2-002a'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-002c', task:'Unit test with sample bank statement file', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:['INT-P3-G2-002b'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-002d', task:'Configure error handling and notification', owner:'Integration Developer', startWeek:12, duration:0.5, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G2-002e', task:'Peer review and doc spec sheet', owner:'Integration Lead', startWeek:12, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-002c'], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P3-G2-003', phase:'Configure', group:'Integration Build — High Priority', task:'Build I003: Supplier Invoice Inbound (Studio)', owner:'Integration Developer', startWeek:12, duration:2, status:'not_started', dependencies:['INT-P3-G1-001'], crossDeps:['DC-P3-G3-001'], priority:'high', notes:'Requires supplier master loaded first', subtasks:[
+    { id:'INT-P3-G2-003a', task:'Configure Studio inbound from SFTP/EDI source', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G2-003b', task:'Build XSLT to map invoice XML to Workday format', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:['INT-P3-G2-003a'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-003c', task:'Handle duplicate invoice detection logic', owner:'Integration Developer', startWeek:13, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-003b'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-003d', task:'Unit test and peer review', owner:'Integration Lead', startWeek:13, duration:1, status:'not_started', dependencies:['INT-P3-G2-003c'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P3-G2-004', phase:'Configure', group:'Integration Build — High Priority', task:'Build I004: Payment Outbound (Studio)', owner:'Integration Developer', startWeek:12, duration:2, status:'not_started', dependencies:['INT-P3-G1-001'], crossDeps:[], priority:'high', notes:'ACH/NACHA format. Critical for AP cutover.', subtasks:[
+    { id:'INT-P3-G2-004a', task:'Configure Studio outbound payment extract', owner:'Integration Developer', startWeek:12, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G2-004b', task:'Build NACHA file formatter XSLT', owner:'Integration Lead', startWeek:13, duration:1, status:'not_started', dependencies:['INT-P3-G2-004a'], priority:'high', notes:'Include prenote logic and addenda records' },
+    { id:'INT-P3-G2-004c', task:'Configure SFTP delivery to bank', owner:'Integration Developer', startWeek:13, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-004b'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-004d', task:'Unit test with bank-provided test environment', owner:'Integration Lead', startWeek:13, duration:1, status:'not_started', dependencies:['INT-P3-G2-004c'], priority:'high', notes:'' },
+    { id:'INT-P3-G2-004e', task:'Peer review and doc spec sheet', owner:'Integration Developer', startWeek:14, duration:0.5, status:'not_started', dependencies:['INT-P3-G2-004d'], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P3-G3-001', phase:'Configure', group:'Integration Build — Medium Priority', task:'Build I005: Budget Import (EIB)', owner:'Integration Developer', startWeek:13, duration:2, status:'not_started', dependencies:['INT-P3-G1-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'INT-P3-G3-001a', task:'Configure EIB inbound from Adaptive Planning CSV', owner:'Integration Developer', startWeek:13, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-001b', task:'Map budget fields and cost center hierarchy', owner:'Integration Developer', startWeek:13, duration:1, status:'not_started', dependencies:['INT-P3-G3-001a'], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-001c', task:'Unit test with sample budget file and peer review', owner:'Integration Lead', startWeek:14, duration:1, status:'not_started', dependencies:['INT-P3-G3-001b'], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P3-G3-002', phase:'Configure', group:'Integration Build — Medium Priority', task:'Build I006-I010: Fixed Asset, Interco, Tax, Expense, Customer Invoice', owner:'Integration Developer', startWeek:13, duration:3, status:'not_started', dependencies:['INT-P3-G1-001'], crossDeps:[], priority:'medium', notes:'One developer per integration in parallel where possible', subtasks:[
+    { id:'INT-P3-G3-002a', task:'Build I006: Fixed Asset Outbound (Studio)', owner:'Integration Developer', startWeek:13, duration:2, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-002b', task:'Build I007: Intercompany Billing (Studio)', owner:'Integration Lead', startWeek:13, duration:2, status:'not_started', dependencies:[], priority:'high', notes:'Complex transformation — requires intercompany netting logic' },
+    { id:'INT-P3-G3-002c', task:'Build I008: Tax Data Outbound (EIB)', owner:'Integration Developer', startWeek:14, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-002d', task:'Build I009: Expense Report Export (EIB)', owner:'Integration Developer', startWeek:14, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-002e', task:'Build I010: Customer Invoice Outbound (Studio)', owner:'Integration Developer', startWeek:15, duration:2, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+  ]},
+  { id:'INT-P3-G3-003', phase:'Configure', group:'Integration Build — Medium Priority', task:'Build I011-I015: Cash, AR, PO, AP Aging, FP&A', owner:'Integration Developer', startWeek:14, duration:3, status:'not_started', dependencies:['INT-P3-G1-001'], crossDeps:[], priority:'medium', notes:'', subtasks:[
+    { id:'INT-P3-G3-003a', task:'Build I011: Cash Position Report (EIB)', owner:'Integration Developer', startWeek:14, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-003b', task:'Build I012: AR Cash Application Inbound (Studio)', owner:'Integration Lead', startWeek:15, duration:2, status:'not_started', dependencies:[], priority:'high', notes:'Complex remittance matching logic' },
+    { id:'INT-P3-G3-003c', task:'Build I013: Purchasing/PO Outbound (Studio)', owner:'Integration Developer', startWeek:15, duration:2, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-003d', task:'Build I014: AP Aging Extract (EIB)', owner:'Integration Developer', startWeek:15, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P3-G3-003e', task:'Build I015: FP&A Data API Integration', owner:'Integration Lead', startWeek:16, duration:2, status:'not_started', dependencies:[], priority:'high', notes:'REST API. Requires client IT API endpoint configuration.' },
+  ]},
+  { id:'INT-P3-G4-001', phase:'Configure', group:'Integration SIT Prep', task:'Prepare SIT environment for all integrations', owner:'Integration Lead', startWeek:17, duration:2, status:'not_started', dependencies:['INT-P3-G2-001','INT-P3-G2-002','INT-P3-G2-003','INT-P3-G2-004','INT-P3-G3-003'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P3-G4-001a', task:'Document integration test scripts (one per integration)', owner:'QA Analyst', startWeek:17, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G4-001b', task:'Prepare SIT test data for each integration direction', owner:'QA Analyst', startWeek:17, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G4-001c', task:'Configure external endpoints for SIT (bank test env, SFTP)', owner:'Client IT', startWeek:17, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P3-G4-001d', task:'Confirm all integrations running in sandbox without errors', owner:'Integration Lead', startWeek:18, duration:1, status:'not_started', dependencies:['INT-P3-G4-001c'], priority:'high', notes:'' },
+  ]},
+
+  // ── PHASE 4: TEST (Weeks 19-24) ──────────────────────────────────────
+  { id:'INT-P4-G1-001', phase:'Test', group:'SIT', task:'System Integration Testing — all 15 integrations', owner:'Integration Lead', startWeek:19, duration:3, status:'not_started', dependencies:['INT-P3-G4-001'], crossDeps:['DC-P4-G1-001','RPT-P4-G1-001'], priority:'high', notes:'', subtasks:[
+    { id:'INT-P4-G1-001a', task:'SIT: I001 GL Journal Entry Outbound — end-to-end', owner:'Integration Lead', startWeek:19, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Validate: journal creates in WD → SFTP file delivered → reconciled in target system' },
+    { id:'INT-P4-G1-001b', task:'SIT: I002 Bank Statement Inbound — end-to-end', owner:'Integration Developer', startWeek:19, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P4-G1-001c', task:'SIT: I003 Supplier Invoice Inbound — end-to-end', owner:'Integration Developer', startWeek:19, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P4-G1-001d', task:'SIT: I004 Payment Outbound — end-to-end (bank test environment)', owner:'Integration Lead', startWeek:19, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Use bank test environment — do not send live payments' },
+    { id:'INT-P4-G1-001e', task:'SIT: I005-I010 — end-to-end tests', owner:'Integration Developer', startWeek:20, duration:2, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P4-G1-001f', task:'SIT: I011-I015 — end-to-end tests', owner:'Integration Developer', startWeek:21, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P4-G1-001g', task:'SIT: Error handling tests — simulate failures for all integrations', owner:'QA Analyst', startWeek:20, duration:2, status:'not_started', dependencies:['INT-P4-G1-001a'], priority:'high', notes:'Simulate: SFTP down, invalid data, ISU locked, API timeout' },
+    { id:'INT-P4-G1-001h', task:'SIT: Volume/performance tests for high-volume integrations', owner:'QA Analyst', startWeek:21, duration:1, status:'not_started', dependencies:['INT-P4-G1-001f'], priority:'medium', notes:'I001 GL (target: 50K records/run), I004 Payments (target: 5K records/run)' },
+    { id:'INT-P4-G1-001i', task:'Document and resolve all SIT defects', owner:'Integration Lead', startWeek:21, duration:1, status:'not_started', dependencies:['INT-P4-G1-001h'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P4-G2-001', phase:'Test', group:'UAT', task:'User Acceptance Testing — all integrations', owner:'Client IT', startWeek:22, duration:2, status:'not_started', dependencies:['INT-P4-G1-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P4-G2-001a', task:'UAT: Finance team validates GL Journal integration output', owner:'Controller', startWeek:22, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P4-G2-001b', task:'UAT: Treasury validates bank statement reconciliation', owner:'Treasury Manager', startWeek:22, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P4-G2-001c', task:'UAT: AP team validates supplier invoice and payment integrations', owner:'AP Manager', startWeek:22, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P4-G2-001d', task:'UAT: FP&A validates budget import and FP&A API', owner:'FP&A Manager', startWeek:23, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P4-G2-001e', task:'UAT sign-off document completed per integration', owner:'Integration Lead', startWeek:23, duration:1, status:'not_started', dependencies:['INT-P4-G2-001d'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P4-G3-001', phase:'Test', group:'Cutover Prep', task:'Integration cutover preparation', owner:'Integration Lead', startWeek:23, duration:1, status:'not_started', dependencies:['INT-P4-G2-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P4-G3-001a', task:'Draft integration production deployment runbook', owner:'Integration Lead', startWeek:23, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'Sequence: disable sandbox integrations → configure production → test → enable' },
+    { id:'INT-P4-G3-001b', task:'Confirm production ISU account setup plan with client IT', owner:'Security Admin', startWeek:24, duration:1, status:'not_started', dependencies:['INT-P4-G3-001a'], priority:'high', notes:'' },
+    { id:'INT-P4-G3-001c', task:'Review integration runbook with all stakeholders', owner:'Project Manager', startWeek:24, duration:1, status:'not_started', dependencies:['INT-P4-G3-001b'], priority:'high', notes:'' },
+  ]},
+
+  // ── PHASE 5: DEPLOY (Weeks 25-28) ─────────────────────────────────────
+  { id:'INT-P5-G1-001', phase:'Deploy', group:'Production Setup', task:'Configure production ISU and security', owner:'Security Admin', startWeek:25, duration:1, status:'not_started', dependencies:['INT-P4-G3-001'], crossDeps:[], priority:'high', notes:'All ISU accounts must be created in production tenant before integration deployment', subtasks:[
+    { id:'INT-P5-G1-001a', task:'Create all ISU accounts in production tenant', owner:'Security Admin', startWeek:25, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P5-G1-001b', task:'Assign all domain security policies in production', owner:'Security Admin', startWeek:25, duration:0.5, status:'not_started', dependencies:['INT-P5-G1-001a'], priority:'high', notes:'' },
+    { id:'INT-P5-G1-001c', task:'Test ISU authentication in production tenant', owner:'Integration Developer', startWeek:25, duration:0.5, status:'not_started', dependencies:['INT-P5-G1-001b'], priority:'high', notes:'' },
+    { id:'INT-P5-G1-001d', task:'Configure production SFTP and external endpoint connections', owner:'Client IT', startWeek:25, duration:1, status:'not_started', dependencies:[], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P5-G2-001', phase:'Deploy', group:'Production Deployment', task:'Deploy all integrations to production', owner:'Integration Lead', startWeek:26, duration:1, status:'not_started', dependencies:['INT-P5-G1-001'], crossDeps:['DC-P5-G2-001'], priority:'high', notes:'Deploy after conversion data load is confirmed complete', subtasks:[
+    { id:'INT-P5-G2-001a', task:'Deploy I001 GL Journal Outbound to production and smoke test', owner:'Integration Lead', startWeek:26, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P5-G2-001b', task:'Deploy I002 Bank Statement Inbound to production', owner:'Integration Developer', startWeek:26, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P5-G2-001c', task:'Deploy I003 Supplier Invoice Inbound to production', owner:'Integration Developer', startWeek:26, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P5-G2-001d', task:'Deploy I004 Payment Outbound to production and bank confirm', owner:'Integration Lead', startWeek:26, duration:0.5, status:'not_started', dependencies:[], priority:'high', notes:'' },
+    { id:'INT-P5-G2-001e', task:'Deploy I005-I015 remaining integrations to production', owner:'Integration Developer', startWeek:26, duration:1, status:'not_started', dependencies:['INT-P5-G2-001d'], priority:'medium', notes:'' },
+    { id:'INT-P5-G2-001f', task:'Run smoke tests for all 15 integrations in production', owner:'Integration Lead', startWeek:26, duration:1, status:'not_started', dependencies:['INT-P5-G2-001e'], priority:'high', notes:'' },
+    { id:'INT-P5-G2-001g', task:'Go/No-Go sign-off for integration go-live', owner:'Integration Lead', startWeek:26, duration:0.5, status:'not_started', dependencies:['INT-P5-G2-001f'], priority:'high', notes:'' },
+  ]},
+  { id:'INT-P5-G3-001', phase:'Deploy', group:'Hypercare', task:'Post-go-live integration monitoring and support', owner:'Integration Lead', startWeek:27, duration:2, status:'not_started', dependencies:['INT-P5-G2-001'], crossDeps:[], priority:'high', notes:'', subtasks:[
+    { id:'INT-P5-G3-001a', task:'Monitor all integration run statuses daily', owner:'Integration Developer', startWeek:27, duration:2, status:'not_started', dependencies:[], priority:'high', notes:'Check integration history daily. Resolve failures within 4 hours.' },
+    { id:'INT-P5-G3-001b', task:'Resolve integration failures during hypercare', owner:'Integration Lead', startWeek:27, duration:2, status:'not_started', dependencies:['INT-P5-G3-001a'], priority:'high', notes:'' },
+    { id:'INT-P5-G3-001c', task:'Finalize integration runbook with production-confirmed details', owner:'Integration Lead', startWeek:28, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+    { id:'INT-P5-G3-001d', task:'Prepare integration closure report and hand off to client IT', owner:'Integration Lead', startWeek:28, duration:1, status:'not_started', dependencies:['INT-P5-G3-001c'], priority:'medium', notes:'' },
+    { id:'INT-P5-G3-001e', task:'Train client IT on integration monitoring and error resolution', owner:'Change Manager', startWeek:27, duration:1, status:'not_started', dependencies:[], priority:'medium', notes:'' },
+  ]},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let tasks = [];
+let history = [];
+let currentFilter = 'all';
+let collapsedPhases = {};
+let collapsedGroups = {};
+let expandedTasks = {};
+let modalTask = null;
+let isNewTask = false;
+let ctxTask = null;
+let dragState = null;
+let splitterDragging = false;
+let saveTimer = null;
+let tooltipEl = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const saved = localStorage.getItem('cop_int_tracker');
+  if (saved) {
+    try { tasks = JSON.parse(saved); }
+    catch { tasks = JSON.parse(JSON.stringify(SEED_TASKS)); }
+  } else {
+    tasks = JSON.parse(JSON.stringify(SEED_TASKS));
+  }
+  updateLastSaved();
+  setupPhaseTabListeners();
+  setupSplitter();
+  setupScrollSync();
+  setupKeyboard();
+  setupContextMenu();
+  setupMouseGlobal();
+  renderAll();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function ownerColor(o) { return OWNER_COLORS[o] || '#4b5563'; }
+
+function findTask(id) {
+  for (const t of tasks) {
+    if (t.id === id) return t;
+    if (t.subtasks) for (const s of t.subtasks) if (s.id === id) return s;
+  }
+  return null;
+}
+
+function findParent(id) {
+  for (const t of tasks) {
+    if (t.subtasks) for (const s of t.subtasks) if (s.id === id) return t;
+  }
+  return null;
+}
+
+function removeTask(id) {
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx >= 0) { tasks.splice(idx, 1); return; }
+  for (const t of tasks) {
+    if (t.subtasks) {
+      const si = t.subtasks.findIndex(s => s.id === id);
+      if (si >= 0) { t.subtasks.splice(si, 1); return; }
+    }
+  }
+}
+
+function genId(phase) {
+  const pMap = {Plan:'P1',Architect:'P2',Configure:'P3',Test:'P4',Deploy:'P5'};
+  const prefix = 'DC-' + (pMap[phase]||'P1') + '-G9-';
+  let n = 1;
+  while (findTask(prefix + String(n).padStart(3,'0'))) n++;
+  return prefix + String(n).padStart(3,'0');
+}
+
+function phaseComplete(phase) {
+  const pt = tasks.filter(t => t.phase === phase);
+  if (!pt.length) return 0;
+  const allT = [];
+  pt.forEach(t => { allT.push(t); (t.subtasks||[]).forEach(s => allT.push(s)); });
+  return Math.round(allT.filter(t => t.status === 'complete').length / allT.length * 100);
+}
+
+function allTasksFlat() {
+  const flat = [];
+  tasks.forEach(t => { flat.push(t); (t.subtasks||[]).forEach(s => flat.push(s)); });
+  return flat;
+}
+
+// ============================================================
+// ROW BUILDER
+// ============================================================
+function buildRows() {
+  const rows = [];
+  const phases = (currentFilter === 'all') ? PHASES : [currentFilter];
+  for (const phase of phases) {
+    const phaseTasks = tasks.filter(t => t.phase === phase);
+    if (!phaseTasks.length) continue;
+    rows.push({type:'phase', phase});
+    if (!collapsedPhases[phase]) {
+      const groups = [...new Set(phaseTasks.map(t => t.group))];
+      for (const group of groups) {
+        rows.push({type:'group', phase, group});
+        if (!collapsedGroups[phase+'::'+group]) {
+          const gTasks = phaseTasks.filter(t => t.group === group);
+          for (const task of gTasks) {
+            rows.push({type:'task', task});
+            if (expandedTasks[task.id] && task.subtasks && task.subtasks.length) {
+              for (const sub of task.subtasks) {
+                rows.push({type:'subtask', task:sub, parent:task});
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  const rows = buildRows();
+  renderTaskList(rows);
+  renderGantt(rows);
+  updateStatusBar();
+  requestAnimationFrame(() => drawDependencyArrows(rows));
+}
+
+// ============================================================
+// TASK LIST
+// ============================================================
+function renderTaskList(rows) {
+  const tl = document.getElementById('task-list');
+  let html = '';
+  for (const row of rows) {
+    if (row.type === 'phase') {
+      const pct = phaseComplete(row.phase);
+      const col = PHASE_COLORS[row.phase];
+      const arrow = collapsedPhases[row.phase] ? '▶' : '▼';
+      html += `<div class="tl-row ph-row" data-ph="${row.phase}" onclick="togglePhase('${row.phase}')" style="border-left:3px solid ${col}">
+        <span class="chevron" style="color:${col}">${arrow}</span>
+        <span class="ph-name" style="color:${col}">${row.phase}</span>
+        <span class="ph-pct" style="background:${col}22;color:${col}">${pct}%</span>
+        <div class="ph-prog" style="flex:1"><div class="ph-prog-fill" style="width:${pct}%;background:${col}"></div></div>
+      </div>`;
+    } else if (row.type === 'group') {
+      const grKey = row.phase+'::'+row.group;
+      const gCount = tasks.filter(t=>t.phase===row.phase&&t.group===row.group).length;
+      const arrow = collapsedGroups[grKey] ? '▶' : '▼';
+      html += `<div class="tl-row gr-row" data-grk="${grKey}" onclick="toggleGroup('${grKey}')">
+        <span class="chevron">${arrow}</span>
+        <span class="gr-name">${row.group}</span>
+        <span class="gr-count">(${gCount})</span>
+      </div>`;
+    } else if (row.type === 'task') {
+      const t = row.task;
+      const oc = ownerColor(t.owner);
+      const sc = STATUS_COLORS[t.status];
+      const hasSub = t.subtasks && t.subtasks.length > 0;
+      const expArrow = expandedTasks[t.id] ? '▼' : '▶';
+      const pc = PRIORITY_COLORS[t.priority] || '#4b5563';
+      let depsHtml = '';
+      if (t.dependencies && t.dependencies.length) {
+        depsHtml += `<div class="dep-line">→ dep: ${t.dependencies.join(', ')}</div>`;
+      }
+      if (t.crossDeps && t.crossDeps.length) {
+        depsHtml += `<div class="cross-dep-line">↗ cross: ${t.crossDeps.join(', ')}</div>`;
+      }
+      html += `<div>
+        <div class="tl-row task-row" data-id="${t.id}" oncontextmenu="showCtxMenu(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))">
+          <span class="drag-handle">⠿</span>
+          <span class="priority-ind" style="background:${pc}"></span>
+          <span class="status-dot" style="background:${sc}"></span>
+          <span class="id-badge">${t.id}</span>
+          <span class="task-name" title="${escHtml(t.task)}">${escHtml(t.task)}</span>
+          ${t.owner ? `<span class="owner-chip" style="background:${oc}22;border:1px solid ${oc}44;color:${oc}">${shortOwner(t.owner)}</span>` : ''}
+          <span class="week-badge">W${t.startWeek}-${t.startWeek+t.duration-1}</span>
+          ${hasSub ? `<span class="expand-btn" onclick="event.stopPropagation();toggleExpand('${t.id}')">${expArrow}</span>` : ''}
+        </div>
+        ${depsHtml}
+      </div>`;
+    } else if (row.type === 'subtask') {
+      const t = row.task;
+      const oc = ownerColor(t.owner);
+      const sc = STATUS_COLORS[t.status];
+      html += `<div>
+        <div class="tl-row sub-row" data-id="${t.id}" oncontextmenu="showCtxMenu(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))">
+          <span class="status-dot" style="background:${sc}"></span>
+          <span class="id-badge" style="font-size:8px">${t.id}</span>
+          <span class="sub-name" title="${escHtml(t.task)}">${escHtml(t.task)}</span>
+          ${t.owner ? `<span class="owner-chip" style="background:${oc}22;border:1px solid ${oc}44;color:${oc}">${shortOwner(t.owner)}</span>` : ''}
+          <span class="week-badge">W${t.startWeek}-${t.startWeek+(t.duration||1)-1}</span>
+        </div>
+      </div>`;
+    }
+  }
+  tl.innerHTML = html;
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shortOwner(o) {
+  const m = {'Conversion Lead':'CL','Data Analyst':'DA','Workday Architect':'WA','Business Analyst':'BA',
+    'Client IT':'IT','Client Data Owner':'CDO','Project Manager':'PM','Project Coordinator':'PC',
+    'Controller':'CTL','AP Manager':'APM','Fixed Asset Manager':'FAM','Workday Configurator':'WC'};
+  return m[o] || o.split(' ').map(w=>w[0]).join('').toUpperCase();
+}
+
+function togglePhase(ph) { collapsedPhases[ph] = !collapsedPhases[ph]; renderAll(); }
+function toggleGroup(k) { collapsedGroups[k] = !collapsedGroups[k]; renderAll(); }
+function toggleExpand(id) { expandedTasks[id] = !expandedTasks[id]; renderAll(); }
+
+// ============================================================
+// GANTT HEADER
+// ============================================================
+function renderGanttHeader() {
+  const totalW = TOTAL_WEEKS * CELL_W;
+  let html = `<div style="position:relative;height:38px;width:${totalW}px;">`;
+  // Phase bands
+  for (const [ph, [s, e]] of Object.entries(PHASE_RANGES)) {
+    const left = (s-1) * CELL_W;
+    const width = (e-s+1) * CELL_W;
+    const col = PHASE_COLORS[ph];
+    html += `<div class="g-ph-band" style="left:${left}px;width:${width}px;background:${col}22;border-bottom:2px solid ${col};color:${col};font-size:9px;letter-spacing:0.3px;">${ph.toUpperCase()}</div>`;
+  }
+  // Week labels
+  html += `<div class="g-wk-row" style="position:absolute;top:18px;left:0;">`;
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const isCur = w === currentWeek;
+    html += `<div class="g-wk-cell${isCur?' cur-wk':''}">W${w}</div>`;
+  }
+  html += `</div></div>`;
+  document.getElementById('g-hdr').innerHTML = html;
+}
+
+// ============================================================
+// GANTT BODY
+// ============================================================
+function renderGantt(rows) {
+  renderGanttHeader();
+  const totalW = TOTAL_WEEKS * CELL_W;
+  const gbody = document.getElementById('g-body');
+
+  // Calculate total height
+  let totalH = 0;
+  for (const row of rows) {
+    if (row.type === 'phase') totalH += PH_ROW_H;
+    else if (row.type === 'group') totalH += GR_ROW_H;
+    else if (row.type === 'task') totalH += ROW_H;
+    else if (row.type === 'subtask') totalH += SUB_H;
+  }
+
+  let html = `<div style="width:${totalW}px;position:relative;min-height:${totalH}px;">`;
+
+  // Phase background bands
+  for (const [ph, [s, e]] of Object.entries(PHASE_RANGES)) {
+    const left = (s-1)*CELL_W;
+    const width = (e-s+1)*CELL_W;
+    const col = PHASE_COLORS[ph];
+    html += `<div class="g-ph-bg" style="left:${left}px;width:${width}px;height:100%;position:absolute;background:${col};top:0;"></div>`;
+  }
+
+  // Column grid lines
+  for (let w = 0; w < TOTAL_WEEKS; w++) {
+    html += `<div class="g-col-grid" style="left:${w*CELL_W}px;top:0;height:100%;position:absolute;"></div>`;
+  }
+
+  // Today line
+  const todayX = (currentWeek - 1) * CELL_W + CELL_W/2;
+  html += `<div class="g-today" style="left:${todayX}px;"></div>`;
+
+  // Rows
+  for (const row of rows) {
+    if (row.type === 'phase') {
+      const col = PHASE_COLORS[row.phase];
+      html += `<div class="g-row g-ph" style="border-left:3px solid ${col};height:${PH_ROW_H}px;"></div>`;
+    } else if (row.type === 'group') {
+      html += `<div class="g-row g-gr" style="height:${GR_ROW_H}px;"></div>`;
+    } else if (row.type === 'task') {
+      const t = row.task;
+      const left = (t.startWeek - 1) * CELL_W;
+      const width = Math.max(t.duration * CELL_W, 4);
+      const col = STATUS_COLORS[t.status];
+      const phCol = PHASE_COLORS[t.phase] || '#A100FF';
+      html += `<div class="g-row g-task" style="height:${ROW_H}px;">
+        <div class="g-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${col};border-left:2px solid ${phCol};"
+          title="${escHtml(t.task)} | ${t.owner} | W${t.startWeek}-${t.startWeek+t.duration-1} | ${STATUS_LABELS[t.status]}"
+          onmousedown="barMouseDown(event,'${t.id}')"
+          ondblclick="openModal(findTask('${t.id}'))"
+          onmouseenter="showTooltip(event,'${escHtml(t.task)}','${t.owner}',${t.startWeek},${t.startWeek+t.duration-1},'${STATUS_LABELS[t.status]}')"
+          onmouseleave="hideTooltip()">
+          <span style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;max-width:calc(100% - 8px);">${width > 36 ? escHtml(shortOwner(t.owner)) : ''}</span>
+        </div>
+      </div>`;
+    } else if (row.type === 'subtask') {
+      const t = row.task;
+      const left = (t.startWeek - 1) * CELL_W;
+      const dur = t.duration || 1;
+      const width = Math.max(dur * CELL_W, 4);
+      const col = STATUS_COLORS[t.status];
+      html += `<div class="g-row g-sub" style="height:${SUB_H}px;">
+        <div class="g-bar g-sub-bar" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${col};opacity:0.75;"
+          title="${escHtml(t.task)} | ${t.owner||''} | W${t.startWeek}-${t.startWeek+dur-1} | ${STATUS_LABELS[t.status]}"
+          onmousedown="barMouseDown(event,'${t.id}')"
+          ondblclick="openModal(findTask('${t.id}'))"
+          onmouseenter="showTooltip(event,'${escHtml(t.task)}','${t.owner||''}',${t.startWeek},${t.startWeek+dur-1},'${STATUS_LABELS[t.status]}')"
+          onmouseleave="hideTooltip()">
+        </div>
+      </div>`;
+    }
+  }
+
+  // SVG overlay placeholder
+  html += `<svg id="dep-svg" class="g-dep-svg" style="width:${totalW}px;height:${Math.max(totalH,400)}px;"></svg>`;
+  html += `</div>`;
+  gbody.innerHTML = html;
+}
+
+// ============================================================
+// DEPENDENCY ARROWS
+// ============================================================
+function drawDependencyArrows(rows) {
+  const svg = document.getElementById('dep-svg');
+  if (!svg) return;
+  svg.innerHTML = '';
+
+  // Build a map of bar positions
+  function getBarRect(id) {
+    const bar = document.querySelector(`.g-bar[data-id="${id}"]`);
+    if (!bar) return null;
+    const gbodyWrap = document.getElementById('g-body-wrap');
+    const gbodyEl = document.getElementById('g-body').firstElementChild;
+    const gbodyRect = gbodyEl.getBoundingClientRect();
+    const barRect = bar.getBoundingClientRect();
+    const scrollTop = gbodyWrap.scrollTop;
+    const scrollLeft = gbodyWrap.scrollLeft;
+    return {
+      left: barRect.left - gbodyRect.left + scrollLeft,
+      top: barRect.top - gbodyRect.top + scrollTop,
+      right: barRect.right - gbodyRect.left + scrollLeft,
+      bottom: barRect.bottom - gbodyRect.top + scrollTop,
+      midY: barRect.top - gbodyRect.top + scrollTop + barRect.height/2,
+    };
+  }
+
+  const arrowPaths = [];
+
+  for (const row of rows) {
+    if (row.type !== 'task') continue;
+    const t = row.task;
+    const succRect = getBarRect(t.id);
+    if (!succRect) continue;
+
+    if (t.dependencies && t.dependencies.length) {
+      for (const depId of t.dependencies) {
+        const predRect = getBarRect(depId);
+        if (!predRect) continue;
+        arrowPaths.push({
+          x1: predRect.right, y1: predRect.midY,
+          x2: succRect.left, y2: succRect.midY,
+          color: '#A100FF', dashed: false
+        });
+      }
+    }
+    if (t.crossDeps && t.crossDeps.length) {
+      for (const depId of t.crossDeps) {
+        const predRect = getBarRect(depId);
+        if (!predRect) continue;
+        arrowPaths.push({
+          x1: predRect.right, y1: predRect.midY,
+          x2: succRect.left, y2: succRect.midY,
+          color: '#fbbf24', dashed: true
+        });
+      }
+    }
+  }
+
+  for (const {x1,y1,x2,y2,color,dashed} of arrowPaths) {
+    const midX = (x1 + x2) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('opacity', '0.6');
+    if (dashed) path.setAttribute('stroke-dasharray', '4,3');
+
+    // Arrowhead
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const aw = 6, ah = 4;
+    const ax1 = x2 - aw * Math.cos(angle - Math.PI/7);
+    const ay1 = y2 - aw * Math.sin(angle - Math.PI/7);
+    const ax2 = x2 - aw * Math.cos(angle + Math.PI/7);
+    const ay2 = y2 - aw * Math.sin(angle + Math.PI/7);
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    arrow.setAttribute('points', `${x2},${y2} ${ax1},${ay1} ${ax2},${ay2}`);
+    arrow.setAttribute('fill', color);
+    arrow.setAttribute('opacity', '0.7');
+
+    svg.appendChild(path);
+    svg.appendChild(arrow);
+  }
+}
+
+// ============================================================
+// GANTT BAR DRAG
+// ============================================================
+function barMouseDown(e, id) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const task = findTask(id);
+  if (!task) return;
+  const startX = e.clientX;
+  const origWeek = task.startWeek;
+  dragState = {task, startX, origWeek};
+}
+
+function setupMouseGlobal() {
+  document.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    const dx = e.clientX - dragState.startX;
+    const weeksDelta = Math.round(dx / CELL_W);
+    const maxDur = dragState.task.duration || 1;
+    const newWeek = Math.max(1, Math.min(TOTAL_WEEKS - maxDur + 1, dragState.origWeek + weeksDelta));
+    dragState.task.startWeek = newWeek;
+    const bar = document.querySelector(`.g-bar[data-id="${dragState.task.id}"]`);
+    if (bar) bar.style.left = ((newWeek-1)*CELL_W)+'px';
+  });
+  document.addEventListener('mouseup', e => {
+    if (dragState) {
+      pushHistory();
+      renderAll();
+      dragState = null;
+      save();
+    }
+    if (splitterDragging) {
+      splitterDragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+function showTooltip(e, name, owner, s, end, status) {
+  hideTooltip();
+  tooltipEl = document.createElement('div');
+  tooltipEl.className = 'g-tooltip';
+  tooltipEl.innerHTML = `<strong>${name}</strong><br>${owner}<br>W${s}–W${end}<br><span style="color:var(--text-muted)">${status}</span>`;
+  document.body.appendChild(tooltipEl);
+  posTooltip(e);
+}
+
+function posTooltip(e) {
+  if (!tooltipEl) return;
+  tooltipEl.style.left = (e.clientX + 12) + 'px';
+  tooltipEl.style.top = (e.clientY - 10) + 'px';
+}
+
+function hideTooltip() {
+  if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+}
+
+document.addEventListener('mousemove', e => { if (tooltipEl) posTooltip(e); });
+
+// ============================================================
+// STATUS BAR
+// ============================================================
+function updateStatusBar() {
+  const flat = allTasksFlat();
+  document.getElementById('stat-total').textContent = flat.length;
+  document.getElementById('stat-complete').textContent = flat.filter(t=>t.status==='complete').length;
+  document.getElementById('stat-inprog').textContent = flat.filter(t=>t.status==='in_progress').length;
+  document.getElementById('stat-blocked').textContent = flat.filter(t=>t.status==='blocked').length;
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(task, isNew) {
+  if (!task) return;
+  modalTask = task;
+  isNewTask = !!isNew;
+  document.getElementById('modal-title').textContent = isNew ? 'New Task' : 'Edit Task';
+  document.getElementById('f-task').value = task.task || '';
+  document.getElementById('f-id').value = task.id || '';
+  document.getElementById('f-phase').value = task.phase || 'Plan';
+  document.getElementById('f-group').value = task.group || '';
+  document.getElementById('f-owner').value = task.owner || 'Conversion Lead';
+  document.getElementById('f-status').value = task.status || 'not_started';
+  document.getElementById('f-start').value = task.startWeek || 1;
+  document.getElementById('f-dur').value = task.duration || 1;
+  document.getElementById('f-priority').value = task.priority || 'medium';
+  document.getElementById('f-deps').value = (task.dependencies||[]).join(', ');
+  document.getElementById('f-crossdeps').value = (task.crossDeps||[]).join(', ');
+  document.getElementById('f-notes').value = task.notes || '';
+  document.getElementById('modal-del-btn').style.display = isNew ? 'none' : '';
+  document.getElementById('modal-ov').style.display = 'flex';
+}
+
+function openNewTaskModal() {
+  const phase = (currentFilter === 'all') ? 'Plan' : currentFilter;
+  const newTask = {
+    id: genId(phase),
+    phase, group:'General', task:'', owner:'Conversion Lead',
+    startWeek:1, duration:1, status:'not_started',
+    dependencies:[], crossDeps:[], notes:'', priority:'medium', subtasks:[]
+  };
+  openModal(newTask, true);
+}
+
+function closeModal() {
+  document.getElementById('modal-ov').style.display = 'none';
+  modalTask = null;
+}
+
+function saveModal() {
+  if (!modalTask) return;
+  pushHistory();
+  modalTask.task = document.getElementById('f-task').value.trim();
+  modalTask.id = document.getElementById('f-id').value.trim() || modalTask.id;
+  modalTask.phase = document.getElementById('f-phase').value;
+  modalTask.group = document.getElementById('f-group').value.trim() || 'General';
+  modalTask.owner = document.getElementById('f-owner').value;
+  modalTask.status = document.getElementById('f-status').value;
+  modalTask.startWeek = Math.max(1, Math.min(28, parseInt(document.getElementById('f-start').value)||1));
+  modalTask.duration = Math.max(1, Math.min(28, parseInt(document.getElementById('f-dur').value)||1));
+  modalTask.priority = document.getElementById('f-priority').value;
+  modalTask.dependencies = document.getElementById('f-deps').value.split(',').map(s=>s.trim()).filter(Boolean);
+  modalTask.crossDeps = document.getElementById('f-crossdeps').value.split(',').map(s=>s.trim()).filter(Boolean);
+  modalTask.notes = document.getElementById('f-notes').value.trim();
+  if (isNewTask) {
+    if (!modalTask.subtasks) modalTask.subtasks = [];
+    tasks.push(modalTask);
+  }
+  closeModal();
+  renderAll();
+  save();
+}
+
+function deleteCurrentTask() {
+  if (!modalTask) return;
+  if (!confirm('Delete this task?')) return;
+  pushHistory();
+  removeTask(modalTask.id);
+  closeModal();
+  renderAll();
+  save();
+}
+
+document.getElementById('modal-ov').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-ov')) closeModal();
+});
+
+// ============================================================
+// CONTEXT MENU
+// ============================================================
+function showCtxMenu(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxTask = findTask(id);
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  let x = e.clientX, y = e.clientY;
+  const mw = 160, mh = 200;
+  if (x + mw > window.innerWidth) x = window.innerWidth - mw - 4;
+  if (y + mh > window.innerHeight) y = window.innerHeight - mh - 4;
+  menu.style.left = x+'px';
+  menu.style.top = y+'px';
+}
+
+function setupContextMenu() {
+  document.getElementById('ctx-menu').addEventListener('click', e => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    document.getElementById('ctx-menu').style.display = 'none';
+    if (!ctxTask) return;
+    if (action === 'edit') {
+      openModal(ctxTask);
+    } else if (action === 'addSub') {
+      const sub = {
+        id: ctxTask.id + String.fromCharCode(97 + (ctxTask.subtasks||[]).length),
+        task:'New Subtask', owner:ctxTask.owner, startWeek:ctxTask.startWeek,
+        duration:1, status:'not_started', dependencies:[], priority:'medium', notes:''
+      };
+      if (!ctxTask.subtasks) ctxTask.subtasks = [];
+      ctxTask.subtasks.push(sub);
+      expandedTasks[ctxTask.id] = true;
+      pushHistory(); renderAll(); save();
+    } else if (action === 'addBelow') {
+      const phase = ctxTask.phase || 'Plan';
+      const newT = {
+        id:genId(phase), phase, group:ctxTask.group||'General',
+        task:'New Task', owner:ctxTask.owner, startWeek:ctxTask.startWeek,
+        duration:1, status:'not_started', dependencies:[], crossDeps:[],
+        notes:'', priority:'medium', subtasks:[]
+      };
+      const idx = tasks.findIndex(t=>t.id===ctxTask.id);
+      if (idx>=0) tasks.splice(idx+1,0,newT);
+      else tasks.push(newT);
+      pushHistory(); renderAll(); save();
+    } else if (action === 'duplicate') {
+      const dup = JSON.parse(JSON.stringify(ctxTask));
+      dup.id = genId(dup.phase||'Plan');
+      dup.task = dup.task + ' (copy)';
+      if (dup.subtasks) dup.subtasks.forEach((s,i)=>{s.id=dup.id+(String.fromCharCode(97+i));});
+      const idx = tasks.findIndex(t=>t.id===ctxTask.id);
+      if (idx>=0) tasks.splice(idx+1,0,dup);
+      else tasks.push(dup);
+      pushHistory(); renderAll(); save();
+    } else if (action === 'delete') {
+      if (!confirm('Delete this task?')) return;
+      pushHistory();
+      removeTask(ctxTask.id);
+      renderAll(); save();
+    } else if (action === 'dep') {
+      const depId = prompt('Enter dependency task ID:');
+      if (depId && depId.trim()) {
+        if (!ctxTask.dependencies) ctxTask.dependencies = [];
+        if (!ctxTask.dependencies.includes(depId.trim())) {
+          ctxTask.dependencies.push(depId.trim());
+          pushHistory(); renderAll(); save();
+        }
+      }
+    }
+    ctxTask = null;
+  });
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('ctx-menu').contains(e.target)) {
+      document.getElementById('ctx-menu').style.display = 'none';
+    }
+  });
+}
+
+// ============================================================
+// PHASE TABS
+// ============================================================
+function setupPhaseTabListeners() {
+  document.querySelectorAll('.ptab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.phase;
+      renderAll();
+    });
+  });
+}
+
+// ============================================================
+// SPLITTER
+// ============================================================
+function setupSplitter() {
+  const splitter = document.getElementById('splitter');
+  splitter.addEventListener('mousedown', e => {
+    splitterDragging = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!splitterDragging) return;
+    const main = document.getElementById('main');
+    const rect = main.getBoundingClientRect();
+    const pct = Math.max(20, Math.min(75, (e.clientX - rect.left) / rect.width * 100));
+    document.getElementById('left').style.width = pct + '%';
+  });
+}
+
+// ============================================================
+// SCROLL SYNC
+// ============================================================
+function setupScrollSync() {
+  let scrollSyncing = false;
+  const taskScroll = document.getElementById('task-scroll');
+  const ganttBodyWrap = document.getElementById('g-body-wrap');
+  const ganttHdr = document.getElementById('g-hdr-wrap');
+
+  taskScroll.addEventListener('scroll', () => {
+    if (scrollSyncing) return;
+    scrollSyncing = true;
+    ganttBodyWrap.scrollTop = taskScroll.scrollTop;
+    scrollSyncing = false;
+  });
+
+  ganttBodyWrap.addEventListener('scroll', () => {
+    if (scrollSyncing) return;
+    scrollSyncing = true;
+    taskScroll.scrollTop = ganttBodyWrap.scrollTop;
+    ganttHdr.scrollLeft = ganttBodyWrap.scrollLeft;
+    scrollSyncing = false;
+    requestAnimationFrame(() => drawDependencyArrows(buildRows()));
+  });
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+function setupKeyboard() {
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if ((e.key === 'n' || e.key === '+') && !e.ctrlKey) openNewTaskModal();
+    if (e.key === 'e' && !e.ctrlKey) doExport();
+    if (e.key === 'Escape') closeModal();
+    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+  });
+}
+
+// ============================================================
+// HISTORY / UNDO
+// ============================================================
+function pushHistory() {
+  history.push(JSON.stringify(tasks));
+  if (history.length > HISTORY_MAX) history.shift();
+}
+
+function undo() {
+  if (!history.length) { showToast('Nothing to undo'); return; }
+  tasks = JSON.parse(history.pop());
+  renderAll();
+  showToast('Undo successful');
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem('cop_int_tracker', JSON.stringify(tasks));
+    localStorage.setItem('cop_int_tracker_saved', new Date().toISOString());
+    updateLastSaved();
+  }, 500);
+}
+
+function updateLastSaved() {
+  const ts = localStorage.getItem('cop_int_tracker_saved');
+  const el = document.getElementById('last-saved');
+  if (el && ts) el.textContent = 'Saved ' + new Date(ts).toLocaleTimeString();
+}
+
+function confirmReset() {
+  if (!confirm('Reset all data to defaults? This cannot be undone.')) return;
+  tasks = JSON.parse(JSON.stringify(SEED_TASKS));
+  history = [];
+  expandedTasks = {};
+  collapsedPhases = {};
+  collapsedGroups = {};
+  localStorage.removeItem('cop_int_tracker');
+  localStorage.removeItem('cop_int_tracker_saved');
+  renderAll();
+  showToast('Reset to defaults');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, duration) {
+  duration = duration || 3500;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+// ============================================================
+// IMPORT
+// ============================================================
+function doImport(inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if (!rows.length) { showToast('Empty file'); return; }
+      const headers = rows[0].map(h => String(h||'').toLowerCase().replace(/\s+/g,''));
+      let imported = 0, updated = 0, errors = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const idIdx = headers.indexOf('id');
+        if (idIdx < 0 || !row[idIdx]) continue;
+        try {
+          const obj = {};
+          ['id','phase','group','task','owner','startweek','duration','status','dependencies','crossdeps','notes','priority','parentid']
+            .forEach(k => { const idx = headers.indexOf(k); obj[k] = idx >= 0 ? row[idx] : undefined; });
+          const existing = findTask(String(obj.id));
+          const taskObj = {
+            id: String(obj.id),
+            phase: obj.phase || 'Plan',
+            group: obj.group || 'General',
+            task: obj.task || '',
+            owner: obj.owner || '',
+            startWeek: parseInt(obj.startweek) || 1,
+            duration: parseInt(obj.duration) || 1,
+            status: obj.status || 'not_started',
+            dependencies: obj.dependencies ? String(obj.dependencies).split(',').map(s=>s.trim()).filter(Boolean) : [],
+            crossDeps: obj.crossdeps ? String(obj.crossdeps).split(',').map(s=>s.trim()).filter(Boolean) : [],
+            notes: obj.notes || '',
+            priority: obj.priority || 'medium',
+            subtasks: existing ? (existing.subtasks || []) : []
+          };
+          if (obj.parentid) {
+            const parent = findTask(String(obj.parentid));
+            if (parent) {
+              if (!parent.subtasks) parent.subtasks = [];
+              const subIdx = parent.subtasks.findIndex(s => s.id === taskObj.id);
+              if (subIdx >= 0) { Object.assign(parent.subtasks[subIdx], taskObj); updated++; }
+              else { const st = {...taskObj}; delete st.subtasks; parent.subtasks.push(st); imported++; }
+            }
+          } else if (existing) {
+            Object.assign(existing, taskObj); updated++;
+          } else {
+            tasks.push(taskObj); imported++;
+          }
+        } catch(ex) { errors++; }
+      }
+      inputEl.value = '';
+      showToast(`Imported ${imported} tasks, updated ${updated}${errors?', '+errors+' errors':''}`);
+      pushHistory(); renderAll(); save();
+    } catch(ex) {
+      showToast('Import failed: ' + ex.message);
+      inputEl.value = '';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function doExport() {
+  if (typeof XLSX === 'undefined') { showToast('XLSX library not loaded'); return; }
+  const wb = XLSX.utils.book_new();
+  const cols = ['id','phase','group','task','owner','startWeek','duration','status','dependencies','crossDeps','notes','priority'];
+
+  const flat = [];
+  tasks.forEach(t => {
+    flat.push({...t, dependencies:(t.dependencies||[]).join(','), crossDeps:(t.crossDeps||[]).join(',')});
+    (t.subtasks||[]).forEach(s => flat.push({
+      ...s,
+      phase: t.phase,
+      group: t.group,
+      dependencies: (s.dependencies||[]).join(','),
+      crossDeps: '',
+      parentid: t.id
+    }));
+  });
+
+  const allCols = [...cols, 'parentid'];
+  const allRows = [allCols, ...flat.map(t => allCols.map(c => t[c] !== undefined ? t[c] : ''))];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(allRows), 'All Tasks');
+
+  PHASES.forEach(phase => {
+    const phRows = [allCols, ...flat.filter(t=>t.phase===phase).map(t=>allCols.map(c=>t[c]!==undefined?t[c]:''))];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(phRows), phase);
+  });
+
+  const summaryRows = [['Phase','Total','Complete','In Progress','Blocked','Not Started']];
+  PHASES.forEach(phase => {
+    const pt = tasks.filter(t => t.phase === phase);
+    summaryRows.push([
+      phase, pt.length,
+      pt.filter(t=>t.status==='complete').length,
+      pt.filter(t=>t.status==='in_progress').length,
+      pt.filter(t=>t.status==='blocked').length,
+      pt.filter(t=>t.status==='not_started').length
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryRows), 'Summary');
+
+  XLSX.writeFile(wb, 'integration_tracker_export.xlsx');
+  showToast('Exported successfully');
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+
+

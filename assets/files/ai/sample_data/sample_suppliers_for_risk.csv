@@ -1,0 +1,13 @@
+Supplier_ID,Supplier_Name,Supplier_Category,Tax_ID,Default_Currency,Payment_Terms_Days,Preferred_Payment_Type,Address_Country
+SUP-001,Acme Office Supplies,Office Supplies,12-3456789,USD,30,ACH,US
+SUP-002,Global Tech International,IT Services,,EUR,90,Wire,Russia
+SUP-003,Premier Consulting Group,Professional Services,98-7654321,USD,45,ACH,US
+SUP-004,Express Freight Solutions,Logistics,45-6789012,USD,15,EFT,US
+SUP-005,International Vendors Ltd,General Supplies,,,Wire,Iran
+SUP-006,DataSync Systems,Software,23-4567890,USD,30,ACH,US
+SUP-007,Offshore IT Corp,IT Services,,USD,60,Wire,China
+SUP-008,Strategic Advisors LLC,Consulting,67-8901234,USD,45,Check,US
+SUP-009,Regional Supplies Co,Office Supplies,89-0123456,USD,30,ACH,US
+SUP-010,Unknown Vendor,,,USD,,,
+SUP-011,Secure Payment Inc,Financial Services,34-5678901,USD,15,EFT,US
+SUP-012,Overseas Materials Corp,Manufacturing,,,Wire,Venezuela

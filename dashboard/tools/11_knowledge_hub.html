@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CoP Knowledge Hub</title>
+<style>
+:root {
+  --bg-body:#0a0014;--bg-card:rgba(20,5,40,0.85);--bg-panel:rgba(15,4,30,0.9);
+  --border:rgba(161,0,255,0.15);--border-hi:rgba(161,0,255,0.4);
+  --accent:#A100FF;--blue:#818cf8;--green:#4ade80;--amber:#fbbf24;--red:#f87171;
+  --text:#f0e6ff;--text-muted:#b08fcc;--text-dim:#6b4f8a;
+  --metal:linear-gradient(135deg,rgba(30,10,60,0.95),rgba(15,4,30,0.98));
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg-body);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;}
+.app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:300px 1fr;height:100vh;}
+
+/* ── Header ── */
+.hdr{grid-column:1/-1;background:var(--metal);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;}
+.hdr-icon{font-size:16px;padding:5px 9px;background:rgba(161,0,255,0.1);border:1px solid var(--border);border-radius:6px;}
+.hdr-title{font-size:14px;font-weight:800;letter-spacing:0.4px;}
+.hdr-sub{font-size:10px;color:var(--text-dim);}
+.hdr-stats{display:flex;gap:14px;margin-left:16px;}
+.hstat{font-size:10px;color:var(--text-dim);}
+.hstat strong{color:var(--text-muted);}
+.api-row{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.api-label{font-size:10px;color:var(--text-dim);}
+.api-status{font-size:10px;color:var(--text-dim);}
+
+/* ── Left Panel ── */
+.left{background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+/* Ingest */
+.ing-wrap{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ing-head{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:8px;}
+.drop-zone{border:2px dashed rgba(161,0,255,0.22);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:border-color .18s,background .18s;background:rgba(161,0,255,0.02);margin-bottom:8px;}
+.drop-zone:hover,.drop-zone.dg{border-color:var(--border-hi);background:rgba(161,0,255,0.06);}
+.dz-icon{font-size:18px;opacity:0.45;margin-bottom:3px;}
+.dz-text{font-size:10px;color:var(--text-dim);}
+.dz-text span{color:var(--accent);}
+#fileInput{display:none;}
+.if,.isel,.ita{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);font-size:11px;padding:5px 8px;width:100%;}
+.if:focus,.isel:focus,.ita:focus{outline:none;border-color:var(--border-hi);color:var(--text);}
+.isel option{background:#1a0530;}
+.ita{resize:vertical;min-height:64px;font-family:inherit;}
+.irow{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ilbl{font-size:9px;color:var(--text-dim);margin-bottom:2px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
+.ing-form{display:flex;flex-direction:column;gap:5px;}
+.ing-actions{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.btn-p{background:var(--accent);border:none;border-radius:5px;color:#fff;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;flex:1;transition:opacity .15s;}
+.btn-p:hover{opacity:0.85;}
+.btn-p:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-p.editing{background:var(--amber);}
+.ai-chk{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);cursor:pointer;white-space:nowrap;}
+.ai-chk input{accent-color:var(--accent);}
+.edit-banner{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.22);border-radius:5px;padding:5px 9px;font-size:10px;color:var(--amber);display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.cancel-edit{background:transparent;border:none;color:var(--amber);font-size:10px;cursor:pointer;padding:0;text-decoration:underline;}
+
+/* Lib list */
+.lib-search-wrap{padding:7px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.lib-search{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);font-size:11px;padding:5px 8px;width:100%;}
+.lib-search:focus{outline:none;border-color:var(--border-hi);color:var(--text);}
+.type-pills{display:flex;flex-wrap:wrap;gap:3px;padding:5px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tpill{font-size:9px;padding:2px 7px;border-radius:99px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);transition:all .12s;}
+.tpill.on{background:rgba(161,0,255,0.14);border-color:var(--border-hi);color:var(--text-muted);}
+.lib-list{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:4px;}
+.li-item{background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:6px;padding:7px 9px;cursor:pointer;transition:border-color .12s,background .12s;}
+.li-item:hover{border-color:rgba(161,0,255,0.28);background:rgba(161,0,255,0.04);}
+.li-item.on{border-color:var(--accent);background:rgba(161,0,255,0.08);}
+.li-title{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.li-meta{display:flex;align-items:center;gap:5px;}
+.li-type{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(161,0,255,0.1);color:var(--text-muted);}
+.li-date{font-size:9px;color:var(--text-dim);margin-left:auto;}
+.li-preview{font-size:10px;color:var(--text-dim);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* ── Main Panel ── */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.tab-bar{display:flex;background:var(--bg-panel);border-bottom:1px solid var(--border);padding:0 14px;gap:2px;flex-shrink:0;}
+.tab-btn{background:transparent;border:none;color:var(--text-dim);font-size:12px;font-weight:600;padding:13px 15px;cursor:pointer;border-bottom:2px solid transparent;transition:color .12s,border-color .12s;}
+.tab-btn.on{color:var(--text);border-bottom-color:var(--accent);}
+.tab-btn:hover:not(.on){color:var(--text-muted);}
+.main-body{flex:1;overflow:hidden;position:relative;}
+
+/* Library view */
+.lib-view{position:absolute;inset:0;overflow-y:auto;padding:18px;}
+
+/* Cards grid */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px;}
+.kb-card{background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:13px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.kb-card:hover{border-color:rgba(161,0,255,0.38);box-shadow:0 4px 18px rgba(161,0,255,0.1);}
+.kb-card-icon{font-size:18px;margin-bottom:7px;}
+.kb-card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.kb-card-type{font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(161,0,255,0.1);color:var(--text-muted);display:inline-block;margin-bottom:6px;}
+.kb-card-sum{font-size:11px;color:var(--text-dim);line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:7px;}
+.kb-card-foot{display:flex;align-items:center;justify-content:space-between;}
+.kb-tags{display:flex;flex-wrap:wrap;gap:3px;}
+.kb-tag{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.04);color:var(--text-dim);}
+.kb-date{font-size:9px;color:var(--text-dim);white-space:nowrap;}
+
+/* Detail view */
+.detail-view{position:absolute;inset:0;overflow-y:auto;padding:18px;display:none;}
+.detail-view.vis{display:block;}
+.back-btn{background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--text-dim);font-size:11px;padding:4px 11px;cursor:pointer;margin-bottom:13px;transition:all .12s;}
+.back-btn:hover{border-color:var(--border-hi);color:var(--text-muted);}
+.det-hdr{display:flex;align-items:flex-start;gap:11px;margin-bottom:16px;}
+.det-icon{font-size:22px;padding:7px;background:rgba(161,0,255,0.08);border:1px solid var(--border);border-radius:7px;flex-shrink:0;}
+.det-title{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.det-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.det-badge{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(161,0,255,0.1);color:var(--text-muted);border:1px solid rgba(161,0,255,0.2);}
+.det-date{font-size:10px;color:var(--text-dim);}
+.det-actions{display:flex;gap:5px;margin-left:auto;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.act-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:10px;padding:4px 9px;cursor:pointer;transition:all .12s;}
+.act-btn:hover{border-color:var(--border-hi);color:var(--text-muted);}
+.act-btn.del:hover{border-color:var(--red);color:var(--red);}
+.act-btn.edit-btn:hover{border-color:var(--amber);color:var(--amber);}
+.det-sec{margin-bottom:18px;}
+.det-sec-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:7px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.sum-box{font-size:13px;color:var(--text-muted);line-height:1.65;background:rgba(161,0,255,0.04);border-radius:6px;padding:11px;border:1px solid var(--border);}
+.kp-list{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.kp-item{font-size:12px;color:var(--text-muted);padding:5px 10px;background:rgba(0,0,0,0.2);border-radius:4px;border-left:2px solid var(--accent);}
+.tags-row{display:flex;flex-wrap:wrap;gap:4px;}
+.tag-chip{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(161,0,255,0.08);border:1px solid rgba(161,0,255,0.2);color:var(--text-muted);}
+.raw-toggle{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:10px;padding:4px 11px;cursor:pointer;width:100%;text-align:left;margin-bottom:5px;}
+.raw-toggle:hover{border-color:var(--border-hi);}
+.raw-pre{background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:6px;padding:11px;font-size:10px;color:var(--text-dim);white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;display:none;font-family:monospace;line-height:1.6;}
+.raw-pre.vis{display:block;}
+
+/* Setup banner */
+.setup-banner{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:12px 16px;margin-bottom:10px;font-size:11px;color:var(--amber);line-height:1.7;flex-shrink:0;}
+.setup-banner strong{color:#fde68a;}
+.setup-banner code{background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;font-family:monospace;font-size:10px;color:#fde68a;}
+
+/* Ask view */
+.ask-view{position:absolute;inset:0;display:none;flex-direction:column;padding:14px;gap:10px;}
+.ask-view.vis{display:flex;}
+.scope-row{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.scope-lbl{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+.scope-sel{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);font-size:11px;padding:4px 8px;flex:1;}
+.scope-sel option{background:#1a0530;}
+.chat-win{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:9px;background:rgba(0,0,0,0.14);border-radius:8px;border:1px solid var(--border);padding:13px;}
+.cm{max-width:86%;}
+.cm.usr{align-self:flex-end;}
+.cm.ast{align-self:flex-start;}
+.cm.sys{align-self:center;max-width:100%;text-align:center;}
+.cb{padding:9px 13px;border-radius:9px;font-size:12px;line-height:1.65;}
+.cm.usr .cb{background:rgba(161,0,255,0.14);border:1px solid rgba(161,0,255,0.25);color:var(--text);border-radius:9px 9px 2px 9px;}
+.cm.ast .cb{background:rgba(0,0,0,0.28);border:1px solid var(--border);color:var(--text-muted);border-radius:9px 9px 9px 2px;}
+.cm.sys .cb{background:transparent;border:none;color:var(--text-dim);font-size:11px;font-style:italic;}
+.cb h2{font-size:13px;color:var(--text);margin:8px 0 4px;}
+.cb h3{font-size:12px;color:var(--text-muted);font-weight:700;margin:6px 0 3px;}
+.cb ul,.cb ol{padding-left:16px;margin:4px 0;}
+.cb li{margin-bottom:2px;}
+.cb code{background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:3px;font-size:10px;font-family:monospace;}
+.cb strong{color:var(--text);}
+.chat-in-row{display:flex;gap:7px;flex-shrink:0;}
+.chat-ta{flex:1;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:7px 11px;resize:none;font-family:inherit;transition:border-color .12s;}
+.chat-ta:focus{outline:none;border-color:var(--border-hi);}
+.send-btn{background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;padding:8px 15px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+.send-btn:hover{opacity:0.85;}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Generate view */
+.gen-view{position:absolute;inset:0;display:none;overflow:hidden;}
+.gen-view.vis{display:flex;}
+.gen-left{width:255px;flex-shrink:0;border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;}
+.gen-right{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:14px;gap:10px;}
+.glbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);margin-bottom:3px;}
+.gsel,.ginput,.gta{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);font-size:11px;padding:5px 8px;width:100%;}
+.gsel option,.gsel:focus,.ginput:focus,.gta:focus{background:#1a0530;outline:none;border-color:var(--border-hi);color:var(--text);}
+.gta{resize:vertical;min-height:55px;font-family:inherit;}
+.gen-btn{background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;padding:9px;cursor:pointer;width:100%;transition:opacity .15s;}
+.gen-btn:hover{opacity:0.85;}
+.gen-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.ttcard{padding:7px 9px;border-radius:5px;border:1px solid var(--border);cursor:pointer;transition:all .12s;margin-bottom:3px;}
+.ttcard:hover{border-color:rgba(161,0,255,0.3);background:rgba(161,0,255,0.04);}
+.ttcard.on{border-color:var(--accent);background:rgba(161,0,255,0.1);}
+.ttcard-name{font-size:11px;font-weight:700;color:var(--text-muted);}
+.ttcard-desc{font-size:9px;color:var(--text-dim);margin-top:1px;}
+.gen-out{flex:1;overflow-y:auto;background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:8px;padding:15px;}
+.gen-out-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;}
+.gen-out-title{font-size:13px;font-weight:700;color:var(--text);}
+.gen-out-acts{display:flex;gap:5px;flex-wrap:wrap;}
+.gen-out-acts button{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:10px;padding:3px 9px;cursor:pointer;transition:all .12s;}
+.gen-out-acts button:hover{border-color:var(--border-hi);color:var(--text-muted);}
+.gen-out-acts .exp-word:hover{border-color:#4472c4;color:#4472c4;}
+.gen-out-acts .exp-pdf:hover{border-color:var(--red);color:var(--red);}
+.gen-out-acts .exp-xlsx:hover{border-color:var(--green);color:var(--green);}
+.gen-out-acts .exp-ppt:hover{border-color:var(--amber);color:var(--amber);}
+.gen-out-body{font-size:12px;color:var(--text-muted);line-height:1.75;}
+.gen-out-body h1{font-size:16px;color:var(--text);margin:12px 0 5px;}
+.gen-out-body h2{font-size:14px;color:var(--text);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:3px;}
+.gen-out-body h3{font-size:12px;color:var(--text-muted);font-weight:700;margin:7px 0 3px;}
+.gen-out-body ul,.gen-out-body ol{padding-left:18px;margin:4px 0 8px;}
+.gen-out-body li{margin-bottom:2px;}
+.gen-out-body strong{color:var(--text);}
+.gen-out-body code{background:rgba(0,0,0,0.35);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px;}
+.gen-out-body table{border-collapse:collapse;width:100%;margin:8px 0;font-size:11px;}
+.gen-out-body th{background:rgba(161,0,255,0.1);color:var(--text-muted);padding:5px 9px;text-align:left;border:1px solid var(--border);}
+.gen-out-body td{padding:5px 9px;border:1px solid var(--border);color:var(--text-dim);}
+.gen-empty{text-align:center;padding:50px 20px;color:var(--text-dim);}
+.gen-empty-icon{font-size:28px;opacity:0.2;margin-bottom:9px;}
+
+/* Living Docs view */
+.live-view{position:absolute;inset:0;display:none;overflow-y:auto;padding:16px;}
+.live-view.vis{display:block;}
+.live-grid{display:flex;flex-direction:column;gap:14px;}
+.live-area{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.live-area-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.25);gap:10px;flex-wrap:wrap;}
+.live-area-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.live-area-meta{font-size:10px;color:var(--text-dim);}
+.live-act-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.live-refresh{background:rgba(161,0,255,0.12);border:1px solid var(--border-hi);border-radius:5px;color:var(--text-muted);font-size:11px;font-weight:700;padding:5px 11px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.live-refresh:hover{background:rgba(161,0,255,0.22);}
+.live-refresh:disabled{opacity:0.4;cursor:not-allowed;}
+.exp-btn{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-size:10px;padding:4px 9px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.exp-btn:hover{border-color:var(--border-hi);color:var(--text-muted);}
+.exp-btn.exp-word:hover{border-color:#4472c4;color:#4472c4;}
+.exp-btn.exp-pdf:hover{border-color:var(--red);color:var(--red);}
+.exp-btn.exp-xlsx:hover{border-color:var(--green);color:var(--green);}
+.exp-btn.exp-ppt:hover{border-color:var(--amber);color:var(--amber);}
+.live-body{padding:16px;}
+.live-empty{text-align:center;padding:28px;color:var(--text-dim);font-size:11px;}
+.live-empty-icon{font-size:22px;opacity:0.25;margin-bottom:6px;}
+.live-content{font-size:12px;color:var(--text-muted);line-height:1.75;}
+.live-content h1{font-size:15px;color:var(--text);margin:10px 0 5px;}
+.live-content h2{font-size:13px;color:var(--text);margin:9px 0 4px;border-bottom:1px solid var(--border);padding-bottom:3px;}
+.live-content h3{font-size:12px;color:var(--text-muted);font-weight:700;margin:6px 0 3px;}
+.live-content ul,.live-content ol{padding-left:18px;margin:4px 0 8px;}
+.live-content li{margin-bottom:2px;}
+.live-content strong{color:var(--text);}
+.live-content code{background:rgba(0,0,0,0.35);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:10px;}
+.live-content table{border-collapse:collapse;width:100%;margin:8px 0;font-size:11px;}
+.live-content th{background:rgba(161,0,255,0.1);color:var(--text-muted);padding:5px 9px;text-align:left;border:1px solid var(--border);}
+.live-content td{padding:5px 9px;border:1px solid var(--border);color:var(--text-dim);}
+
+/* Shared */
+.empty-state{text-align:center;padding:70px 20px;color:var(--text-dim);}
+.empty-icon{font-size:36px;opacity:0.18;margin-bottom:11px;}
+.empty-title{font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:5px;}
+.empty-sub{font-size:11px;}
+.spin{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--amber);}
+.ring{width:8px;height:8px;border:1.5px solid rgba(251,191,36,0.3);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;padding:60px;color:var(--text-dim);}
+.lring{width:30px;height:30px;border:3px solid rgba(161,0,255,0.14);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+.toast{position:fixed;bottom:18px;right:18px;background:rgba(20,5,40,0.96);border:1px solid var(--border-hi);border-radius:7px;padding:9px 14px;font-size:12px;color:var(--text-muted);z-index:999;animation:fi .2s;}
+.toast.ok{border-color:rgba(74,222,128,0.4);color:var(--green);}
+.toast.err{border-color:rgba(248,113,113,0.4);color:var(--red);}
+@keyframes fi{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.28);border-radius:99px;}
+.sources-block{margin-top:10px;padding-top:8px;border-top:1px solid rgba(161,0,255,0.18);}
+.sources-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);margin-bottom:5px;}
+.source-item{font-size:10px;color:var(--text-dim);margin-bottom:3px;display:flex;gap:5px;align-items:baseline;}
+.source-item .src-num{color:var(--accent);font-weight:700;flex-shrink:0;}
+.source-item a{color:var(--blue);text-decoration:none;word-break:break-all;}
+.source-item a:hover{text-decoration:underline;}
+.src-kb-tag{display:inline-block;background:rgba(161,0,255,0.12);border:1px solid rgba(161,0,255,0.25);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--accent);margin-right:4px;}
+.search-status{font-size:10px;color:var(--text-dim);font-style:italic;margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-icon">◈</div>
+  <div>
+    <div class="hdr-title">CoP Knowledge Hub</div>
+    <div class="hdr-sub">Centralized AI-powered knowledge base</div>
+  </div>
+  <div class="hdr-stats">
+    <div class="hstat"><strong id="sItems">0</strong> items</div>
+    <div class="hstat"><strong id="sWords">0</strong> words</div>
+    <div class="hstat"><strong id="sTypes">0</strong> types</div>
+  </div>
+  <div class="api-row">
+    <span class="api-label">AI:</span>
+    <span class="api-status" id="apiStat" title="Claude API status">Checking…</span>
+  </div>
+</header>
+
+<!-- LEFT PANEL -->
+<aside class="left">
+  <div class="ing-wrap">
+    <div class="ing-head">◈ Ingest Knowledge</div>
+    <div class="drop-zone" id="dz" onclick="document.getElementById('fileInput').click()"
+         ondragover="handleDO(event)" ondrop="handleDrop(event)" ondragleave="this.classList.remove('dg')">
+      <div class="dz-icon">◈</div>
+      <div class="dz-text">Drop files or <span>browse</span></div>
+      <div class="dz-text" style="font-size:9px;margin-top:2px">PDF · DOCX · TXT · MD · CSV · XLSX</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".txt,.md,.pdf,.docx,.csv,.xlsx" onchange="handleFiles(this.files)">
+    <div id="editBanner" class="edit-banner" style="display:none">
+      <span>✏ Editing existing item</span>
+      <button class="cancel-edit" onclick="cancelEdit()">Cancel</button>
+    </div>
+    <div class="ing-form">
+      <div><div class="ilbl">Title *</div><input class="if" id="iTitle" placeholder="Document title…"></div>
+      <div class="irow">
+        <div>
+          <div class="ilbl">Type</div>
+          <select class="isel" id="iType">
+            <option value="document">Document</option>
+            <option value="transcript">Transcript</option>
+            <option value="design_doc">Design Doc</option>
+            <option value="note">Note</option>
+            <option value="article">Article</option>
+            <option value="worksheet">Worksheet</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <div class="ilbl">Tags (comma)</div>
+          <input class="if" id="iTags" placeholder="integration, gl">
+        </div>
+      </div>
+      <div><div class="ilbl">Content (paste or upload above)</div>
+        <textarea class="ita" id="iContent" placeholder="Paste text, notes, transcript…"></textarea>
+      </div>
+      <div class="ing-actions">
+        <button class="btn-p" id="ingestBtn" onclick="doIngest()">◈ Add to Hub</button>
+        <label class="ai-chk"><input type="checkbox" id="autoAI" checked> AI analyze</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="lib-search-wrap">
+    <input class="lib-search" id="lSearch" placeholder="Search knowledge base…" oninput="renderAll()">
+  </div>
+  <div class="type-pills" id="typePills">
+    <span class="tpill on" data-t="all" onclick="setFilter('all')">All</span>
+    <span class="tpill" data-t="document" onclick="setFilter('document')">Docs</span>
+    <span class="tpill" data-t="transcript" onclick="setFilter('transcript')">Transcripts</span>
+    <span class="tpill" data-t="design_doc" onclick="setFilter('design_doc')">Design</span>
+    <span class="tpill" data-t="note" onclick="setFilter('note')">Notes</span>
+    <span class="tpill" data-t="article" onclick="setFilter('article')">Articles</span>
+  </div>
+  <div class="lib-list" id="libList"></div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="tab-bar">
+    <button class="tab-btn on" onclick="switchTab('lib')">◈ Library</button>
+    <button class="tab-btn" onclick="switchTab('ask')">◎ Ask AI</button>
+    <button class="tab-btn" onclick="switchTab('gen')">◆ Generate</button>
+    <button class="tab-btn" onclick="switchTab('live')">◉ Living Docs</button>
+  </div>
+  <div class="main-body">
+
+    <!-- Library -->
+    <div class="lib-view" id="libView"></div>
+    <div class="detail-view" id="detailView"></div>
+
+    <!-- Ask -->
+    <div class="ask-view" id="askView">
+      <div class="setup-banner" id="setupBanner" style="display:none">
+        ⚠ <strong>No AI backend connected.</strong> Choose one option to enable Ask AI, Generate, and Living Docs:<br><br>
+        <strong>Option A — Local / free (no key needed):</strong><br>
+        1. Install <strong>Ollama</strong> from <code>ollama.ai</code><br>
+        2. Open a terminal and run: <code>ollama pull llama3.2</code><br>
+        3. Restart the CoP Dashboard server — AI connects automatically.<br><br>
+        <strong>Option B — Anthropic Claude (requires API key):</strong><br>
+        1. Open <code>workday-cop-manager\.env</code> in any text editor<br>
+        2. Add: <code>ANTHROPIC_API_KEY=sk-ant-api03-…</code> &nbsp;(get a key at <strong>console.anthropic.com → API Keys</strong>)<br>
+        3. Restart the CoP Dashboard server — then refresh this page.
+      </div>
+      <div class="scope-row">
+        <span class="scope-lbl">Knowledge scope:</span>
+        <select class="scope-sel" id="askScope">
+          <option value="all">Full content + summaries</option>
+          <option value="sum">Summaries only (faster)</option>
+        </select>
+      </div>
+      <div class="chat-win" id="chatWin">
+        <div class="cm sys"><div class="cb">Ask anything — I'll answer using your ingested knowledge. More items = better answers.</div></div>
+      </div>
+      <div class="chat-in-row">
+        <textarea class="chat-ta" id="chatIn" rows="2" placeholder="Ask a question about the knowledge base…" onkeydown="chatKey(event)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="doAsk()">Send</button>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <div class="gen-view" id="genView">
+      <div class="gen-left">
+        <div>
+          <div class="glbl">Template Type</div>
+          <div id="ttList"></div>
+        </div>
+        <div><div class="glbl">Knowledge Scope</div>
+          <select class="gsel" id="gScope">
+            <option value="all">Full content + summaries</option>
+            <option value="sum">Summaries only</option>
+          </select>
+        </div>
+        <div><div class="glbl">Topic / Focus (optional)</div>
+          <input class="ginput" id="gTopic" placeholder="e.g. GL journal entry integration">
+        </div>
+        <div><div class="glbl">Additional Context</div>
+          <textarea class="gta" id="gCtx" placeholder="Specific requirements…"></textarea>
+        </div>
+        <button class="gen-btn" id="genBtn" onclick="doGenerate()">◆ Generate</button>
+      </div>
+      <div class="gen-right">
+        <div class="gen-out" id="genOut">
+          <div class="gen-empty">
+            <div class="gen-empty-icon">◆</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:5px">Select a template type and click Generate</div>
+            <div style="font-size:11px">Claude will build a complete template from your knowledge base</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Living Docs -->
+    <div class="live-view" id="liveView">
+      <div class="live-grid" id="liveGrid"></div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script>
+const SK = 'cop_kb_v1';
+const ICONS = {transcript:'🎙',document:'▣',design_doc:'◈',note:'◎',article:'◆',worksheet:'▥',other:'◫'};
+const TMPL = [
+  {id:'bp',     name:'Best Practice Guide',          desc:'Recommendations and patterns from your knowledge'},
+  {id:'sdd',    name:'Solution Design Document',     desc:'Technical SDD with architecture and config'},
+  {id:'dg',     name:'Data Gathering Worksheet',     desc:'Structured client questionnaire'},
+  {id:'strat',  name:'Project Strategy Document',    desc:'Goals, approach, risks, and timeline'},
+  {id:'intpat', name:'Integration Design Pattern',   desc:'Standard integration specs and config'},
+  {id:'conv',   name:'Conversion Mapping Template',  desc:'Field mapping, transformation, validation'},
+  {id:'rpt',    name:'Report Design Specification',  desc:'Report layout, data source, and security'},
+  {id:'risk',   name:'Risk Register',                desc:'Risks, impacts, and mitigations'},
+  {id:'test',   name:'Test Plan Template',           desc:'Test scenarios, scripts, acceptance criteria'},
+  {id:'arch',   name:'Architecture Guide',           desc:'Architecture decisions and patterns'},
+  {id:'train',  name:'Client Training Guide',        desc:'Step-by-step end-user training material'},
+  {id:'gl',     name:'Go-Live Checklist',            desc:'Cutover tasks, rollback, and sign-off'},
+];
+
+const LIVE_AREAS = {
+  dc:{
+    key:'cop_kb_living_dc',
+    title:'Data Conversion Best Practices',
+    icon:'⬡',
+    tags:['conversion','data conversion','iload','migration','mapping','extract','transform','load','legacy','erp','cutover','mock load','parallel','reconcil'],
+    prompt:'Create a comprehensive, living best practices guide for Workday Finance Data Conversion. Cover: iLoad preparation and field mapping, legacy data extraction and cleansing, transformation logic, mock load strategy, error handling and reconciliation, parallel testing, cutover sequencing, and rollback procedures. Format with clear H2 sections, bullet points, tables where helpful, and practical tips. Make it immediately useful for a consultant on a real engagement.'
+  },
+  int:{
+    key:'cop_kb_living_int',
+    title:'Integrations Best Practices',
+    icon:'⬡',
+    tags:['integration','studio','eis','core connector','api','web service','rest','soap','cci','bp','business process','middleware','etl','isg','error','raas','prism'],
+    prompt:'Create a comprehensive, living best practices guide for Workday Finance Integrations. Cover: integration strategy and pattern selection (Core Connectors vs Studio vs API), ISU and security setup, Studio development standards, error handling and monitoring, testing approach (SIT/UAT), performance considerations, cross-workstream dependencies, and production deployment. Include a section on common pitfalls and how to avoid them. Format with clear H2 sections, tables, and practical examples.'
+  },
+  rpt:{
+    key:'cop_kb_living_rpt',
+    title:'Report Deployment Best Practices',
+    icon:'⬡',
+    tags:['report','reporting','prism','dashboard','analytics','composite','matrix','simple','advanced','security group','sharing','birt','calculated field','filter','prompt','worker security'],
+    prompt:'Create a comprehensive, living best practices guide for Workday Finance Report Deployment. Cover: report type selection (Simple, Advanced, Matrix, Composite, Prism), security group design and worker security, calculated fields and business objects, filter and prompt design, dashboard layout and performance, UAT and sign-off processes, production publishing, and ongoing maintenance. Include tips for naming conventions, version control, and client training. Format with clear H2 sections, tables, and practical guidance.'
+  }
+};
+
+let S = {items:[], tab:'lib', selId:null, filter:'all', tmpl:null, chat:[]};
+let _editId = null;
+
+// ── Persistence ──
+function save(){localStorage.setItem(SK,JSON.stringify(S.items));}
+function load(){try{S.items=JSON.parse(localStorage.getItem(SK)||'[]');}catch{S.items=[];}}
+function getLiving(area){try{return JSON.parse(localStorage.getItem(LIVE_AREAS[area].key)||'null')||null;}catch{return null;}}
+function saveLiving(area,data){localStorage.setItem(LIVE_AREAS[area].key,JSON.stringify(data));}
+
+// ── Backend tracking ──
+let _backend='none'; // 'anthropic' | 'ollama' | 'none'
+
+// ── API status ──
+async function checkApiStatus(){
+  const el=document.getElementById('apiStat');
+  const banner=document.getElementById('setupBanner');
+  const showBanner=(show)=>{if(banner)banner.style.display=show?'block':'none';};
+  try{
+    const r=await fetch('/api/status',{signal:AbortSignal.timeout(4000)});
+    if(!r.ok)throw new Error('server error');
+    const d=await r.json();
+    if(d.configured){
+      _backend=d.backend||'none';
+      const label=d.backend==='ollama'?`✓ Ollama (${(d.model||'').split(':')[0]})`:'✓ Claude';
+      el.textContent=label;el.style.color='var(--green)';
+      showBanner(false);
+      if(d.backend==='ollama'){
+        el.title='Ollama (local AI): responses take 20-90 seconds. Use Anthropic API key for full-length documents.';
+      }
+    }else{
+      _backend='none';
+      el.textContent='✗ No AI backend';el.style.color='var(--red)';
+      showBanner(true);
+    }
+  }catch{
+    _backend='none';
+    el.textContent='— Server offline';el.style.color='var(--text-dim)';
+    showBanner(true);
+  }
+}
+
+// ── Claude (server-side proxy) ──
+async function claude(sys, usr, max=3000){
+  // Ollama on CPU is ~10-15 tokens/sec. The server caps output at 700 tokens.
+  // Warn the user if this is a long-running request.
+  const isOllama=(_backend==='ollama');
+
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),115000); // 115s browser-side limit
+  try{
+    const r=await fetch('/api/claude',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({system:sys,user:usr,max_tokens:max}),
+      signal:ctrl.signal,
+    });
+    clearTimeout(timer);
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===503){
+        toast('No AI backend — install Ollama (ollama.ai) or set ANTHROPIC_API_KEY in .env','err');
+        return null;
+      }
+      if(r.status===504){
+        toast('AI timed out — try a shorter question, or add ANTHROPIC_API_KEY to .env for faster responses','err');
+        return null;
+      }
+      throw new Error(data.error||`Server error ${r.status}`);
+    }
+    return data.text||null;
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError'){
+      toast('Request timed out (115s). Ollama is slow for long outputs — try a shorter query or add ANTHROPIC_API_KEY to .env','err');
+      return null;
+    }
+    throw e;
+  }
+}
+
+// ── File handling ──
+function handleDO(e){e.preventDefault();document.getElementById('dz').classList.add('dg');}
+function handleDrop(e){e.preventDefault();document.getElementById('dz').classList.remove('dg');handleFiles(e.dataTransfer.files);}
+async function handleFiles(files){
+  if(!files||!files.length)return;
+  const f=files[0];
+  document.getElementById('iTitle').value=f.name.replace(/\.[^.]+$/,'');
+  const ext=f.name.split('.').pop().toLowerCase();
+  let txt='';
+  try{
+    if(['txt','md','csv'].includes(ext)) txt=await readText(f);
+    else if(ext==='pdf') txt=await readPDF(f);
+    else if(ext==='docx') txt=await readDOCX(f);
+    else if(ext==='xlsx') txt=await readXLSX(f);
+    else txt=await readText(f);
+  }catch(e){toast('Could not read file: '+e.message,'err');return;}
+  document.getElementById('iContent').value=txt;
+  const tmap={docx:'document',pdf:'document',xlsx:'worksheet',csv:'worksheet',md:'design_doc'};
+  if(tmap[ext]) document.getElementById('iType').value=tmap[ext];
+}
+function readText(f){return new Promise((r,e)=>{const fr=new FileReader();fr.onload=x=>r(x.target.result);fr.onerror=e;fr.readAsText(f);});}
+async function readPDF(f){
+  if(!window.pdfjsLib)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const ab=await f.arrayBuffer(),pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let t='';
+  for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();t+=tc.items.map(s=>s.str).join(' ')+'\n\n';}
+  return t;
+}
+async function readDOCX(f){
+  if(!window.mammoth)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
+}
+async function readXLSX(f){
+  if(!window.XLSX)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+  return wb.SheetNames.map(n=>`=== ${n} ===\n`+XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n\n');
+}
+function loadJS(src){return new Promise((r,e)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=e;document.head.appendChild(s);});}
+
+// ── Edit mode ──
+window.editItem = function(id){
+  const it=S.items.find(i=>i.id===id);
+  if(!it)return;
+  _editId=id;
+  document.getElementById('iTitle').value=it.title;
+  document.getElementById('iType').value=it.type;
+  document.getElementById('iTags').value=(it.tags||[]).join(', ');
+  document.getElementById('iContent').value=it.content;
+  document.getElementById('editBanner').style.display='flex';
+  document.getElementById('ingestBtn').textContent='✏ Save Changes';
+  document.getElementById('ingestBtn').classList.add('editing');
+  document.querySelector('.ing-wrap').scrollIntoView({behavior:'smooth'});
+  toast('Editing item — update fields and click Save Changes','ok');
+};
+
+function cancelEdit(){
+  _editId=null;
+  document.getElementById('iTitle').value='';
+  document.getElementById('iTags').value='';
+  document.getElementById('iContent').value='';
+  document.getElementById('editBanner').style.display='none';
+  document.getElementById('ingestBtn').textContent='◈ Add to Hub';
+  document.getElementById('ingestBtn').classList.remove('editing');
+}
+
+// ── Ingest ──
+async function doIngest(){
+  const title=document.getElementById('iTitle').value.trim();
+  const type=document.getElementById('iType').value;
+  const tags=document.getElementById('iTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const content=document.getElementById('iContent').value.trim();
+  if(!title){toast('Enter a title','err');return;}
+  if(!content){toast('No content to ingest','err');return;}
+
+  if(_editId){
+    // Update existing item
+    const item=S.items.find(i=>i.id===_editId);
+    if(item){
+      item.title=title;item.type=type;item.tags=tags;item.content=content;
+      item.wordCount=content.split(/\s+/).filter(Boolean).length;
+      item.updatedAt=new Date().toISOString();
+      save();cancelEdit();renderAll();toast(`"${title}" updated`,'ok');
+      if(document.getElementById('autoAI').checked) analyzeItem(item.id);
+      checkLivingHints(tags);
+    }
+    return;
+  }
+
+  const id='kb'+Date.now()+Math.random().toString(36).slice(2,6);
+  const item={id,title,type,tags,content,wordCount:content.split(/\s+/).filter(Boolean).length,summary:'',keyPoints:[],createdAt:new Date().toISOString()};
+  S.items.unshift(item);
+  save();
+  document.getElementById('iTitle').value='';
+  document.getElementById('iTags').value='';
+  document.getElementById('iContent').value='';
+  renderAll();
+  toast(`"${title}" added`,'ok');
+  if(document.getElementById('autoAI').checked) analyzeItem(id);
+  checkLivingHints(tags);
+}
+
+function checkLivingHints(tags){
+  const tl=tags.map(t=>t.toLowerCase());
+  const matches=[];
+  for(const [area,cfg] of Object.entries(LIVE_AREAS)){
+    if(cfg.tags.some(kw=>tl.some(t=>t.includes(kw)||kw.includes(t)))){
+      matches.push(cfg.title.replace(' Best Practices',''));
+    }
+  }
+  if(matches.length){
+    setTimeout(()=>toast(`Tip: Refresh Living Docs → ${matches.join(', ')} with new content`,'ok'),1200);
+  }
+}
+
+async function analyzeItem(id){
+  const item=S.items.find(i=>i.id===id);
+  if(!item)return;
+  item._busy=true;renderAll();
+  try{
+    const snippet=item.content.slice(0,8000);
+    const raw=await claude(
+      'You are a Workday Finance knowledge analyst. Respond ONLY with valid JSON, no markdown fences.',
+      `Analyze and respond with this exact JSON structure:
+{"summary":"2-3 sentence executive summary","key_points":["insight 1","insight 2","insight 3","insight 4","insight 5"],"suggested_tags":["tag1","tag2","tag3"]}
+
+Title: ${item.title}\nType: ${item.type}\nContent:\n${snippet}`,
+      800
+    );
+    if(raw){
+      const m=raw.match(/\{[\s\S]*\}/);
+      if(m){const p=JSON.parse(m[0]);item.summary=p.summary||'';item.keyPoints=p.key_points||[];if(p.suggested_tags)item.tags=[...new Set([...item.tags,...p.suggested_tags])];}
+    }
+  }catch(e){item.summary=item.content.slice(0,200)+(item.content.length>200?'…':'');}
+  delete item._busy;save();renderAll();toast('AI analysis done','ok');
+}
+
+// ── Render ──
+function renderAll(){updStats();renderList();renderMain();}
+
+function updStats(){
+  const its=S.items;
+  document.getElementById('sItems').textContent=its.length;
+  document.getElementById('sWords').textContent=its.reduce((a,i)=>a+(i.wordCount||0),0).toLocaleString();
+  document.getElementById('sTypes').textContent=new Set(its.map(i=>i.type)).size;
+}
+
+function filtered(){
+  const q=(document.getElementById('lSearch')?.value||'').toLowerCase();
+  return S.items.filter(i=>{
+    const mt=S.filter==='all'||i.type===S.filter;
+    const mq=!q||i.title.toLowerCase().includes(q)||i.content.toLowerCase().includes(q)||i.summary.toLowerCase().includes(q)||i.tags.some(t=>t.toLowerCase().includes(q));
+    return mt&&mq;
+  });
+}
+
+function renderList(){
+  const el=document.getElementById('libList'),its=filtered();
+  el.innerHTML=its.length?its.map(it=>`
+    <div class="li-item${S.selId===it.id?' on':''}" onclick="selItem('${it.id}')">
+      <div class="li-title">${ICONS[it.type]||'◫'} ${esc(it.title)}</div>
+      <div class="li-meta">
+        <span class="li-type">${it.type.replace('_',' ')}</span>
+        ${it._busy?'<span class="spin"><span class="ring"></span>Analyzing…</span>':''}
+        <span class="li-date">${fdt(it.createdAt)}</span>
+      </div>
+      ${it.summary?`<div class="li-preview">${esc(it.summary)}</div>`:''}
+    </div>`).join('')
+  :'<div style="padding:14px;text-align:center;font-size:11px;color:var(--text-dim)">No matches.</div>';
+}
+
+function renderMain(){
+  if(S.tab==='lib') renderLib();
+  if(S.tab==='live') renderLiveView();
+}
+
+function renderLib(){
+  const lv=document.getElementById('libView'),dv=document.getElementById('detailView');
+  if(S.selId){
+    lv.style.display='none';dv.classList.add('vis');renderDetail(dv);
+  }else{
+    dv.classList.remove('vis');lv.style.display='';
+    const its=filtered();
+    if(!its.length){
+      lv.innerHTML=S.items.length===0
+        ?`<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">Knowledge Hub is empty</div><div class="empty-sub">Use the ingest panel to add documents, transcripts, notes, or design docs.</div></div>`
+        :`<div class="empty-state"><div class="empty-icon">◎</div><div class="empty-title">No matches</div><div class="empty-sub">Try a different search or filter.</div></div>`;
+      return;
+    }
+    lv.innerHTML=`<div class="card-grid">${its.map(it=>`
+      <div class="kb-card" onclick="selItem('${it.id}')">
+        <div class="kb-card-icon">${ICONS[it.type]||'◫'}</div>
+        <div class="kb-card-title">${esc(it.title)}</div>
+        <div class="kb-card-type">${it.type.replace('_',' ')}</div>
+        ${it._busy?'<div class="spin" style="margin-bottom:5px"><span class="ring"></span>AI analyzing…</div>':''}
+        <div class="kb-card-sum">${it.summary?esc(it.summary):'<em style="color:var(--text-dim);font-size:10px">No summary yet — enable AI (Ollama or API key) and use AI analyze, or click to analyze manually</em>'}</div>
+        <div class="kb-card-foot">
+          <div class="kb-tags">${(it.tags||[]).slice(0,4).map(t=>`<span class="kb-tag">${esc(t)}</span>`).join('')}</div>
+          <span class="kb-date">${fdt(it.createdAt)}</span>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+}
+
+function renderDetail(el){
+  const it=S.items.find(i=>i.id===S.selId);
+  if(!it){S.selId=null;renderLib();return;}
+  el.innerHTML=`
+    <button class="back-btn" onclick="S.selId=null;renderAll()">← Back to Library</button>
+    <div class="det-hdr">
+      <div class="det-icon">${ICONS[it.type]||'◫'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="det-title">${esc(it.title)}</div>
+        <div class="det-meta">
+          <span class="det-badge">${it.type.replace('_',' ')}</span>
+          <span class="det-date">${new Date(it.createdAt).toLocaleString()}</span>
+          ${it.updatedAt?`<span class="det-date">Updated: ${new Date(it.updatedAt).toLocaleString()}</span>`:''}
+          <span class="det-badge">${(it.wordCount||0).toLocaleString()} words</span>
+          ${it._busy?'<span class="spin"><span class="ring"></span>Analyzing…</span>':''}
+        </div>
+      </div>
+      <div class="det-actions">
+        ${!it.summary&&!it._busy?`<button class="act-btn" onclick="analyzeItem('${it.id}')">◈ Analyze</button>`:''}
+        ${it.summary&&!it._busy?`<button class="act-btn" onclick="analyzeItem('${it.id}')">↻ Re-analyze</button>`:''}
+        <button class="act-btn edit-btn" onclick="editItem('${it.id}')">✏ Edit</button>
+        <button class="act-btn" onclick="cpItem('${it.id}')">Copy</button>
+        <button class="act-btn del" onclick="delItem('${it.id}')">Delete</button>
+      </div>
+    </div>
+    ${it.tags?.length?`<div class="det-sec"><div class="det-sec-title">Tags</div><div class="tags-row">${it.tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+    ${it.summary?`<div class="det-sec"><div class="det-sec-title">AI Summary</div><div class="sum-box">${esc(it.summary)}</div></div>`:''}
+    ${it.keyPoints?.length?`<div class="det-sec"><div class="det-sec-title">Key Points</div><ul class="kp-list">${it.keyPoints.map(p=>`<li class="kp-item">${esc(p)}</li>`).join('')}</ul></div>`:''}
+    <div class="det-sec">
+      <div class="det-sec-title">Full Content</div>
+      <button class="raw-toggle" onclick="togRaw(this)">▶ Show full content (${(it.wordCount||0).toLocaleString()} words)</button>
+      <pre class="raw-pre" id="rp-${it.id}">${esc(it.content)}</pre>
+    </div>`;
+}
+
+// ── Interaction ──
+window.selItem=function(id){S.selId=S.selId===id?null:id;renderAll();};
+window.delItem=function(id){
+  if(!confirm('Remove this item from the knowledge base?'))return;
+  S.items=S.items.filter(i=>i.id!==id);S.selId=null;save();renderAll();toast('Removed','ok');
+};
+window.cpItem=function(id){const it=S.items.find(i=>i.id===id);if(it)navigator.clipboard.writeText(it.content).then(()=>toast('Copied','ok'));};
+window.togRaw=function(btn){const id=S.selId;const el=document.getElementById('rp-'+id);if(!el)return;el.classList.toggle('vis');const wc=(S.items.find(i=>i.id===id)?.wordCount||0).toLocaleString();btn.textContent=el.classList.contains('vis')?'▼ Hide full content':`▶ Show full content (${wc} words)`;};
+
+function setFilter(t){S.filter=t;document.querySelectorAll('.tpill').forEach(p=>p.classList.toggle('on',p.dataset.t===t));renderAll();}
+
+function switchTab(tab){
+  S.tab=tab;
+  const tabs=['lib','ask','gen','live'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('on',tabs[i]===tab));
+  document.getElementById('libView').style.display=tab==='lib'?'':'none';
+  document.getElementById('detailView').classList[tab==='lib'&&S.selId?'add':'remove']('vis');
+  document.getElementById('askView').classList[tab==='ask'?'add':'remove']('vis');
+  document.getElementById('genView').classList[tab==='gen'?'add':'remove']('vis');
+  document.getElementById('liveView').classList[tab==='live'?'add':'remove']('vis');
+  if(tab==='lib')renderLib();
+  if(tab==='live')renderLiveView();
+}
+
+// ── Ask AI ──
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doAsk();}}
+
+async function doAsk(){
+  const inp=document.getElementById('chatIn'),q=inp.value.trim();
+  if(!q)return;
+  inp.value='';
+  addMsg('usr',q);
+  const btn=document.getElementById('sendBtn');btn.disabled=true;
+  const spin=addMsg('ast','<span class="spin"><span class="ring"></span>Searching knowledge base…</span>');
+
+  try{
+    const scope=document.getElementById('askScope').value;
+
+    // 1. Build compact, relevance-ranked KB context (safe for Ollama)
+    const {ctx:kbCtx, sources:kbSources} = buildRelevantCtx(q, scope);
+
+    // 2. Web search — runs in parallel-ish; failure is non-fatal
+    spin.querySelector('.cb').innerHTML='<span class="spin"><span class="ring"></span>Searching web for current information…</span>';
+    let webResults=[];
+    try{
+      const wq=encodeURIComponent(q+' Workday');
+      const wr=await fetch(`/api/search?q=${wq}`,{signal:AbortSignal.timeout(12000)});
+      if(wr.ok){const wd=await wr.json();webResults=wd.results||[];}
+    }catch{/* web search optional */}
+
+    // 3. Build web context block
+    let webCtx='';
+    if(webResults.length){
+      webCtx='\n\nWEB SEARCH RESULTS (cite these as [Web N] in your answer):\n'+
+        webResults.map((r,i)=>`[Web ${i+1}] ${r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`).join('\n\n');
+    }
+
+    // 4. Call AI
+    spin.querySelector('.cb').innerHTML='<span class="spin"><span class="ring"></span>Generating answer…</span>';
+    const systemPrompt=`You are a Workday Finance & Technology expert assistant.\n\nInstructions:\n- Use the KNOWLEDGE BASE items and WEB SEARCH RESULTS below to answer the question.\n- Cite knowledge base items as [KB: Title] and web results as [Web 1], [Web 2], etc.\n- If neither source has enough detail, say so clearly and give your best general answer.\n- Use markdown formatting with headings and bullet points.\n- Be specific and actionable.\n\n${kbCtx}${webCtx}`;
+
+    const ans=await claude(systemPrompt, q, 700);
+
+    // 5. Render answer + sources
+    if(!ans){
+      const hint=_backend==='none'
+        ?'No AI backend found. Start Ollama (<code>ollama serve</code>) or add <code>ANTHROPIC_API_KEY</code> to .env and restart the server.'
+        :'The AI returned an empty response. Try rephrasing your question or reducing the knowledge base size.';
+      spin.querySelector('.cb').innerHTML=`<span style="color:var(--text-dim);font-style:italic">${hint}</span>`;
+      btn.disabled=false;
+      return;
+    }
+
+    let html=mdToHtml(ans);
+
+    // Sources block
+    const hasKbSrc=kbSources.length>0;
+    const hasWebSrc=webResults.some(r=>r.url);
+    if(hasKbSrc||hasWebSrc){
+      html+=`<div class="sources-block"><div class="sources-title">Sources</div>`;
+      kbSources.forEach(s=>{
+        html+=`<div class="source-item"><span class="src-num">KB</span><span class="src-kb-tag">${esc(s.type)}</span>${esc(s.title)}</div>`;
+      });
+      webResults.forEach((r,i)=>{
+        if(!r.url)return;
+        html+=`<div class="source-item"><span class="src-num">[${i+1}]</span><a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title||r.url)}</a></div>`;
+      });
+      html+=`</div>`;
+    }
+
+    spin.querySelector('.cb').innerHTML=html;
+  }catch(e){
+    spin.querySelector('.cb').innerHTML=`<span style="color:var(--red)">Error: ${esc(e.message)}</span>`;
+  }
+  btn.disabled=false;
+}
+
+function addMsg(cls,html){
+  const w=document.getElementById('chatWin');
+  const d=document.createElement('div');d.className=`cm ${cls}`;d.innerHTML=`<div class="cb">${html}</div>`;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;return d;
+}
+
+// Score KB items by relevance to query, return top 3 as compact context
+function buildRelevantCtx(query, scope){
+  if(!S.items.length)return{ctx:'KNOWLEDGE BASE: Empty — ingest documents first.',sources:[]};
+
+  const qWords=query.toLowerCase().split(/\W+/).filter(w=>w.length>3);
+
+  const scored=S.items.map(it=>{
+    const haystack=(it.title+' '+(it.tags||[]).join(' ')+' '+(it.summary||'')+' '+(it.keyPoints||[]).join(' ')).toLowerCase();
+    const score=qWords.reduce((n,w)=>n+(haystack.includes(w)?2:0)+(it.content.toLowerCase().includes(w)?1:0),0);
+    return{...it,_score:score};
+  }).sort((a,b)=>b._score-a._score);
+
+  // Take top 3 most relevant items
+  const top=scored.filter(i=>i._score>0).slice(0,3);
+  const fallback=top.length===0?scored.slice(0,2):top; // if nothing scored, take 2 most recent
+
+  const sources=fallback.map(it=>({title:it.title,type:it.type}));
+
+  const ctx='KNOWLEDGE BASE ('+fallback.length+' most relevant items):\n\n'+
+    fallback.map(it=>{
+      const parts=[`### [KB: ${it.title}] (${it.type})`];
+      if(it.tags?.length)parts.push('Tags: '+it.tags.join(', '));
+      if(it.summary)parts.push('Summary: '+it.summary);
+      if(it.keyPoints?.length)parts.push('Key Points:\n'+it.keyPoints.map(p=>'- '+p).join('\n'));
+      // Include up to 1000 chars of content regardless of scope (safe for Ollama)
+      const snippet=it.content.slice(0,1000);
+      parts.push('Content:\n'+snippet+(it.content.length>1000?'\n[…truncated]':''));
+      return parts.join('\n');
+    }).join('\n\n---\n\n');
+
+  return{ctx,sources};
+}
+
+// Legacy full-context builder (used by Generate tab only)
+function buildCtx(scope){
+  if(!S.items.length)return'No items in knowledge base yet.';
+  return S.items.map(it=>{
+    const parts=[`### ${it.title} (${it.type})`];
+    if(it.tags?.length)parts.push(`Tags: ${it.tags.join(', ')}`);
+    if(it.summary)parts.push(`Summary: ${it.summary}`);
+    if(it.keyPoints?.length)parts.push(`Key Points:\n${it.keyPoints.map(p=>`- ${p}`).join('\n')}`);
+    if(scope==='all')parts.push(`Content:\n${it.content.slice(0,1200)}${it.content.length>1200?'\n[truncated]':''}`);
+    return parts.join('\n');
+  }).join('\n\n---\n\n');
+}
+
+// ── Generate ──
+function renderTmplList(){
+  document.getElementById('ttList').innerHTML=TMPL.map(t=>`
+    <div class="ttcard${S.tmpl===t.id?' on':''}" onclick="S.tmpl='${t.id}';renderTmplList()">
+      <div class="ttcard-name">${t.name}</div>
+      <div class="ttcard-desc">${t.desc}</div>
+    </div>`).join('');
+}
+
+async function doGenerate(){
+  if(!S.tmpl){toast('Select a template type','err');return;}
+  if(!S.items.length){toast('Ingest some items first','err');return;}
+  const t=TMPL.find(x=>x.id===S.tmpl);
+  const topic=document.getElementById('gTopic').value.trim();
+  const ctx=document.getElementById('gCtx').value.trim();
+  const scope=document.getElementById('gScope').value;
+  const btn=document.getElementById('genBtn');btn.disabled=true;btn.textContent='◆ Generating…';
+  document.getElementById('genOut').innerHTML=`<div class="loading"><div class="lring"></div><div style="font-size:11px">Generating ${t.name}…</div></div>`;
+  try{
+    const kb=buildCtx(scope);
+    const out=await claude(
+      `You are a senior Workday Finance technical consultant creating a ${t.name}. Make it professional, detailed, and immediately usable on a client engagement. Use markdown with clear headings and tables where helpful.`,
+      `Create a complete ${t.name}${topic?` focused on: ${topic}`:''}.\n${ctx?`Requirements: ${ctx}\n`:''}\nBase this on:\n\n${kb}`,
+      4000
+    );
+    if(!out){document.getElementById('genOut').innerHTML=`<div style="padding:18px;color:var(--text-dim);font-size:12px">No AI backend available — start Ollama with a model, or add ANTHROPIC_API_KEY to .env and restart the server.</div>`;btn.disabled=false;btn.textContent='◆ Generate';return;}
+    const docTitle=t.name+(topic?' - '+topic:'');
+    window._genRaw={text:out,title:docTitle};
+    document.getElementById('genOut').innerHTML=`
+      <div class="gen-out-hdr">
+        <div class="gen-out-title">${t.name}${topic?' — '+esc(topic):''}</div>
+        <div class="gen-out-acts">
+          <button onclick="cpGen()">Copy</button>
+          <button onclick="dlGen('md')">↓ .md</button>
+          <button class="exp-word" onclick="dlGen('word')">↓ Word</button>
+          <button class="exp-pdf" onclick="dlGen('pdf')">↓ PDF</button>
+          <button class="exp-xlsx" onclick="dlGen('xlsx')">↓ Excel</button>
+          <button class="exp-ppt" onclick="dlGen('ppt')">↓ PPT</button>
+        </div>
+      </div>
+      <div class="gen-out-body" id="genOutBody">${mdToHtml(out)}</div>`;
+    toast('Template generated!','ok');
+  }catch(e){document.getElementById('genOut').innerHTML=`<div style="padding:18px;color:var(--red);font-size:12px">Error: ${esc(e.message)}</div>`;}
+  btn.disabled=false;btn.textContent='◆ Generate';
+}
+
+window.cpGen=function(){if(window._genRaw)navigator.clipboard.writeText(window._genRaw.text).then(()=>toast('Copied','ok'));};
+window.dlGen=async function(fmt){
+  if(!window._genRaw)return;
+  await exportDoc(window._genRaw.text,window._genRaw.title,fmt);
+};
+
+// ── Living Docs ──
+function getRelevantItems(area){
+  const keywords=LIVE_AREAS[area].tags;
+  return S.items.filter(it=>{
+    const allText=(it.title+' '+(it.tags||[]).join(' ')+' '+(it.summary||'')).toLowerCase();
+    return keywords.some(kw=>allText.includes(kw));
+  });
+}
+
+function renderLiveView(){
+  const grid=document.getElementById('liveGrid');
+  grid.innerHTML=Object.entries(LIVE_AREAS).map(([area,cfg])=>{
+    const data=getLiving(area);
+    const rel=getRelevantItems(area);
+    const metaText=data
+      ?`Last updated ${fdt(data.lastUpdated)} · ${data.itemCount} source items · ${rel.length} items now in KB`
+      :'Not yet generated';
+    return `
+    <div class="live-area">
+      <div class="live-area-hdr">
+        <div style="min-width:0">
+          <div class="live-area-title">${cfg.icon} ${cfg.title}</div>
+          <div class="live-area-meta" id="liveMeta_${area}">${metaText}</div>
+        </div>
+        <div class="live-act-row">
+          <button class="exp-btn exp-word" onclick="exportLiving('${area}','word')" ${!data?'disabled':''}>↓ Word</button>
+          <button class="exp-btn exp-pdf" onclick="exportLiving('${area}','pdf')" ${!data?'disabled':''}>↓ PDF</button>
+          <button class="exp-btn exp-xlsx" onclick="exportLiving('${area}','xlsx')" ${!data?'disabled':''}>↓ Excel</button>
+          <button class="exp-btn exp-ppt" onclick="exportLiving('${area}','ppt')" ${!data?'disabled':''}>↓ PPT</button>
+          <button class="live-refresh" id="liveBtn_${area}" onclick="refreshLiving('${area}')">↻ ${data?'Refresh':'Generate'}</button>
+        </div>
+      </div>
+      <div class="live-body">
+        ${data
+          ?`<div class="live-content" id="liveContent_${area}">${mdToHtml(data.content)}</div>`
+          :`<div class="live-empty"><div class="live-empty-icon">◉</div>Click <strong>Generate</strong> to create this living document from your knowledge base.<br>${rel.length?`<br><strong>${rel.length} relevant items</strong> found in the knowledge base.`:'Add items tagged with relevant keywords to populate this guide.'}</div>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.refreshLiving=async function(area){
+  const cfg=LIVE_AREAS[area];
+  const btn=document.getElementById(`liveBtn_${area}`);
+  if(btn){btn.disabled=true;btn.textContent='↻ Generating…';}
+  try{
+    const rel=getRelevantItems(area);
+    let kbCtx='';
+    if(rel.length){
+      kbCtx='\n\nKNOWLEDGE BASE CONTEXT:\n'+rel.map(it=>{
+        const parts=[`### ${it.title}`];
+        if(it.summary)parts.push(`Summary: ${it.summary}`);
+        if(it.keyPoints?.length)parts.push(it.keyPoints.map(p=>`- ${p}`).join('\n'));
+        parts.push(it.content.slice(0,3000));
+        return parts.join('\n');
+      }).join('\n\n---\n\n');
+    }else{
+      kbCtx='\n\nNo directly tagged items found in the knowledge base yet — generate best practices based on your expert Workday Finance knowledge, noting where client-specific details would normally be sourced from.';
+    }
+    const out=await claude(
+      'You are a senior Workday Finance consultant creating a living best practices document. This document will be continuously updated as new knowledge is added. Make it comprehensive, authoritative, and immediately actionable. Use markdown with H1, H2, H3 headings, bullet lists, and tables.',
+      cfg.prompt+kbCtx,
+      5000
+    );
+    if(!out){toast('Set your Claude API key in the header to generate Living Docs','err');if(btn){btn.disabled=false;btn.textContent='↻ '+(getLiving(area)?'Refresh':'Generate');}return;}
+    const data={content:out,lastUpdated:new Date().toISOString(),itemCount:rel.length};
+    saveLiving(area,data);
+    renderLiveView();
+    toast(`${cfg.title} updated`,'ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  if(btn){btn.disabled=false;btn.textContent='↻ Refresh';}
+};
+
+window.exportLiving=async function(area,fmt){
+  const data=getLiving(area);
+  if(!data){toast('Generate the document first','err');return;}
+  await exportDoc(data.content,LIVE_AREAS[area].title,fmt);
+};
+
+// ── Export (Word / PDF / Excel / PPT) ──
+async function exportDoc(markdown,title,fmt){
+  const slug=title.replace(/[^a-z0-9 ]/gi,'').replace(/\s+/g,'_').toLowerCase();
+  try{
+    if(fmt==='md'){
+      dlBlob(new Blob([markdown],{type:'text/markdown'}),slug+'.md');
+    }else if(fmt==='word'){
+      await exportWord(markdown,title,slug);
+    }else if(fmt==='pdf'){
+      await exportPDF(markdown,title,slug);
+    }else if(fmt==='xlsx'){
+      await exportXL(markdown,title,slug);
+    }else if(fmt==='ppt'){
+      await exportPPT(markdown,title,slug);
+    }
+  }catch(e){toast('Export failed: '+e.message,'err');}
+}
+
+async function exportWord(markdown,title,slug){
+  if(!window.htmlDocx)await loadJS('https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+  <style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;margin:2cm;}
+  h1{font-size:18pt;color:#1a0066;margin-top:20pt;}h2{font-size:14pt;color:#3d0099;margin-top:14pt;border-bottom:1px solid #ccc;padding-bottom:4pt;}
+  h3{font-size:12pt;color:#5a00cc;margin-top:10pt;}table{border-collapse:collapse;width:100%;margin:8pt 0;}
+  th{background:#e8d5ff;padding:5pt 8pt;text-align:left;border:1px solid #ccc;font-weight:bold;}
+  td{padding:5pt 8pt;border:1px solid #ccc;}ul,ol{margin:4pt 0;padding-left:18pt;}li{margin-bottom:2pt;}
+  code{font-family:Consolas,monospace;background:#f0e0ff;padding:1pt 4pt;}</style></head>
+  <body>${mdToHtmlFull(markdown)}</body></html>`;
+  const blob=htmlDocx.asBlob(html,{orientation:'portrait',margins:{top:1440,right:1440,bottom:1440,left:1440}});
+  dlBlob(blob,slug+'.docx');
+  toast('Word document downloaded','ok');
+}
+
+async function exportPDF(markdown,title,slug){
+  if(!window.jspdf)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const pw=doc.internal.pageSize.getWidth();
+  const ph=doc.internal.pageSize.getHeight();
+  const margin=15,maxW=pw-margin*2;
+  let y=margin;
+
+  function newPageIfNeeded(h){if(y+h>ph-margin){doc.addPage();y=margin;}}
+
+  const lines=markdown.split('\n');
+  for(const raw of lines){
+    const line=raw.trimEnd();
+    if(!line){y+=3;continue;}
+    if(line.startsWith('# ')){
+      newPageIfNeeded(12);
+      doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(26,0,102);
+      const wrapped=doc.splitTextToSize(line.slice(2),maxW);
+      wrapped.forEach(l=>{newPageIfNeeded(9);doc.text(l,margin,y);y+=9;});
+      y+=2;
+    }else if(line.startsWith('## ')){
+      newPageIfNeeded(10);
+      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(61,0,153);
+      doc.setDrawColor(200,180,230);doc.setLineWidth(0.2);doc.line(margin,y+2,pw-margin,y+2);
+      const wrapped=doc.splitTextToSize(line.slice(3),maxW);
+      wrapped.forEach(l=>{newPageIfNeeded(8);doc.text(l,margin,y);y+=8;});
+      y+=2;
+    }else if(line.startsWith('### ')){
+      newPageIfNeeded(8);
+      doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(90,0,200);
+      const wrapped=doc.splitTextToSize(line.slice(4),maxW);
+      wrapped.forEach(l=>{newPageIfNeeded(7);doc.text(l,margin,y);y+=7;});
+    }else if(line.match(/^[-*] /)){
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(40,20,60);
+      const txt='• '+line.replace(/^[-*] /,'').replace(/\*\*(.+?)\*\*/g,'$1');
+      const wrapped=doc.splitTextToSize(txt,maxW-5);
+      wrapped.forEach(l=>{newPageIfNeeded(6);doc.text(l,margin+4,y);y+=6;});
+    }else if(line.match(/^\d+\. /)){
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(40,20,60);
+      const txt=line.replace(/\*\*(.+?)\*\*/g,'$1');
+      const wrapped=doc.splitTextToSize(txt,maxW-5);
+      wrapped.forEach(l=>{newPageIfNeeded(6);doc.text(l,margin+4,y);y+=6;});
+    }else if(line.startsWith('---')){
+      newPageIfNeeded(6);doc.setDrawColor(180,160,210);doc.setLineWidth(0.15);doc.line(margin,y,pw-margin,y);y+=5;
+    }else{
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(40,20,60);
+      const txt=line.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]');
+      const wrapped=doc.splitTextToSize(txt,maxW);
+      wrapped.forEach(l=>{newPageIfNeeded(6);doc.text(l,margin,y);y+=6;});
+    }
+  }
+  doc.save(slug+'.pdf');
+  toast('PDF downloaded','ok');
+}
+
+async function exportXL(markdown,title,slug){
+  if(!window.XLSX)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  const wb=XLSX.utils.book_new();
+  // Parse markdown into sections, each section → worksheet
+  const sections=[];let cur={name:'Overview',rows:[]};
+  for(const raw of markdown.split('\n')){
+    const line=raw.trim();
+    if(line.startsWith('## ')){
+      if(cur.rows.length)sections.push(cur);
+      cur={name:line.slice(3).slice(0,31),rows:[]};
+    }else if(line.startsWith('# ')){
+      cur.rows.push([line.slice(2)]);
+    }else if(line.startsWith('### ')){
+      cur.rows.push(['',line.slice(4)]);
+    }else if(line.startsWith('| ')){
+      const cells=line.split('|').map(c=>c.trim()).filter(c=>c&&!c.match(/^-+$/));
+      if(cells.length)cur.rows.push(cells);
+    }else if(line.match(/^[-*] /)){
+      cur.rows.push(['• '+line.replace(/^[-*] /,'').replace(/\*\*(.+?)\*\*/g,'$1')]);
+    }else if(line){
+      cur.rows.push([line.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'$1')]);
+    }else{
+      cur.rows.push([]);
+    }
+  }
+  if(cur.rows.length)sections.push(cur);
+  if(!sections.length)sections.push({name:'Content',rows:[[title]]});
+  for(const sec of sections){
+    const ws=XLSX.utils.aoa_to_sheet(sec.rows);
+    if(ws['!cols']===undefined)ws['!cols']=[{wch:80}];
+    XLSX.utils.book_append_sheet(wb,ws,sec.name.replace(/[:\\\/\?\[\]\*]/g,'').slice(0,31)||'Sheet');
+  }
+  XLSX.writeFile(wb,slug+'.xlsx');
+  toast('Excel downloaded','ok');
+}
+
+async function exportPPT(markdown,title,slug){
+  if(!window.JSZip)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+
+  // Parse markdown into slides (H1/H2 = new slide)
+  const slides=[];
+  let cur=null;
+  for(const raw of markdown.split('\n')){
+    const line=raw.trim();
+    if(line.startsWith('# ')||line.startsWith('## ')){
+      if(cur)slides.push(cur);
+      cur={heading:line.replace(/^#+\s+/,''),level:line.startsWith('## ')?2:1,bullets:[]};
+    }else if(cur){
+      if(line.startsWith('### ')) cur.bullets.push({txt:line.slice(4),bold:true,sub:false});
+      else if(line.match(/^[-*] /)) cur.bullets.push({txt:'• '+line.replace(/^[-*] /,'').replace(/\*\*(.+?)\*\*/g,'$1'),bold:false,sub:false});
+      else if(line&&!line.startsWith('---')&&!line.startsWith('|')) cur.bullets.push({txt:line.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]'),bold:false,sub:true});
+    }
+  }
+  if(cur)slides.push(cur);
+
+  function emu(inches){return Math.round(inches*914400);}
+  function xmlEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+
+  function makeSlideXml(idx,sld,isTitleSlide){
+    const W=emu(10),H=emu(5.625);
+    const bgColor=isTitleSlide?'0A0014':'0D0020';
+    const headColor=isTitleSlide?'E8D5FF':'F0E6FF';
+    const bodyLines=sld.bullets.slice(0,18);
+    const bodyXml=bodyLines.map(b=>`
+      <a:p><a:pPr${b.sub?' lvl="1"':''}/>
+        <a:r><a:rPr lang="en-US" sz="${b.bold?1400:1200}" b="${b.bold?1:0}" dirty="0"/>
+          <a:t>${xmlEsc(b.txt.slice(0,120))}</a:t></a:r></a:p>`).join('');
+    const headY=isTitleSlide?emu(1.8):emu(0.35);
+    const bodyY=isTitleSlide?emu(3.0):emu(1.3);
+    const headSz=isTitleSlide?3200:2400;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="${bgColor}"/></a:solidFill>
+    <a:effectLst/></p:bgPr></p:bg>
+  <p:spTree>
+    <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+    <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="0" y="0"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>
+    <p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(0.4)}" y="${headY}"/><a:ext cx="${emu(9.2)}" cy="${emu(1.2)}"/></a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+      <p:txBody><a:bodyPr wrap="square" rtlCol="0"/><a:lstStyle/>
+        <a:p><a:r><a:rPr lang="en-US" sz="${headSz}" b="1" dirty="0"><a:solidFill><a:srgbClr val="${headColor}"/></a:solidFill></a:rPr>
+          <a:t>${xmlEsc(sld.heading.slice(0,80))}</a:t></a:r></a:p></p:txBody></p:sp>
+    ${bodyLines.length?`<p:sp><p:nvSpPr><p:cNvPr id="3" name="Body"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph idx="1"/></p:nvPr></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(0.4)}" y="${bodyY}"/><a:ext cx="${emu(9.2)}" cy="${emu(3.8)}"/></a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+      <p:txBody><a:bodyPr wrap="square" rtlCol="0"/><a:lstStyle/>${bodyXml}</p:txBody></p:sp>`:''}
+    ${isTitleSlide?`<p:sp><p:nvSpPr><p:cNvPr id="4" name="Sub"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(0.4)}" y="${emu(3.5)}"/><a:ext cx="${emu(9.2)}" cy="${emu(0.5)}"/></a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+      <p:txBody><a:bodyPr/><a:lstStyle/>
+        <a:p><a:r><a:rPr lang="en-US" sz="1200" dirty="0"><a:solidFill><a:srgbClr val="9070C0"/></a:solidFill></a:rPr>
+          <a:t>CoP Knowledge Hub · Generated ${new Date().toLocaleDateString()}</a:t></a:r></a:p></p:txBody></p:sp>`:''}
+  </p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+  }
+
+  const slideCount=slides.length;
+  const zip=new JSZip();
+
+  // [Content_Types].xml
+  let ctSlides=slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+  <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
+  <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+  ${ctSlides}</Types>`);
+
+  // _rels/.rels
+  zip.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
+</Relationships>`);
+
+  // ppt/presentation.xml
+  const sldIds=slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+1}"/>`).join('');
+  zip.file('ppt/presentation.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rMaster1"/></p:sldMasterIdLst>
+  <p:sldSz cx="${emu(10)}" cy="${emu(5.625)}" type="screen16x9"/>
+  <p:notesSz cx="${emu(7.5)}" cy="${emu(10)}"/>
+  <p:sldIdLst>${sldIds}</p:sldIdLst></p:presentation>`);
+
+  // ppt/_rels/presentation.xml.rels
+  const presRels=slides.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('');
+  zip.file('ppt/_rels/presentation.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${presRels}
+  <Relationship Id="rMaster1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
+</Relationships>`);
+
+  // Minimal slide master + layout (required by spec)
+  const masterXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldMaster xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="0A0014"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+    <p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(10)}" cy="${emu(5.625)}"/><a:chOff x="0" y="0"/><a:chExt cx="${emu(10)}" cy="${emu(5.625)}"/></a:xfrm></p:grpSpPr>
+    </p:spTree></p:cSld>
+  <p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
+  <p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>
+</p:sldMaster>`;
+  zip.file('ppt/slideMasters/slideMaster1.xml',masterXml);
+  zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`);
+
+  const layoutXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldLayout xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" type="blank">
+  <p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+    <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(10)}" cy="${emu(5.625)}"/><a:chOff x="0" y="0"/><a:chExt cx="${emu(10)}" cy="${emu(5.625)}"/></a:xfrm></p:grpSpPr>
+  </p:spTree></p:cSld>
+  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`;
+  zip.file('ppt/slideLayouts/slideLayout1.xml',layoutXml);
+  zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
+</Relationships>`);
+
+  // Individual slides
+  // First slide = title slide
+  const titleSlide={heading:title,level:1,bullets:[{txt:'CoP Knowledge Hub',bold:false,sub:true}]};
+  const allSlides=[titleSlide,...slides];
+  allSlides.forEach((sld,i)=>{
+    zip.file(`ppt/slides/slide${i+1}.xml`,makeSlideXml(i,sld,i===0));
+    zip.file(`ppt/slides/_rels/slide${i+1}.xml.rels`,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`);
+  });
+
+  // Re-generate presentation.xml with correct slide count
+  const allCount=allSlides.length;
+  const sldIds2=allSlides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+1}"/>`).join('');
+  const presRels2=allSlides.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('');
+  zip.file('ppt/presentation.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rMaster1"/></p:sldMasterIdLst>
+  <p:sldSz cx="${emu(10)}" cy="${emu(5.625)}" type="screen16x9"/>
+  <p:notesSz cx="${emu(7.5)}" cy="${emu(10)}"/>
+  <p:sldIdLst>${sldIds2}</p:sldIdLst></p:presentation>`);
+  zip.file('ppt/_rels/presentation.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${presRels2}
+  <Relationship Id="rMaster1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
+</Relationships>`);
+
+  // Also add ct entries for all slides
+  const ctAll=allSlides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('');
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+  <Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
+  <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+  ${ctAll}</Types>`);
+
+  const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  dlBlob(blob,slug+'.pptx');
+  toast('PowerPoint downloaded','ok');
+}
+
+function dlBlob(blob,filename){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── Utilities ──
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fdt(iso){if(!iso)return'';const d=new Date(iso);return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});}
+function toast(msg,type='info'){const el=document.createElement('div');el.className=`toast${type==='ok'?' ok':type==='err'?' err':''}`;el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3500);}
+
+function mdToHtml(t){
+  if(!t)return'';
+  return t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)(\n(?!<li>)|$)/g,'$1</ul>\n')
+    .replace(/(<li>)/,'<ul>$1')
+    .replace(/\n\n/g,'<br><br>');
+}
+
+function mdToHtmlFull(t){
+  if(!t)return'';
+  let html=t
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^\|(.+)\|$/gm,(m,inner)=>{
+      const cells=inner.split('|').map(c=>`<td>${c.trim()}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    });
+  // Wrap consecutive table rows
+  html=html.replace(/(<tr>.*<\/tr>\n?)+/gs,m=>`<table>${m}</table>`);
+  html=html
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
+    .replace(/((<li>.*<\/li>\n?)+)/gs,m=>`<ul>${m}</ul>`)
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^(?!<[huptl])/gm,'');
+  return html;
+}
+
+// ── Init ──
+(function init(){
+  load();
+  checkApiStatus();
+  renderTmplList();
+  renderAll();
+})();
+</script>
+</body>
+</html>

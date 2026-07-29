@@ -1,0 +1,11 @@
+Invoice_ID,Supplier,Amount,Currency,Invoice_Date,PO_Reference,Exception_Type,Exception_Detail
+INV-2024-0891,Acme Office Supplies,15250.00,USD,2024-01-15,PO-5501,PRICE_VARIANCE,Invoice unit price $152.50 vs PO agreed price $130.00 for 100 units of office furniture
+INV-2024-0892,Global Tech Services,450.00,USD,2024-01-16,,MISSING_PO,No purchase order reference on invoice; vendor claims verbal approval from department head
+INV-2024-0893,Premier Consulting LLC,8500.00,USD,2024-01-17,PO-5502,DUPLICATE,Matches INV-2024-0847 paid on 2024-01-05 — same amount, supplier, and PO reference
+INV-2024-0894,Office Depot Business,250.00,USD,2024-01-18,PO-5503,MISSING_RECEIPT,Goods receipt not recorded in Workday for PO-5503; supplier claims delivery confirmed
+INV-2024-0895,International Freight Co,125000.00,USD,2024-01-19,,UNAPPROVED_SUPPLIER,Supplier not found in Workday approved vendor master; no contract on file
+INV-2024-0896,Software Vendors Ltd,3200.00,EUR,2024-01-20,PO-5504,CURRENCY_MISMATCH,PO issued in USD but invoice submitted in EUR; exchange rate dispute
+INV-2024-0897,Catering Plus Inc,4800.00,USD,2024-01-21,PO-5505,OVER_BUDGET,Invoice would cause cost center CC-1042 to exceed Q1 budget by $12,400
+INV-2024-0898,Express Logistics,780.00,USD,2024-01-22,PO-5506,QUANTITY_MISMATCH,Invoice for 52 units; Workday receiving shows only 40 units received on GR-2024-0331
+INV-2024-0899,Tax Advisory Group,2100.00,USD,2024-01-14,PO-5507,EARLY_PAYMENT,Invoice date 2024-01-14 with NET30 terms; payment requested for 2024-01-17 (3 days)
+INV-2024-0900,Maintenance Corp,650.00,USD,2024-01-23,PO-5508,TAX_DISCREPANCY,Invoice tax amount $78.00; system calculates $52.00 based on jurisdiction rules for TX

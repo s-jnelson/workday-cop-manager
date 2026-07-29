@@ -1,0 +1,138 @@
+[
+  {
+    "id": "bededa80-6054-4ab6-82a5-44f4a837be13",
+    "title": "Workday Finance Deployment Accelerator Program",
+    "description": "Firm-wide initiative to build, test, and publish a set of accelerators that compress the Finance deployment lifecycle across all technical domains.",
+    "type": "deployment_methodology",
+    "status": "active",
+    "priority": "critical",
+    "owner": "CoP Manager",
+    "start_date": "2026-01-15",
+    "target_completion": "2026-12-31",
+    "focus_areas": [
+      "integrations",
+      "conversion",
+      "reporting",
+      "extend"
+    ],
+    "deliverables": [
+      "Standardized Integration Template Library",
+      "Automated Conversion Validation Framework",
+      "Standard Financial Report Package",
+      "Reusable Extend Application Templates",
+      "Go-Live Cutover Toolkit"
+    ],
+    "progress_pct": 35
+  },
+  {
+    "id": "ba801150-aab6-4a0f-b674-61701f6b7a9f",
+    "title": "AI for Workday Financials \u2014 Client Advisory Program",
+    "description": "Develop, pilot, and commercialize AI use cases built on or integrated with Workday Financials that drive measurable client value.",
+    "type": "ai_innovation",
+    "status": "active",
+    "priority": "high",
+    "owner": "CoP Manager",
+    "start_date": "2026-02-01",
+    "target_completion": "2026-12-31",
+    "focus_areas": [
+      "integrations",
+      "extend",
+      "reporting"
+    ],
+    "deliverables": [
+      "AI Invoice Processing & Exception Handling (Extend)",
+      "AI-powered Financial Anomaly Detection (Reporting/Prism)",
+      "AI Integration Error Diagnostics",
+      "Natural Language Financial Query Tool",
+      "AI Supplier Risk Scoring"
+    ],
+    "progress_pct": 20
+  },
+  {
+    "id": "7a27406c-0a24-4298-a5ed-686552d129cc",
+    "title": "Workday Finance Technical CoP Knowledge Hub",
+    "description": "Build a centralized, searchable knowledge repository for all CoP methodology, assets, playbooks, and lessons learned.",
+    "type": "knowledge_management",
+    "status": "active",
+    "priority": "high",
+    "owner": "CoP Manager",
+    "start_date": "2026-01-01",
+    "target_completion": "2026-06-30",
+    "focus_areas": [
+      "integrations",
+      "conversion",
+      "reporting",
+      "extend"
+    ],
+    "deliverables": [
+      "Asset catalog with search and tagging",
+      "Methodology playbooks (one per focus area)",
+      "Lessons learned database",
+      "Training curriculum by role and level"
+    ],
+    "progress_pct": 50
+  },
+  {
+    "id": "a5625d1f-b87a-431c-9397-70baa934ca3d",
+    "title": "Conversion Methodology V2",
+    "description": "Overhaul the existing conversion methodology to cover all 14 Workday Financial data objects with standardized mapping templates, validation rules, and rehearsal protocols.",
+    "type": "methodology",
+    "status": "active",
+    "priority": "high",
+    "owner": "conversion",
+    "start_date": "2026-01-15",
+    "target_completion": "2026-09-30",
+    "focus_areas": [
+      "conversion"
+    ],
+    "deliverables": [
+      "Data mapping templates for all 14 objects",
+      "Automated validation rule library",
+      "Cutover rehearsal protocol",
+      "Post-cutover reconciliation guide"
+    ],
+    "progress_pct": 60
+  },
+  {
+    "id": "8deb3f5b-cd58-45b2-85a4-056dfe1357ac",
+    "title": "Report Design Standards & Certification Program",
+    "description": "Establish firm standards for Workday report design, naming conventions, security group mapping, and performance optimization. Launch an internal certification to ensure quality.",
+    "type": "standards",
+    "status": "planning",
+    "priority": "medium",
+    "owner": "reporting",
+    "start_date": "2026-04-01",
+    "target_completion": "2026-08-31",
+    "focus_areas": [
+      "reporting"
+    ],
+    "deliverables": [
+      "Report Design Standards Guide",
+      "Naming convention taxonomy",
+      "Performance optimization playbook",
+      "Internal certification assessment"
+    ],
+    "progress_pct": 10
+  },
+  {
+    "id": "5c749843-8dbb-455f-bec8-e16d113c5045",
+    "title": "Integration Monitoring & Alerting Framework",
+    "description": "Build a standard approach for deploying integration monitoring, error alerting, and self-healing patterns across all Workday Finance integration deployments.",
+    "type": "tooling",
+    "status": "active",
+    "priority": "medium",
+    "owner": "integrations",
+    "start_date": "2026-03-01",
+    "target_completion": "2026-09-30",
+    "focus_areas": [
+      "integrations"
+    ],
+    "deliverables": [
+      "Monitoring configuration templates",
+      "Error notification workflow",
+      "Integration health dashboard",
+      "Incident response runbook"
+    ],
+    "progress_pct": 25
+  }
+]

@@ -1,0 +1,15 @@
+INSTRUCTIONS,"Bank account master data. Includes operating accounts, payroll accounts, and investment accounts. Validate with: python workday_financial_validator.py bank_accounts this_file.csv 3",,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,ACME-US,First National Bank,ACME Operating USD,Checking,USD,4567891230,021000021,,,ACH,2026-01-01,FALSE,Primary operating account for USD disbursements
+Company,Financial_Institution_Name,Bank_Account_Nickname,Account_Type,Currency,Bank_Account_Number,Routing_Number,IBAN,SWIFT_Code,Default_Payment_Type,Start_Date,Inactive,Description
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+NOTES:,Account_Type valid values: Checking | Savings | Money_Market | Investment | Payroll,,,,,,,,,,,,,,
+NOTES:,Currency: 3-letter ISO code. Each account holds one currency.,,,,,,,,,,,,,,
+NOTES:,"Routing_Number: 9-digit US ABA routing number for ACH. Required for US accounts using ACH. Leave blank for international accounts",,,,,,,,,,,,,,
+NOTES:,"IBAN: International Bank Account Number — required for EU/UK accounts. Format varies by country (e.g., GB29NWBK60161331926819)",,,,,,,,,,,,,,
+NOTES:,"SWIFT_Code: Required for international wire transfers. 8-11 characters (e.g., CHASUS33)",,,,,,,,,,,,,,
+NOTES:,"Bank_Account_Number: The actual account number. Do NOT include routing number in this field",,,,,,,,,,,,,,
+NOTES:,SECURITY: This file contains sensitive banking data. Restrict access to conversion team leads only. Do not email unencrypted.,,,,,,,,,,,,,,
+NOTES:,"Reconciliation: After load, confirm each bank account appears in Workday Banking with correct details and currency",,,,,,,,,,,,,,

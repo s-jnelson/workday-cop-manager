@@ -1,0 +1,16 @@
+INSTRUCTIONS,"GL Beginning Balances represent the closing trial balance from the legacy system as of the last closed period before go-live. Validate with: python workday_financial_validator.py beginning_balances_gl this_file.csv 3",,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,ACME-US,1000,2025-12,USD,125000.00,,CC-1001,,Cash - Operating Account
+Company,Ledger_Account,Period,Currency,Debit_Amount,Credit_Amount,Cost_Center,Additional_Worktag,Memo
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+NOTES:,Ledger_Account: Must exactly match a Ledger Account ID from the COA (Ledger Accounts) load,,,,,,,,,,
+NOTES:,"Period: Format YYYY-MM (e.g., 2025-12 for December 2025 — the last closed period in legacy)",,,,,,,,,,
+NOTES:,"Debit_Amount and Credit_Amount: Enter positive amounts only. Use EITHER Debit OR Credit per row, not both",,,,,,,,,,
+NOTES:,"CRITICAL: Total Debits must equal Total Credits (trial balance must balance). Run this check in Excel before loading: =SUMIF(E:E,"">0"",E:E) should equal =SUMIF(F:F,"">0"",F:F)",,,,,,,,,,
+NOTES:,"Reconciliation gate: GL balance per Workday after load must match legacy trial balance by account, by currency, within $0.01",,,,,,,,,,
+NOTES:,"Worktag allocation: If GL balances need to be split by Cost Center, create one row per Cost Center allocation per account",,,,,,,,,,
+NOTES:,"Load order: Object 8 — LAST object to load in the sequence. All master data (COA, Cost Centers, Suppliers, Customers) must be loaded first",,,,,,,,,,
+NOTES:,"This template represents ACTUAL ledger balances. If loading Budget balances separately, use a separate template and load type",,,,,,,,,,

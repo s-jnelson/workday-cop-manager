@@ -1,0 +1,6 @@
+Expense_Report_ID,Employee_ID,Total_Amount,Expense_Line_Count,P1_Count,P2_Count,P3_Count,Total_Violations,recommendation,rationale,manager_note
+ER-2024-001,EMP-101,415.0,3,0,2,0,2,REVIEW,,
+ER-2024-002,EMP-202,315.0,3,0,4,1,5,REVIEW,,
+ER-2024-003,EMP-303,317.0,3,2,1,0,3,REJECT,,
+ER-2024-004,EMP-404,6625.0,3,2,0,0,2,REJECT,,
+ER-2024-005,EMP-505,213.0,3,2,1,0,3,REJECT,,

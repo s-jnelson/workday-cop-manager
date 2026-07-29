@@ -1,0 +1,16 @@
+Expense_Report_ID,Employee_ID,Expense_Date,Category,Amount,Currency,Description,Receipt_Attached,Merchant,Cost_Center
+ER-2024-0041,EMP-1001,2024-01-15,Meals & Entertainment,85.00,USD,Team lunch - project kickoff meeting with 4 attendees,Yes,The Capital Grille,CC-1020
+ER-2024-0041,EMP-1001,2024-01-16,Travel - Hotel,275.00,USD,Hotel stay - client site visit NYC,Yes,Marriott Midtown,CC-1020
+ER-2024-0041,EMP-1001,2024-01-17,Travel - Air,450.00,USD,Flight NYC to Chicago - client meeting,Yes,United Airlines,CC-1020
+ER-2024-0041,EMP-1001,2024-01-18,Meals & Entertainment,42.00,USD,Working lunch,Yes,Local Deli,CC-1020
+ER-2024-0042,EMP-1002,2024-01-13,Meals & Entertainment,320.00,USD,Team dinner with wine and cocktails for 6 people,No,Morton's Steakhouse,CC-1015
+ER-2024-0042,EMP-1002,2024-01-14,Personal Care,125.00,USD,Haircut and grooming before client presentation,Yes,Salon Elite,CC-1015
+ER-2024-0042,EMP-1002,2024-01-15,Travel - Hotel,185.00,USD,Hotel - conference attendance,Yes,Hilton Downtown,CC-1015
+ER-2024-0042,EMP-1002,2024-01-20,Meals & Entertainment,95.00,USD,Saturday team brunch,Yes,Brunch Spot,CC-1015
+ER-2024-0043,EMP-1003,2024-01-08,Office Supplies,32.00,USD,Printer paper and pens,No,Office Depot,CC-1042
+ER-2024-0043,EMP-1003,2024-01-09,Meals & Entertainment,68.00,USD,Client lunch - 2 attendees,Yes,Bistro 42,CC-1042
+ER-2024-0043,EMP-1003,2024-01-10,Travel - Ground,6500.00,USD,Limousine service for the week,Yes,Elite Limo Co,CC-1042
+ER-2024-0043,EMP-1003,2024-01-11,Meals & Entertainment,45.00,USD,Working dinner,Yes,Restaurant XYZ,CC-1042
+ER-2024-0044,EMP-1004,2024-01-22,Travel - Air,1250.00,USD,First class upgrade - domestic flight,Yes,Delta Airlines,CC-1030
+ER-2024-0044,EMP-1004,2024-01-23,Meals & Entertainment,55.00,USD,Business lunch with partner,Yes,Cafe Milano,CC-1030
+ER-2024-0044,EMP-1004,2024-01-24,Software,15.00,USD,Personal Netflix subscription,Yes,Netflix,CC-1030

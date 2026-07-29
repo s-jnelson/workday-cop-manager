@@ -1,0 +1,32 @@
+WORKDAY SUPPLIER RISK — HIGH/CRITICAL REPORT
+Generated: 2026-07-09 07:14:20
+======================================================================
+
+Supplier: Global Tech Partners (SUP-002)
+Risk Level: CRITICAL  |  Total Score: 95/100
+Scores — Completeness: 25/25  |  Payment Terms: 25/25  |  Geographic: 25/25  |  Payment Type: 20/25
+Country: Russia  |  Payment Type: Wire
+
+----------------------------------------------------------------------
+
+Supplier: BestDeal Imports (SUP-005)
+Risk Level: CRITICAL  |  Total Score: 85/100
+Scores — Completeness: 15/25  |  Payment Terms: 25/25  |  Geographic: 25/25  |  Payment Type: 20/25
+Country: Iran  |  Payment Type: Wire
+
+----------------------------------------------------------------------
+
+Supplier: Delta Energy Corp (SUP-008)
+Risk Level: HIGH  |  Total Score: 70/100
+Scores — Completeness: 25/25  |  Payment Terms: 5/25  |  Geographic: 25/25  |  Payment Type: 15/25
+Country: Venezuela  |  Payment Type: nan
+
+----------------------------------------------------------------------
+
+Supplier: Regional Staffing Co (SUP-007)
+Risk Level: HIGH  |  Total Score: 54/100
+Scores — Completeness: 21/25  |  Payment Terms: 15/25  |  Geographic: 10/25  |  Payment Type: 8/25
+Country: nan  |  Payment Type: Check
+
+----------------------------------------------------------------------
+

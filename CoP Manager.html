@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoP Manager — Launch Hub</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --panel: #171b25; --card: #1e2333;
+    --border: #2a3147; --border-l: #333d55;
+    --text: #e8eaf0; --muted: #8892a4; --dim: #5a6478;
+    --teal: #2dd4bf; --teal-dim: #0d3d38;
+    --green: #4ade80; --green-dim: #143d22;
+    --amber: #fbbf24; --amber-dim: #3d2e0a;
+    --red: #f87171; --red-dim: #3d1515;
+    --blue: #4a9eff;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .hub {
+    width: 100%; max-width: 560px;
+  }
+  .hub-brand {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+  }
+  .hub-logo {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--teal); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #0a1a18; letter-spacing: -1px; flex-shrink: 0;
+  }
+  .hub-brand-text h1 { font-size: 20px; font-weight: 700; }
+  .hub-brand-text p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .status-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px;
+  }
+  .status-card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.7px;
+    text-transform: uppercase; color: var(--dim); margin-bottom: 14px;
+  }
+  .server-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .server-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .server-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    background: var(--dim); transition: background 0.3s;
+  }
+  .server-dot.up      { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .server-dot.down    { background: var(--red); }
+  .server-dot.checking { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .server-info { flex: 1; }
+  .server-name { font-size: 13px; font-weight: 600; }
+  .server-url  { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: monospace; }
+  .server-status-text { font-size: 11px; font-weight: 600; }
+  .status-up   { color: var(--green); }
+  .status-down { color: var(--red); }
+  .status-checking { color: var(--amber); }
+
+  .launch-btn {
+    display: block; width: 100%; padding: 14px;
+    background: var(--teal); color: #0a1a18;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    text-decoration: none; text-align: center;
+    transition: opacity 0.15s; margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .launch-btn:hover { opacity: 0.85; }
+  .launch-btn:disabled, .launch-btn.disabled {
+    background: var(--border-l, #333d55); color: var(--dim);
+    cursor: not-allowed; opacity: 1;
+  }
+  .validator-btn {
+    display: block; width: 100%; padding: 11px;
+    background: transparent; color: var(--teal);
+    border: 1px solid var(--teal); border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    text-decoration: none; text-align: center;
+    transition: all 0.15s; margin-bottom: 16px;
+  }
+  .validator-btn:hover { background: var(--teal-dim); }
+  .validator-btn.disabled { color: var(--dim); border-color: var(--border); cursor: not-allowed; }
+
+  .offline-box {
+    background: var(--amber-dim); border: 1px solid var(--amber);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    margin-bottom: 16px; display: none;
+  }
+  .offline-box.show { display: block; }
+  .offline-title { font-size: 12px; font-weight: 700; color: var(--amber); margin-bottom: 8px; }
+  .offline-steps { font-size: 12px; color: var(--text); line-height: 1.7; }
+  .offline-steps code {
+    background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 4px;
+    font-family: monospace; font-size: 11px; color: var(--amber);
+  }
+  .open-folder-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 10px; padding: 9px 16px;
+    background: transparent; color: var(--amber);
+    border: 1px solid var(--amber); border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: opacity 0.15s;
+    width: 100%; justify-content: center;
+  }
+  .open-folder-btn:hover { background: rgba(251,191,36,0.1); }
+  .start-servers-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 10px; padding: 10px 16px;
+    background: var(--amber); color: #1a0e00;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s; letter-spacing: 0.2px;
+  }
+  .start-servers-btn:hover { opacity: 0.85; }
+  .start-hint {
+    margin-top: 8px; font-size: 10px; color: var(--dim);
+    text-align: center; display: none;
+  }
+  .start-hint.show { display: block; }
+
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 20px 0 14px;
+  }
+  .section-divider span {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--dim); white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .mlb-restart-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; margin-top: 10px; padding: 10px 16px;
+    background: transparent; color: var(--blue);
+    border: 1px solid var(--blue); border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    text-decoration: none; transition: all 0.15s; letter-spacing: 0.2px;
+  }
+  .mlb-restart-btn:hover { background: rgba(74,158,255,0.1); }
+
+  .footer {
+    text-align: center; font-size: 11px; color: var(--dim); margin-top: 8px;
+  }
+  .footer a { color: var(--muted); text-decoration: none; }
+  .footer a:hover { color: var(--text); }
+
+  .refresh-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .refresh-label { font-size: 11px; color: var(--dim); }
+  .refresh-btn {
+    font-size: 11px; padding: 3px 10px; border-radius: 4px;
+    background: transparent; border: 1px solid var(--border-l);
+    color: var(--muted); cursor: pointer;
+  }
+  .refresh-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .countdown { font-size: 11px; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="hub">
+
+  <div class="hub-brand">
+    <div class="hub-logo">WD</div>
+    <div class="hub-brand-text">
+      <h1>Finance Tech CoP Manager</h1>
+      <p>Accenture · Finance Technology Practice · Launch Hub</p>
+    </div>
+  </div>
+
+  <div class="status-card">
+    <div class="refresh-row">
+      <div class="status-card-title">Server Status</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="countdown" id="countdown"></span>
+        <button class="refresh-btn" onclick="checkAll()">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="server-row">
+      <div class="server-dot checking" id="dot-3030"></div>
+      <div class="server-info">
+        <div class="server-name">CoP Manager Dashboard</div>
+        <div class="server-url">http://localhost:3030</div>
+      </div>
+      <div class="server-status-text status-checking" id="txt-3030">Checking…</div>
+    </div>
+    <div class="server-row">
+      <div class="server-dot checking" id="dot-8000"></div>
+      <div class="server-info">
+        <div class="server-name">API &amp; Agent Server</div>
+        <div class="server-url">http://localhost:8000</div>
+      </div>
+      <div class="server-status-text status-checking" id="txt-8000">Checking…</div>
+    </div>
+    <div class="server-row">
+      <div class="server-dot checking" id="dot-8090"></div>
+      <div class="server-info">
+        <div class="server-name">Address &amp; Banking Validator</div>
+        <div class="server-url">http://localhost:8090</div>
+      </div>
+      <div class="server-status-text status-checking" id="txt-8090">Checking…</div>
+    </div>
+  </div>
+
+  <div class="offline-box" id="offlineBox">
+    <div class="offline-title">⚠ Servers Not Running</div>
+    <div class="offline-steps">
+      Click below to run <code>Start CoP Manager.bat</code> — then click <strong>Open</strong> in the browser bar.
+      This page will update automatically once servers are online.
+    </div>
+    <a class="start-servers-btn" href="file:///C:/Users/steve.a.nelson/workday-cop-manager/Start%20CoP%20Manager.bat">
+      ▶ Start All Servers
+    </a>
+    <a class="open-folder-btn" href="file:///C:/Users/steve.a.nelson/workday-cop-manager/" title="Opens the project folder in File Explorer">
+      📁 Open Project Folder
+    </a>
+  </div>
+
+  <a id="dashBtn" class="launch-btn disabled" href="#" onclick="return false">
+    🚀 Open CoP Manager Dashboard
+  </a>
+
+  <a id="valBtn" class="validator-btn disabled" href="#" onclick="return false">
+    ◈ Open Address &amp; Banking Validator
+  </a>
+
+  <div class="section-divider"><span>Other Tools</span></div>
+
+  <div class="status-card">
+    <div class="status-card-title">MLB Stat Oracle</div>
+    <div class="server-row">
+      <div class="server-dot checking" id="dot-8337"></div>
+      <div class="server-info">
+        <div class="server-name">MLB Dashboard Server</div>
+        <div class="server-url">http://localhost:8337</div>
+      </div>
+      <div class="server-status-text status-checking" id="txt-8337">Checking…</div>
+    </div>
+  </div>
+
+  <a id="mlbBtn" class="launch-btn disabled" href="#" onclick="return false"
+     style="background:var(--blue);color:#fff;margin-bottom:10px">
+    ⚾ Open MLB Stat Oracle
+  </a>
+
+  <a class="mlb-restart-btn"
+     href="file:///C:/Users/steve.a.nelson/.claude/mlb-analysis/Restart%20MLB%20Dashboard.bat">
+    ↺ Restart MLB Dashboard Server
+  </a>
+
+  <div class="footer">
+    Auto-refreshes every 10 seconds &nbsp;·&nbsp;
+    <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+    &nbsp;·&nbsp; Accenture Finance Tech CoP
+  </div>
+
+</div>
+
+<script>
+const SERVERS = [
+  { port: 3030, url: 'http://localhost:3030',        check: 'http://localhost:3030/' },
+  { port: 8000, url: 'http://localhost:8000',        check: 'http://localhost:8000/api/health' },
+  { port: 8090, url: 'http://localhost:8090',        check: 'http://localhost:8090/health' },
+  { port: 8337, url: 'http://localhost:8337',        check: 'http://localhost:8337/api/run-status' },
+];
+
+const statuses = { 3030: false, 8000: false, 8090: false, 8337: false };
+let countdown = 10;
+let timer;
+
+async function checkServer(port, checkUrl) {
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 2500);
+    await fetch(checkUrl, { mode: 'no-cors', signal: controller.signal });
+    clearTimeout(id);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function setStatus(port, up, checking) {
+  const dot = document.getElementById('dot-' + port);
+  const txt = document.getElementById('txt-' + port);
+  if (!dot || !txt) return;
+  if (checking) {
+    dot.className = 'server-dot checking';
+    txt.className = 'server-status-text status-checking';
+    txt.textContent = 'Checking…';
+  } else if (up) {
+    dot.className = 'server-dot up';
+    txt.className = 'server-status-text status-up';
+    txt.textContent = 'Running';
+  } else {
+    dot.className = 'server-dot down';
+    txt.className = 'server-status-text status-down';
+    txt.textContent = 'Offline';
+  }
+}
+
+async function checkAll() {
+  clearInterval(timer);
+  countdown = 10;
+  document.getElementById('countdown').textContent = '';
+
+  SERVERS.forEach(s => setStatus(s.port, false, true));
+
+  await Promise.all(SERVERS.map(async s => {
+    const up = await checkServer(s.port, s.check);
+    statuses[s.port] = up;
+    setStatus(s.port, up, false);
+  }));
+
+  updateButtons();
+  startCountdown();
+}
+
+function updateButtons() {
+  const dashUp = statuses[3030];
+  const valUp  = statuses[8090];
+  const anyDown = !dashUp || !statuses[8000];
+
+  const dashBtn = document.getElementById('dashBtn');
+  if (dashUp) {
+    dashBtn.classList.remove('disabled');
+    dashBtn.href = 'http://localhost:3030';
+    dashBtn.onclick = null;
+  } else {
+    dashBtn.classList.add('disabled');
+    dashBtn.href = '#';
+    dashBtn.onclick = () => false;
+  }
+
+  const valBtn = document.getElementById('valBtn');
+  if (valUp) {
+    valBtn.classList.remove('disabled');
+    valBtn.href = 'http://localhost:8090';
+    valBtn.onclick = null;
+  } else {
+    valBtn.classList.add('disabled');
+    valBtn.href = '#';
+    valBtn.onclick = () => false;
+  }
+
+  document.getElementById('offlineBox').classList.toggle('show', anyDown);
+
+  const mlbBtn = document.getElementById('mlbBtn');
+  if (statuses[8337]) {
+    mlbBtn.classList.remove('disabled');
+    mlbBtn.href = 'http://localhost:8337';
+    mlbBtn.onclick = null;
+  } else {
+    mlbBtn.classList.add('disabled');
+    mlbBtn.href = '#';
+    mlbBtn.onclick = () => false;
+  }
+}
+
+function startCountdown() {
+  countdown = 10;
+  const el = document.getElementById('countdown');
+  timer = setInterval(() => {
+    countdown--;
+    el.textContent = `Refreshing in ${countdown}s`;
+    if (countdown <= 0) {
+      clearInterval(timer);
+      el.textContent = '';
+      checkAll();
+    }
+  }, 1000);
+}
+
+function copyStartCmd() {
+  const cmd = '"C:\\Users\\steve.a.nelson\\workday-cop-manager\\Start CoP Manager.bat"';
+  navigator.clipboard.writeText(cmd).then(() => {
+    const btn = document.querySelector('.start-servers-btn');
+    const hint = document.getElementById('startHint');
+    btn.textContent = '✓ Copied!';
+    hint.classList.add('show');
+    setTimeout(() => {
+      btn.innerHTML = '▶ Copy Start Command';
+      hint.classList.remove('show');
+    }, 4000);
+  }).catch(() => {
+    prompt('Copy this command, then press Win+R and paste it:', '"C:\\Users\\steve.a.nelson\\workday-cop-manager\\Start CoP Manager.bat"');
+  });
+}
+
+// Start immediately
+checkAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workday Address & Banking Validator — Accenture Finance Tech</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="brand-logo">WD</div>
+      <div class="brand-text">
+        <div class="brand-title">Address &amp; Banking Validator</div>
+        <div class="brand-sub">Accenture · Finance Technology Practice</div>
+      </div>
+    </div>
+    <div class="header-badge">Powered by Workday Field Mapping Guidelines</div>
+  </div>
+</header>
+
+<!-- ── MAIN ────────────────────────────────────────────────── -->
+<main class="app-main">
+
+  <!-- TAB NAV -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" id="tab-address" onclick="switchTab('address')">
+      <span class="tab-icon">◈</span> Address Validation
+    </button>
+    <button class="tab-btn" id="tab-banking" onclick="switchTab('banking')">
+      <span class="tab-icon">◆</span> Banking Validation
+    </button>
+  </nav>
+
+  <!-- ── ADDRESS TAB ──────────────────────────────────────── -->
+  <section class="tab-panel active" id="panel-address">
+
+    <div class="tool-layout">
+
+      <!-- LEFT: Upload -->
+      <div class="upload-col">
+        <div class="panel upload-panel">
+          <div class="panel-title">Upload Address File</div>
+          <div class="upload-zone" id="addr-drop-zone"
+               ondragover="handleDragOver(event,'addr')"
+               ondragleave="handleDragLeave(event,'addr')"
+               ondrop="handleDrop(event,'addr')"
+               onclick="document.getElementById('addr-file-input').click()">
+            <div class="upload-icon">⬆</div>
+            <div class="upload-primary">Drag &amp; drop your file here</div>
+            <div class="upload-secondary">or click to browse</div>
+            <div class="upload-formats">Accepts: .xlsx · .xls · .csv</div>
+          </div>
+          <input type="file" id="addr-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="fileSelected('addr',this)" />
+          <div class="file-info" id="addr-file-info"></div>
+
+          <div class="format-guide">
+            <div class="guide-title">Expected columns (any order):</div>
+            <div class="guide-cols">
+              <span class="guide-tag req">Country *</span>
+              <span class="guide-tag req">Address Line 1 *</span>
+              <span class="guide-tag opt">Address Line 2</span>
+              <span class="guide-tag opt">Address Line 3</span>
+              <span class="guide-tag">City</span>
+              <span class="guide-tag">Region / State</span>
+              <span class="guide-tag">Postal Code</span>
+              <span class="guide-tag opt">City Subdivision</span>
+            </div>
+            <div class="guide-note">* Required. Column names are auto-detected — supports Workday, Coupa, and custom formats.</div>
+          </div>
+
+          <button class="validate-btn" id="addr-validate-btn" onclick="runValidation('address')" disabled>
+            ▶ Validate Addresses
+          </button>
+        </div>
+
+        <div class="panel what-we-check">
+          <div class="panel-title">What We Check</div>
+          <ul class="check-list">
+            <li><span class="check-icon ok">✓</span> Required fields per country (36 countries)</li>
+            <li><span class="check-icon ok">✓</span> Postal code format per Workday rules</li>
+            <li><span class="check-icon ok">✓</span> Fields that are "Not Allowed" left empty</li>
+            <li><span class="check-icon ok">✓</span> Country name normalization (ISO codes accepted)</li>
+            <li><span class="check-icon ok">✓</span> Workday iLoad-ready output columns</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div class="results-col">
+        <div class="panel results-panel" id="addr-results-panel" style="display:none">
+
+          <!-- Summary bar -->
+          <div class="summary-bar" id="addr-summary-bar">
+            <div class="summary-card" id="addr-s-total">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Total Rows</div>
+            </div>
+            <div class="summary-card ok" id="addr-s-valid">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Valid</div>
+            </div>
+            <div class="summary-card warn" id="addr-s-warn">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Warnings</div>
+            </div>
+            <div class="summary-card err" id="addr-s-err">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Errors</div>
+            </div>
+          </div>
+
+          <div class="results-header-row">
+            <div class="results-title">Validation Results</div>
+            <button class="download-btn" id="addr-download-btn" onclick="downloadResults('address')" style="display:none">
+              ⬇ Download Corrected Excel
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="results-table" id="addr-results-table">
+              <thead>
+                <tr>
+                  <th>Row</th>
+                  <th>Status</th>
+                  <th>Country</th>
+                  <th>Address Line 1</th>
+                  <th>City</th>
+                  <th>Postal Code</th>
+                  <th>Issues &amp; Suggestions</th>
+                </tr>
+              </thead>
+              <tbody id="addr-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="addr-empty-state">
+          <div class="empty-icon">◈</div>
+          <div class="empty-title">No results yet</div>
+          <div class="empty-sub">Upload a file and click Validate to see results here</div>
+        </div>
+
+        <!-- Spinner -->
+        <div class="spinner-wrap" id="addr-spinner" style="display:none">
+          <div class="spinner"></div>
+          <div class="spinner-label">Validating addresses…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BANKING TAB ──────────────────────────────────────── -->
+  <section class="tab-panel" id="panel-banking">
+
+    <div class="tool-layout">
+
+      <!-- LEFT: Upload -->
+      <div class="upload-col">
+        <div class="panel upload-panel">
+          <div class="panel-title">Upload Banking File</div>
+          <div class="upload-zone" id="bank-drop-zone"
+               ondragover="handleDragOver(event,'bank')"
+               ondragleave="handleDragLeave(event,'bank')"
+               ondrop="handleDrop(event,'bank')"
+               onclick="document.getElementById('bank-file-input').click()">
+            <div class="upload-icon">⬆</div>
+            <div class="upload-primary">Drag &amp; drop your file here</div>
+            <div class="upload-secondary">or click to browse</div>
+            <div class="upload-formats">Accepts: .xlsx · .xls · .csv</div>
+          </div>
+          <input type="file" id="bank-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="fileSelected('bank',this)" />
+          <div class="file-info" id="bank-file-info"></div>
+
+          <div class="format-guide">
+            <div class="guide-title">Expected columns (any order):</div>
+            <div class="guide-cols">
+              <span class="guide-tag req">Country *</span>
+              <span class="guide-tag req">Bank Name *</span>
+              <span class="guide-tag opt">Account Number</span>
+              <span class="guide-tag opt">Routing / Sort Code</span>
+              <span class="guide-tag opt">IBAN</span>
+              <span class="guide-tag opt">BIC / SWIFT</span>
+              <span class="guide-tag opt">Branch Name</span>
+              <span class="guide-tag opt">Branch ID</span>
+              <span class="guide-tag opt">Name on Account</span>
+            </div>
+            <div class="guide-note">* Required. Column names are auto-detected.</div>
+          </div>
+
+          <button class="validate-btn" id="bank-validate-btn" onclick="runValidation('banking')" disabled>
+            ▶ Validate Banking Data
+          </button>
+        </div>
+
+        <div class="panel what-we-check">
+          <div class="panel-title">What We Check</div>
+          <ul class="check-list">
+            <li><span class="check-icon ok">✓</span> Required fields per country (35 countries)</li>
+            <li><span class="check-icon ok">✓</span> IBAN format validation</li>
+            <li><span class="check-icon ok">✓</span> BIC/SWIFT format (8 or 11 chars)</li>
+            <li><span class="check-icon ok">✓</span> Fields marked N/A for that country</li>
+            <li><span class="check-icon ok">✓</span> Country-specific routing code requirements</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- RIGHT: Results -->
+      <div class="results-col">
+        <div class="panel results-panel" id="bank-results-panel" style="display:none">
+
+          <div class="summary-bar" id="bank-summary-bar">
+            <div class="summary-card" id="bank-s-total">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Total Rows</div>
+            </div>
+            <div class="summary-card ok" id="bank-s-valid">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Valid</div>
+            </div>
+            <div class="summary-card warn" id="bank-s-warn">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Warnings</div>
+            </div>
+            <div class="summary-card err" id="bank-s-err">
+              <div class="summary-num">—</div>
+              <div class="summary-label">Errors</div>
+            </div>
+          </div>
+
+          <div class="results-header-row">
+            <div class="results-title">Validation Results</div>
+            <button class="download-btn" id="bank-download-btn" onclick="downloadResults('banking')" style="display:none">
+              ⬇ Download Corrected Excel
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="results-table" id="bank-results-table">
+              <thead>
+                <tr>
+                  <th>Row</th>
+                  <th>Status</th>
+                  <th>Country</th>
+                  <th>Bank Name</th>
+                  <th>Account #</th>
+                  <th>IBAN</th>
+                  <th>Issues &amp; Suggestions</th>
+                </tr>
+              </thead>
+              <tbody id="bank-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="empty-state" id="bank-empty-state">
+          <div class="empty-icon">◆</div>
+          <div class="empty-title">No results yet</div>
+          <div class="empty-sub">Upload a file and click Validate to see results here</div>
+        </div>
+
+        <div class="spinner-wrap" id="bank-spinner" style="display:none">
+          <div class="spinner"></div>
+          <div class="spinner-label">Validating banking data…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer class="app-footer">
+  <span>Powered by Workday Field Mapping Guidelines · Accenture Finance Technology Practice</span>
+  <span class="footer-sep">|</span>
+  <span>For internal use — demo mode · no client data stored</span>
+</footer>
+
+<!-- ── ERROR TOAST ─────────────────────────────────────────── -->
+<div class="error-toast" id="error-toast" style="display:none">
+  <span class="toast-icon">⚠</span>
+  <span id="error-toast-msg"></span>
+  <button class="toast-close" onclick="hideError()">✕</button>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+const state = {
+  address: { file: null, sessionId: null },
+  banking: { file: null, sessionId: null },
+};
+
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + (tab === 'address' ? 'address' : 'banking')).classList.add('active');
+}
+
+// ── File handling ──────────────────────────────────────────
+function handleDragOver(e, prefix) {
+  e.preventDefault();
+  document.getElementById(prefix + '-drop-zone').classList.add('drag-over');
+}
+function handleDragLeave(e, prefix) {
+  document.getElementById(prefix + '-drop-zone').classList.remove('drag-over');
+}
+function handleDrop(e, prefix) {
+  e.preventDefault();
+  document.getElementById(prefix + '-drop-zone').classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) applyFile(prefix, files[0]);
+}
+function fileSelected(prefix, input) {
+  if (input.files.length) applyFile(prefix, input.files[0]);
+}
+function applyFile(prefix, file) {
+  const key = prefix === 'addr' ? 'address' : 'banking';
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx','xls','csv'].includes(ext)) {
+    showError('Please upload an .xlsx, .xls, or .csv file.');
+    return;
+  }
+  state[key].file = file;
+  const info = document.getElementById(prefix + '-file-info');
+  const size = (file.size / 1024).toFixed(1);
+  info.innerHTML = `<span class="file-name">📄 ${file.name}</span><span class="file-size">${size} KB</span>`;
+  document.getElementById(prefix + '-validate-btn').disabled = false;
+}
+
+// ── Validation ─────────────────────────────────────────────
+async function runValidation(type) {
+  const prefix = type === 'address' ? 'addr' : 'bank';
+  const key = type;
+  const file = state[key].file;
+  if (!file) { showError('Please select a file first.'); return; }
+
+  // Show spinner, hide results
+  document.getElementById(prefix + '-spinner').style.display = 'flex';
+  document.getElementById(prefix + '-results-panel').style.display = 'none';
+  document.getElementById(prefix + '-empty-state').style.display = 'none';
+  document.getElementById(prefix + '-validate-btn').disabled = true;
+
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const endpoint = type === 'address' ? '/api/validate/addresses' : '/api/validate/banking';
+    const res = await fetch(endpoint, { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Validation failed');
+
+    state[key].sessionId = data.session_id;
+    renderResults(type, data);
+
+  } catch (err) {
+    showError(err.message || 'An unexpected error occurred.');
+    document.getElementById(prefix + '-empty-state').style.display = 'flex';
+  } finally {
+    document.getElementById(prefix + '-spinner').style.display = 'none';
+    document.getElementById(prefix + '-validate-btn').disabled = false;
+  }
+}
+
+// ── Render results ─────────────────────────────────────────
+function renderResults(type, data) {
+  const prefix = type === 'address' ? 'addr' : 'bank';
+  const rows = data.rows || [];
+
+  // Compute summary from rows (backend returns per-row data without a summary block)
+  const summary = {
+    total: rows.length,
+    valid: rows.filter(r => r.status === 'valid').length,
+    warnings: rows.filter(r => r.status === 'warning').length,
+    errors: rows.filter(r => r.status === 'error').length,
+  };
+
+  // Summary bar
+  document.getElementById(prefix + '-s-total').querySelector('.summary-num').textContent = summary.total;
+  document.getElementById(prefix + '-s-valid').querySelector('.summary-num').textContent = summary.valid;
+  document.getElementById(prefix + '-s-warn').querySelector('.summary-num').textContent = summary.warnings;
+  document.getElementById(prefix + '-s-err').querySelector('.summary-num').textContent = summary.errors;
+
+  // Download button
+  const dlBtn = document.getElementById(prefix + '-download-btn');
+  dlBtn.style.display = data.session_id ? 'inline-flex' : 'none';
+
+  // Table body
+  const tbody = document.getElementById(prefix + '-results-body');
+  tbody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.className = 'row-' + row.status;
+
+    const statusBadge = `<span class="status-badge ${row.status}">${row.status.toUpperCase()}</span>`;
+
+    // Issues are plain strings prefixed with "ERROR:" or "WARNING:"; suggestions are separate
+    const issueStrings = row.issues || [];
+    const suggStrings = row.suggestions || [];
+
+    let issuesList = issueStrings.map(iss => {
+      const isError = iss.startsWith('ERROR:');
+      const cls = isError ? 'issue-error' : 'issue-warn';
+      const text = iss.replace(/^(ERROR|WARNING):\s*/, '');
+      return `<div class="issue-item ${cls}">${text}</div>`;
+    }).join('');
+
+    if (suggStrings.length > 0) {
+      issuesList += suggStrings.map(s => `<div class="issue-suggestion">→ ${s}</div>`).join('');
+    }
+
+    if (type === 'address') {
+      const orig = row.original || {};
+      const corr = row.corrected || {};
+      const country = row.canonical_country || row.raw_country || orig['Country'] || '';
+      const addr = corr.address_line_1 || orig['Address Line 1'] || '';
+      const city = corr.city || orig['City'] || '';
+      const postal = corr.postal_code || orig['Postal Code'] || '';
+      tr.innerHTML = `
+        <td class="col-row">${row.row_num}</td>
+        <td class="col-status">${statusBadge}</td>
+        <td class="col-country">${country}</td>
+        <td class="col-addr">${addr}</td>
+        <td class="col-city">${city}</td>
+        <td class="col-postal">${postal}</td>
+        <td class="col-issues">${issuesList || '<span class="no-issues">✓ All checks passed</span>'}</td>
+      `;
+    } else {
+      const orig = row.original || {};
+      const corr = row.corrected || {};
+      const country = row.canonical_country || row.raw_country || orig['Country'] || '';
+      const bankName = corr.bank_name || orig['Bank Name'] || '';
+      const accountNum = corr.account_number || orig['Account Number'] || '';
+      const iban = corr.iban || orig['IBAN'] || '';
+      tr.innerHTML = `
+        <td class="col-row">${row.row_num}</td>
+        <td class="col-status">${statusBadge}</td>
+        <td class="col-country">${country}</td>
+        <td class="col-addr">${bankName}</td>
+        <td class="col-city">${accountNum}</td>
+        <td class="col-postal">${iban}</td>
+        <td class="col-issues">${issuesList || '<span class="no-issues">✓ All checks passed</span>'}</td>
+      `;
+    }
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById(prefix + '-results-panel').style.display = 'block';
+  document.getElementById(prefix + '-empty-state').style.display = 'none';
+}
+
+// ── Download ───────────────────────────────────────────────
+function downloadResults(type) {
+  const key = type;
+  const sid = state[key].sessionId;
+  if (!sid) return;
+  window.location = `/api/download/${type}/${sid}`;
+}
+
+// ── Error toast ────────────────────────────────────────────
+function showError(msg) {
+  const toast = document.getElementById('error-toast');
+  document.getElementById('error-toast-msg').textContent = msg;
+  toast.style.display = 'flex';
+  setTimeout(hideError, 6000);
+}
+function hideError() {
+  document.getElementById('error-toast').style.display = 'none';
+}
+</script>
+</body>
+</html>

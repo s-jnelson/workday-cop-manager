@@ -1,0 +1,28 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+
+# Data
+data/users.db
+logs/
+*.log
+api_server.log
+
+# Azure
+.azure/
+Dockerfile
+.dockerignore
+startup.txt
+
+# OS
+.DS_Store
+Thumbs.db

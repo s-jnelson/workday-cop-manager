@@ -1,0 +1,145 @@
+Transaction_ID,Date,Account,Cost_Center,Amount,Debit_Credit,Description,Posted_By,Anomaly_Flags,Max_Z_Score,Severity,Anomaly_Score
+TXN-00001,2024-01-13,6200-Benefits,CC-IT,2310.16,Credit,Journal entry 1 - 6200-Benefits,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00003,2024-01-16,6100-Salaries,CC-IT,2897.29,Debit,Journal entry 3 - 6100-Salaries,tlee,NEW_ACCOUNT,0.0,LOW,30
+TXN-00004,2024-11-04,5100-COGS,CC-HR,10770.27,Debit,Journal entry 4 - 5100-COGS,tlee,ZSCORE(3.56); IQR_OUTLIER,3.559875293673727,MEDIUM,70
+TXN-00006,2024-01-04,8100-Software,CC-Operations,771.85,Debit,Journal entry 6 - 8100-Software,bwilson,NEW_ACCOUNT,0.0,LOW,30
+TXN-00007,2024-03-20,8100-Software,CC-Marketing,11717.27,Debit,Journal entry 7 - 8100-Software,amiller,IQR_OUTLIER,0.0,LOW,30
+TXN-00008,2024-07-13,6200-Benefits,CC-Marketing,3467.37,Debit,Journal entry 8 - 6200-Benefits,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00011,2024-07-04,4000-Revenue,CC-Finance,547.23,Debit,Journal entry 11 - 4000-Revenue,jsmith,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00014,2024-06-30,8200-Hardware,CC-Marketing,62.18,Debit,Journal entry 14 - 8200-Hardware,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00016,2024-08-24,7100-Travel,CC-Marketing,471.81,Credit,Journal entry 16 - 7100-Travel,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00021,2024-05-06,7100-Travel,CC-HR,9882.03,Credit,Journal entry 21 - 7100-Travel,mbrown,IQR_OUTLIER,0.0,LOW,30
+TXN-00024,2024-11-17,7100-Travel,CC-Operations,129.4,Debit,Journal entry 24 - 7100-Travel,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00027,2024-11-24,8100-Software,CC-Finance,195.1,Credit,Journal entry 27 - 8100-Software,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00031,2024-09-28,5100-COGS,CC-HR,444.72,Debit,Journal entry 31 - 5100-COGS,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00032,2024-01-10,9200-Rent,CC-Marketing,17648.7,Debit,Journal entry 32 - 9200-Rent,kpatel,IQR_OUTLIER,0.0,LOW,30
+TXN-00037,2024-06-08,7200-Meals,CC-Marketing,1500.11,Credit,Journal entry 37 - 7200-Meals,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00039,2024-06-22,6200-Benefits,CC-HR,149.56,Debit,Journal entry 39 - 6200-Benefits,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00041,2024-04-27,6100-Salaries,CC-Finance,3319.93,Debit,Journal entry 41 - 6100-Salaries,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00044,2024-05-04,9200-Rent,CC-Operations,698.09,Credit,Journal entry 44 - 9200-Rent,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00045,2024-02-19,6200-Benefits,CC-Marketing,119.37,Credit,Journal entry 45 - 6200-Benefits,mbrown,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00047,2024-06-22,9100-Consulting,CC-IT,549.52,Debit,Journal entry 47 - 9100-Consulting,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00048,2024-10-01,7200-Meals,CC-IT,5354.45,Credit,Journal entry 48 - 7200-Meals,mbrown,IQR_OUTLIER,0.0,LOW,30
+TXN-00051,2024-02-17,6100-Salaries,CC-IT,1783.13,Debit,Journal entry 51 - 6100-Salaries,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00053,2024-07-13,7100-Travel,CC-Operations,397.27,Debit,Journal entry 53 - 7100-Travel,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00054,2024-05-26,9200-Rent,CC-HR,2744.94,Credit,Journal entry 54 - 9200-Rent,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00055,2024-04-07,7100-Travel,CC-IT,5148.7,Credit,Journal entry 55 - 7100-Travel,jsmith,WEEKEND_POSTING,0.0,LOW,30
+TXN-00057,2024-10-26,6100-Salaries,CC-HR,311.43,Credit,Journal entry 57 - 6100-Salaries,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00059,2024-02-04,4000-Revenue,CC-Operations,1802.44,Debit,Journal entry 59 - 4000-Revenue,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00066,2024-05-05,6200-Benefits,CC-Marketing,8386.34,Credit,Journal entry 66 - 6200-Benefits,rjohnson,IQR_OUTLIER; WEEKEND_POSTING,0.0,MEDIUM,60
+TXN-00067,2024-10-05,9200-Rent,CC-HR,984.35,Credit,Journal entry 67 - 9200-Rent,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00068,2024-12-07,6100-Salaries,CC-Finance,4940.88,Credit,Journal entry 68 - 6100-Salaries,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00071,2024-09-15,8100-Software,CC-Marketing,1885.77,Credit,Journal entry 71 - 8100-Software,jsmith,WEEKEND_POSTING,0.0,LOW,30
+TXN-00072,2024-11-20,6200-Benefits,CC-Marketing,11015.46,Credit,Journal entry 72 - 6200-Benefits,jsmith,IQR_OUTLIER,0.0,LOW,30
+TXN-00073,2024-06-19,6100-Salaries,CC-Marketing,1039.26,Debit,Journal entry 73 - 6100-Salaries,rjohnson,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00074,2024-10-09,9200-Rent,CC-HR,11463.98,Credit,Journal entry 74 - 9200-Rent,jsmith,IQR_OUTLIER,0.0,LOW,30
+TXN-00078,2024-12-15,7200-Meals,CC-Finance,700.29,Debit,Journal entry 78 - 7200-Meals,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00079,2024-07-27,5100-COGS,CC-IT,1258.46,Debit,Journal entry 79 - 5100-COGS,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00081,2024-12-08,9100-Consulting,CC-Marketing,788.78,Debit,Journal entry 81 - 9100-Consulting,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00082,2024-07-14,6200-Benefits,CC-Operations,1873.7,Debit,Journal entry 82 - 6200-Benefits,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00083,2024-08-23,7200-Meals,CC-Marketing,10065.22,Credit,Journal entry 83 - 7200-Meals,tlee,IQR_OUTLIER,0.0,LOW,30
+TXN-00084,2024-01-13,7200-Meals,CC-Operations,504.01,Debit,Journal entry 84 - 7200-Meals,bwilson,WEEKEND_POSTING; NEW_ACCOUNT,0.0,MEDIUM,60
+TXN-00088,2024-08-10,4000-Revenue,CC-Marketing,1795.66,Credit,Journal entry 88 - 4000-Revenue,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00093,2024-06-02,6200-Benefits,CC-Operations,382.57,Credit,Journal entry 93 - 6200-Benefits,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00094,2024-12-22,9100-Consulting,CC-HR,670.82,Credit,Journal entry 94 - 9100-Consulting,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00095,2024-08-03,7200-Meals,CC-IT,609.01,Credit,Journal entry 95 - 7200-Meals,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00097,2024-05-26,8100-Software,CC-Operations,1709.88,Debit,Journal entry 97 - 8100-Software,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00098,2024-12-01,4000-Revenue,CC-Operations,1622.27,Credit,Journal entry 98 - 4000-Revenue,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00103,2024-08-31,7200-Meals,CC-Operations,655.85,Debit,Journal entry 103 - 7200-Meals,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00105,2024-03-16,7200-Meals,CC-Finance,860.98,Debit,Journal entry 105 - 7200-Meals,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00106,2024-03-31,7200-Meals,CC-Finance,2010.37,Credit,Journal entry 106 - 7200-Meals,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00107,2024-03-03,7200-Meals,CC-IT,18569.56,Credit,Journal entry 107 - 7200-Meals,cgarcia,IQR_OUTLIER; WEEKEND_POSTING,0.0,MEDIUM,60
+TXN-00108,2024-10-13,5100-COGS,CC-Operations,1424.91,Credit,Journal entry 108 - 5100-COGS,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00110,2024-05-12,9200-Rent,CC-Marketing,980.76,Debit,Journal entry 110 - 9200-Rent,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00111,2024-11-16,9200-Rent,CC-Marketing,61.67,Debit,Journal entry 111 - 9200-Rent,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00112,2024-05-26,6200-Benefits,CC-Marketing,1053.88,Debit,Journal entry 112 - 6200-Benefits,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00114,2024-07-15,7200-Meals,CC-IT,44128.59,Debit,Journal entry 114 - 7200-Meals,amiller,IQR_OUTLIER,0.0,LOW,30
+TXN-00115,2024-07-27,9100-Consulting,CC-HR,821.77,Credit,Journal entry 115 - 9100-Consulting,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00116,2024-02-01,9100-Consulting,CC-Operations,1723.86,Debit,Journal entry 116 - 9100-Consulting,mbrown,NEW_ACCOUNT,0.0,LOW,30
+TXN-00117,2024-12-22,4000-Revenue,CC-HR,1041.0,Debit,Journal entry 117 - 4000-Revenue,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00118,2024-01-04,9200-Rent,CC-Marketing,189.99,Credit,Journal entry 118 - 9200-Rent,mbrown,NEW_ACCOUNT,0.0,LOW,30
+TXN-00119,2024-10-02,9100-Consulting,CC-Operations,6088.97,Debit,Journal entry 119 - 9100-Consulting,tlee,IQR_OUTLIER,0.0,LOW,30
+TXN-00120,2024-08-11,8100-Software,CC-Finance,3387.68,Credit,Journal entry 120 - 8100-Software,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00121,2024-12-08,8200-Hardware,CC-IT,3592.3,Credit,Journal entry 121 - 8200-Hardware,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00123,2024-12-05,4000-Revenue,CC-Finance,8992.91,Debit,Journal entry 123 - 4000-Revenue,mbrown,IQR_OUTLIER,0.0,LOW,30
+TXN-00124,2024-08-24,7100-Travel,CC-Finance,133.92,Debit,Journal entry 124 - 7100-Travel,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00125,2024-06-16,9100-Consulting,CC-Operations,2644.63,Debit,Journal entry 125 - 9100-Consulting,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00126,2024-07-13,8200-Hardware,CC-Operations,29309.98,Credit,Journal entry 126 - 8200-Hardware,kpatel,ZSCORE(4.71); IQR_OUTLIER; WEEKEND_POSTING,4.714672198621709,HIGH,100
+TXN-00136,2024-01-22,4000-Revenue,CC-HR,11213.81,Credit,Journal entry 136 - 4000-Revenue,mbrown,IQR_OUTLIER; NEW_ACCOUNT,0.0,MEDIUM,60
+TXN-00138,2024-02-24,9200-Rent,CC-Marketing,676.48,Credit,Journal entry 138 - 9200-Rent,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00139,2024-08-10,7100-Travel,CC-HR,3715.53,Debit,Journal entry 139 - 7100-Travel,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00142,2024-08-18,8100-Software,CC-Operations,7790.92,Debit,Journal entry 142 - 8100-Software,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00143,2024-12-08,4000-Revenue,CC-Marketing,98.37,Credit,Journal entry 143 - 4000-Revenue,jsmith,WEEKEND_POSTING,0.0,LOW,30
+TXN-00144,2024-06-15,9200-Rent,CC-Operations,1446.57,Debit,Journal entry 144 - 9200-Rent,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00145,2024-05-12,8200-Hardware,CC-Marketing,1619.42,Credit,Journal entry 145 - 8200-Hardware,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00149,2024-02-17,6100-Salaries,CC-IT,2399.25,Credit,Journal entry 149 - 6100-Salaries,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00152,2024-12-25,8200-Hardware,CC-Marketing,1843.96,Credit,Journal entry 152 - 8200-Hardware,kpatel,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00153,2024-04-28,8100-Software,CC-IT,395.43,Debit,Journal entry 153 - 8100-Software,bwilson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00157,2024-12-28,6100-Salaries,CC-Marketing,18009.63,Debit,Journal entry 157 - 6100-Salaries,jsmith,IQR_OUTLIER; WEEKEND_POSTING,0.0,MEDIUM,60
+TXN-00159,2024-01-07,6200-Benefits,CC-Operations,183.65,Credit,Journal entry 159 - 6200-Benefits,cgarcia,WEEKEND_POSTING; NEW_ACCOUNT,0.0,MEDIUM,60
+TXN-00160,2024-06-23,9200-Rent,CC-Finance,2936.08,Debit,Journal entry 160 - 9200-Rent,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00163,2024-06-04,4000-Revenue,CC-IT,6234.75,Debit,Journal entry 163 - 4000-Revenue,amiller,IQR_OUTLIER,0.0,LOW,30
+TXN-00167,2024-11-16,7200-Meals,CC-Marketing,3763.45,Debit,Journal entry 167 - 7200-Meals,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00168,2024-05-02,7100-Travel,CC-HR,18867.37,Debit,Journal entry 168 - 7100-Travel,amiller,IQR_OUTLIER,0.0,LOW,30
+TXN-00169,2024-01-02,7100-Travel,CC-Operations,758.94,Credit,Journal entry 169 - 7100-Travel,lwang,NEW_ACCOUNT,0.0,LOW,30
+TXN-00171,2024-12-25,8100-Software,CC-Finance,288.8,Credit,Journal entry 171 - 8100-Software,tlee,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00172,2024-11-16,8100-Software,CC-Operations,322.56,Debit,Journal entry 172 - 8100-Software,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00175,2024-05-27,4000-Revenue,CC-Finance,1660.77,Credit,Journal entry 175 - 4000-Revenue,cgarcia,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00178,2024-08-09,6100-Salaries,CC-HR,9704.07,Credit,Journal entry 178 - 6100-Salaries,kpatel,IQR_OUTLIER,0.0,LOW,30
+TXN-00180,2024-12-10,6100-Salaries,CC-HR,64877.34,Credit,Journal entry 180 - 6100-Salaries,jsmith,ZSCORE(4.39); IQR_OUTLIER,4.388561680667239,HIGH,98
+TXN-00182,2024-08-11,4000-Revenue,CC-Finance,303.16,Credit,Journal entry 182 - 4000-Revenue,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00183,2024-07-28,8200-Hardware,CC-Marketing,220.01,Credit,Journal entry 183 - 8200-Hardware,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00187,2024-01-01,5100-COGS,CC-Operations,2230.22,Credit,Journal entry 187 - 5100-COGS,jsmith,HOLIDAY_POSTING; NEW_ACCOUNT,0.0,MEDIUM,60
+TXN-00188,2024-09-22,7200-Meals,CC-HR,983.15,Credit,Journal entry 188 - 7200-Meals,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00189,2024-01-27,9200-Rent,CC-Marketing,307.91,Debit,Journal entry 189 - 9200-Rent,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00190,2024-05-27,7100-Travel,CC-Operations,113.04,Credit,Journal entry 190 - 7100-Travel,amiller,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00192,2024-01-08,5100-COGS,CC-Finance,3962.37,Credit,Journal entry 192 - 5100-COGS,tlee,IQR_OUTLIER,0.0,LOW,30
+TXN-00193,2024-08-24,6200-Benefits,CC-IT,1511.93,Debit,Journal entry 193 - 6200-Benefits,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00195,2024-05-04,9200-Rent,CC-HR,1421.93,Credit,Journal entry 195 - 9200-Rent,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00196,2024-04-07,9100-Consulting,CC-Finance,1954.67,Debit,Journal entry 196 - 9100-Consulting,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00197,2024-06-23,9100-Consulting,CC-Finance,291.26,Credit,Journal entry 197 - 9100-Consulting,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00198,2024-10-27,8100-Software,CC-IT,1381.03,Credit,Journal entry 198 - 8100-Software,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00201,2024-10-19,7200-Meals,CC-IT,1875.59,Credit,Journal entry 201 - 7200-Meals,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00208,2024-07-13,5100-COGS,CC-Operations,2370.08,Credit,Journal entry 208 - 5100-COGS,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00210,2024-02-16,7200-Meals,CC-Finance,354724.69,Credit,Journal entry 210 - 7200-Meals,amiller,ZSCORE(5.69); IQR_OUTLIER,5.6945079574478195,HIGH,100
+TXN-00214,2024-12-15,4000-Revenue,CC-IT,2913.43,Debit,Journal entry 214 - 4000-Revenue,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00219,2024-10-27,8200-Hardware,CC-Operations,529.51,Credit,Journal entry 219 - 8200-Hardware,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00221,2024-05-01,6200-Benefits,CC-HR,35312.34,Credit,Journal entry 221 - 6200-Benefits,bwilson,ZSCORE(4.35); IQR_OUTLIER,4.35046496007146,HIGH,98
+TXN-00224,2024-04-27,8100-Software,CC-IT,97.6,Credit,Journal entry 224 - 8100-Software,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00234,2024-07-14,4000-Revenue,CC-Finance,412.65,Credit,Journal entry 234 - 4000-Revenue,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00235,2024-01-13,9200-Rent,CC-HR,27334.81,Credit,Journal entry 235 - 9200-Rent,tlee,IQR_OUTLIER; WEEKEND_POSTING,0.0,MEDIUM,60
+TXN-00240,2024-10-27,9100-Consulting,CC-Operations,3938.87,Debit,Journal entry 240 - 9100-Consulting,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00241,2024-11-11,9200-Rent,CC-Marketing,334.03,Credit,Journal entry 241 - 9200-Rent,jsmith,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00242,2024-04-21,8200-Hardware,CC-Operations,923.25,Credit,Journal entry 242 - 8200-Hardware,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00246,2024-06-19,6100-Salaries,CC-IT,663.98,Debit,Journal entry 246 - 6100-Salaries,lwang,HOLIDAY_POSTING,0.0,LOW,30
+TXN-00249,2024-03-15,8100-Software,CC-HR,15493.59,Debit,Journal entry 249 - 8100-Software,kpatel,ZSCORE(3.69); IQR_OUTLIER,3.6918575123310475,MEDIUM,71
+TXN-00252,2024-01-27,8100-Software,CC-Operations,4345.05,Debit,Journal entry 252 - 8100-Software,dchen,WEEKEND_POSTING,0.0,LOW,30
+TXN-00253,2024-02-02,6200-Benefits,CC-Operations,26455.9,Credit,Journal entry 253 - 6200-Benefits,bwilson,ZSCORE(3.14); IQR_OUTLIER,3.139643098823219,MEDIUM,69
+TXN-00254,2024-10-30,5100-COGS,CC-Operations,5160.03,Debit,Journal entry 254 - 5100-COGS,dchen,IQR_OUTLIER,0.0,LOW,30
+TXN-00255,2024-11-10,7200-Meals,CC-HR,112.27,Debit,Journal entry 255 - 7200-Meals,kpatel,WEEKEND_POSTING,0.0,LOW,30
+TXN-00257,2024-08-06,9100-Consulting,CC-Operations,7334.66,Debit,Journal entry 257 - 9100-Consulting,cgarcia,IQR_OUTLIER,0.0,LOW,30
+TXN-00258,2024-02-11,6200-Benefits,CC-HR,379.36,Credit,Journal entry 258 - 6200-Benefits,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00265,2024-06-09,9100-Consulting,CC-Marketing,750.81,Credit,Journal entry 265 - 9100-Consulting,rjohnson,WEEKEND_POSTING,0.0,LOW,30
+TXN-00266,2024-02-04,9200-Rent,CC-Finance,168.73,Debit,Journal entry 266 - 9200-Rent,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00267,2024-02-19,9100-Consulting,CC-IT,12690.6,Credit,Journal entry 267 - 9100-Consulting,dchen,IQR_OUTLIER; HOLIDAY_POSTING,0.0,MEDIUM,60
+TXN-00268,2024-10-27,6100-Salaries,CC-Finance,128.35,Credit,Journal entry 268 - 6100-Salaries,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00270,2024-06-08,4000-Revenue,CC-Finance,1334.23,Credit,Journal entry 270 - 4000-Revenue,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-00271,2024-04-18,5100-COGS,CC-Operations,9527.24,Debit,Journal entry 271 - 5100-COGS,tlee,ZSCORE(3.06); IQR_OUTLIER,3.060446787812914,MEDIUM,69
+TXN-00273,2024-04-25,4000-Revenue,CC-HR,6277.62,Credit,Journal entry 273 - 4000-Revenue,lwang,IQR_OUTLIER,0.0,LOW,30
+TXN-00276,2024-01-04,8200-Hardware,CC-IT,2193.28,Debit,Journal entry 276 - 8200-Hardware,lwang,NEW_ACCOUNT,0.0,LOW,30
+TXN-00278,2024-04-20,5100-COGS,CC-Operations,445.71,Credit,Journal entry 278 - 5100-COGS,cgarcia,WEEKEND_POSTING,0.0,LOW,30
+TXN-00283,2024-07-31,9200-Rent,CC-IT,11837.47,Credit,Journal entry 283 - 9200-Rent,dchen,IQR_OUTLIER,0.0,LOW,30
+TXN-00285,2024-09-06,4000-Revenue,CC-Finance,26891.08,Credit,Journal entry 285 - 4000-Revenue,tlee,ZSCORE(4.92); IQR_OUTLIER,4.919245987147779,HIGH,99
+TXN-00286,2024-11-02,9100-Consulting,CC-Finance,58.67,Debit,Journal entry 286 - 9100-Consulting,tlee,WEEKEND_POSTING,0.0,LOW,30
+TXN-00288,2024-03-02,8200-Hardware,CC-Operations,2650.43,Debit,Journal entry 288 - 8200-Hardware,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00290,2024-10-13,5100-COGS,CC-Finance,430.93,Credit,Journal entry 290 - 5100-COGS,mbrown,WEEKEND_POSTING,0.0,LOW,30
+TXN-00291,2024-08-11,6100-Salaries,CC-Operations,802.57,Debit,Journal entry 291 - 6100-Salaries,amiller,WEEKEND_POSTING,0.0,LOW,30
+TXN-00295,2024-02-24,9100-Consulting,CC-Operations,1873.42,Debit,Journal entry 295 - 9100-Consulting,lwang,WEEKEND_POSTING,0.0,LOW,30
+TXN-ANOM-Z1,2024-06-15,7100-Travel,CC-Marketing,250000.0,Debit,Travel expense - executive offsite,jsmith,"IQR_OUTLIER; WEEKEND_POSTING; ROUND_NUMBER(250,000)",0.0,HIGH,90
+TXN-ANOM-Z2,2024-06-15,7100-Travel,CC-Marketing,260000.0,Debit,Travel expense - executive offsite,jsmith,"IQR_OUTLIER; WEEKEND_POSTING; ROUND_NUMBER(260,000)",0.0,HIGH,90
+TXN-ANOM-Z3,2024-06-15,7100-Travel,CC-Marketing,270000.0,Debit,Travel expense - executive offsite,jsmith,"ZSCORE(3.12); IQR_OUTLIER; WEEKEND_POSTING; ROUND_NUMBER(270,000)",3.124106998944457,HIGH,100
+TXN-ANOM-WK1,2024-03-09,9100-Consulting,CC-Finance,15000.0,Debit,Weekend consulting charge,bwilson,ZSCORE(3.57); IQR_OUTLIER; WEEKEND_POSTING,3.5716284656740953,HIGH,100
+TXN-ANOM-RND1,2024-04-10,9200-Rent,CC-Operations,50000.0,Debit,Monthly rent payment,amiller,"ZSCORE(4.74); IQR_OUTLIER; ROUND_NUMBER(50,000)",4.743788065585587,HIGH,100
+TXN-ANOM-DUP1,2024-05-20,8100-Software,CC-IT,4850.0,Debit,Software license Q2,tlee,DUPLICATE_TXN,0.0,LOW,30
+TXN-ANOM-DUP2,2024-05-20,8100-Software,CC-IT,4850.0,Debit,Software license Q2,tlee,DUPLICATE_TXN,0.0,LOW,30
+TXN-ANOM-NEW1,2024-11-15,ACCT-9999-NEW,CC-Finance,75000.0,Debit,New cost allocation,kpatel,NEW_ACCOUNT,0.0,LOW,30

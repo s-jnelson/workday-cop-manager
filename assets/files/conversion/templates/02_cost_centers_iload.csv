@@ -1,0 +1,15 @@
+INSTRUCTIONS,Complete all REQUIRED fields. Delete rows 1-3 before loading. Cost Centers must be loaded before any transactional data that references them as worktags.,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,CC-1001,North America Operations,Corporate,2026-01-01,,FALSE
+Cost_Center_ID,Name,Cost_Center_Hierarchy,Availability_Date,Inactive_Date,Worktag_Only
+,,,,,,
+,,,,,,
+,,,,,,
+,,,,,,
+,,,,,,
+NOTES:,Cost_Center_ID must be unique — recommend using legacy cost center code,,,,,
+NOTES:,Cost_Center_Hierarchy: Must match an existing Workday Cost Center Hierarchy name in your tenant,,,,,
+NOTES:,"Availability_Date: Date from which this cost center is active, typically project or fiscal year start",,,,,
+NOTES:,Inactive_Date: Leave blank for active cost centers. Populate only for cost centers being retired at go-live.,,,,,
+NOTES:,"Worktag_Only: TRUE if this cost center is used only as a worktag (not a full org hierarchy node), FALSE otherwise",,,,,
+NOTES:,"Load order: Object 2 — load after Ledger Accounts, before Suppliers/Customers/Invoices",,,,,

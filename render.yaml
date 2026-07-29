@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cop-manager
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python dashboard_server.py
+    healthCheckPath: /api/status
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: API_SERVER_URL
+        value: http://localhost:8000

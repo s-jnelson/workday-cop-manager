@@ -1,0 +1,17 @@
+INSTRUCTIONS,"Open AP invoices are OPEN (unpaid) balances at go-live cutover date only. Do NOT include paid invoices. Validate with: python workday_financial_validator.py open_ap_invoices this_file.csv 3",,,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,ACME-US,SUPP-00001,INV-2025-08841,2025-10-15,2025-11-14,USD,12500.00,0.00,Net30,Office supplies Q4,CC-1001,SPEND-OFFICE,No_Match,Historical AP Balance
+Company,Supplier_ID,Invoice_Number,Invoice_Date,Due_Date,Currency,Invoice_Amount,Tax_Amount,Payment_Terms,Memo,Cost_Center,Spend_Category,Match_Type,Description
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+NOTES:,"Company: Workday Company Reference ID — must exist in your tenant before loading",,,,,,,,,,,,,,,,
+NOTES:,Supplier_ID: Must exactly match a Supplier_ID from the Supplier Master load,,,,,,,,,,,,,,,,
+NOTES:,"Invoice_Amount: Total invoice amount. Positive value only. Use the gross amount (before any credits)",,,,,,,,,,,,,,,,
+NOTES:,"Tax_Amount: Enter 0.00 if no tax, not blank",,,,,,,,,,,,,,,,
+NOTES:,Match_Type: Use No_Match for all historical open invoices being converted (they have no PO matching history),,,,,,,,,,,,,,,,
+NOTES:,"Due_Date: Must be >= Invoice_Date. Many historical invoices will have past-due dates — this is expected and correct",,,,,,,,,,,,,,,,
+NOTES:,Spend_Category: Must match a valid Workday Spend Category Reference ID in your tenant,,,,,,,,,,,,,,,,
+NOTES:,"Reconciliation check: Sum of Invoice_Amount column must equal Open AP balance on legacy trial balance (by currency)",,,,,,,,,,,,,,,,
+NOTES:,"Load order: Object 5 — load AFTER Supplier Master, Cost Centers, and Spend Category config",,,,,,,,,,,,,,,,

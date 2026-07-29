@@ -1,0 +1,133 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-07-08",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Discovery & Design",
+      "standard_weeks": 4,
+      "activities": [
+        "Workday tenant setup and security baseline",
+        "Business requirements gathering (BRD / FRD)",
+        "Current state integration landscape mapping",
+        "Legacy data source analysis",
+        "Report requirements catalog",
+        "Extend opportunity assessment",
+        "CoP asset applicability review"
+      ],
+      "deliverables": [
+        "Integration Design Document (IDD)",
+        "Data Mapping Workbook (DMW)",
+        "Report Design Catalog",
+        "Extend Solution Design",
+        "Technical Architecture Decision Log"
+      ],
+      "gates": [
+        "Architecture review signed off",
+        "Asset reuse plan approved",
+        "IDD approved"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Build & Configure",
+      "standard_weeks": 10,
+      "activities": [
+        "Integration development (Studio / Core Connectors / EIB)",
+        "Conversion template build and data extract",
+        "Custom report development",
+        "Extend application build",
+        "Unit testing (all technical components)",
+        "Initial data validation run"
+      ],
+      "deliverables": [
+        "Completed integrations (unit tested)",
+        "Validated conversion files (mock load)",
+        "Custom report package (UAT-ready)",
+        "Extend app (QA complete)",
+        "Unit Test Evidence Log"
+      ],
+      "gates": [
+        "Unit test pass rate \u226595%",
+        "First mock conversion defect rate <15%",
+        "Report peer review complete"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Testing",
+      "standard_weeks": 6,
+      "activities": [
+        "System Integration Testing (SIT)",
+        "User Acceptance Testing (UAT)",
+        "Parallel conversion run (mock loads 1 & 2)",
+        "End-to-end integration testing",
+        "Performance testing for high-volume integrations",
+        "Report UAT with finance stakeholders",
+        "Cutover rehearsal (at least 1 full dress rehearsal)"
+      ],
+      "deliverables": [
+        "SIT/UAT sign-off document",
+        "Mock conversion results (defect rate \u22645%)",
+        "Integration test evidence",
+        "Cutover rehearsal results",
+        "Performance test results"
+      ],
+      "gates": [
+        "UAT sign-off achieved",
+        "Mock conversion defect rate \u22645%",
+        "Cutover rehearsal completed within window",
+        "Zero P1 open defects"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Cutover & Go-Live",
+      "standard_weeks": 2,
+      "activities": [
+        "Final data extraction from legacy systems",
+        "Production conversion loads (all objects in dependency order)",
+        "Integration activation and smoke test",
+        "Go-live report validation",
+        "Hypercare support (2 weeks post go-live)",
+        "Post-cutover reconciliation"
+      ],
+      "deliverables": [
+        "Production load confirmation",
+        "Go-live checklist (signed off)",
+        "Reconciliation report",
+        "Hypercare tracker",
+        "Lessons learned log"
+      ],
+      "gates": [
+        "All conversion objects loaded with zero P1 defects",
+        "Integration smoke tests passed",
+        "Finance lead sign-off on go-live"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Stabilization & Optimization",
+      "standard_weeks": 4,
+      "activities": [
+        "Hypercare issue resolution",
+        "Integration monitoring activation",
+        "Report optimization (performance tuning)",
+        "Knowledge transfer to client support team",
+        "CoP asset contribution (new templates back to library)",
+        "Retrospective and lessons learned capture"
+      ],
+      "deliverables": [
+        "Hypercare closure report",
+        "Asset contributions to CoP library",
+        "Client support runbook",
+        "Project retrospective"
+      ],
+      "gates": [
+        "Client acceptance signed",
+        "Zero open P1/P2 defects",
+        "CoP asset contribution submitted"
+      ]
+    }
+  ]
+}

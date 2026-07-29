@@ -1,0 +1,12 @@
+INSTRUCTIONS,"Open AR invoices are OPEN (uncollected) balances at go-live cutover date only. Do NOT include collected invoices. Validate with: python workday_financial_validator.py open_ar_invoices this_file.csv 3",,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,ACME-US,CUST-00001,INV-AR-2025-44201,2025-09-30,2025-10-30,USD,75000.00,0.00,Net30,Professional Services Q3,CC-2001,REV-PROF-SVCS,Historical AR Balance
+Company,Customer_ID,Invoice_Number,Invoice_Date,Due_Date,Currency,Invoice_Amount,Tax_Amount,Payment_Terms,Memo,Cost_Center,Revenue_Category,Description
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+NOTES:,Customer_ID: Must exactly match a Customer_ID from the Customer Master load,,,,,,,,,,,,,,
+NOTES:,Revenue_Category: Must match a valid Workday Revenue Category Reference ID in your tenant,,,,,,,,,,,,,,
+NOTES:,"Invoice_Amount: Open (outstanding) amount at cutover. Enter the amount still owed, not the original invoice amount if partial payments exist",,,,,,,,,,,,,,
+NOTES:,"Reconciliation check: Sum of Invoice_Amount must equal Open AR balance on legacy trial balance (by currency)",,,,,,,,,,,,,,
+NOTES:,"Load order: Object 6 — load AFTER Customer Master and Revenue Category configuration",,,,,,,,,,,,,,

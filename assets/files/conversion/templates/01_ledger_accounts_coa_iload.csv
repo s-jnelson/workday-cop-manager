@@ -1,0 +1,14 @@
+INSTRUCTIONS,Complete all REQUIRED fields. Delete rows 1-3 (INSTRUCTIONS/FIELD TYPE/EXAMPLE) before loading. Date format: YYYY-MM-DD. Validate using: python workday_financial_validator.py ledger_accounts this_file.csv 3,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,1000,Cash and Cash Equivalents,Asset,USD,2026-01-01,,Summary Account,Cash
+Ledger_Account_ID,Name,Account_Type,Currency_Code,Start_Date,End_Date,Summary_Account_ID,Description
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+NOTES:,Account_Type valid values: Asset | Liability | Equity | Revenue | Expense | Gain_Loss,,,,,,,
+NOTES:,Currency_Code: 3-letter ISO code (USD / EUR / GBP / CAD / AUD),,,,,,,
+NOTES:,Ledger_Account_ID must be unique and match your legacy GL account numbering scheme,,,,,,,
+NOTES:,"Summary_Account_ID: Reference to a parent summary/rollup account, if applicable",,,,,,,
+NOTES:,"Load order: This is Object 1 — must be loaded BEFORE any transactional data (AP, AR, GL Balances)",,,,,,,

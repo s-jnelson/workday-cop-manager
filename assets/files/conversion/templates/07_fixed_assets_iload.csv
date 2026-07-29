@@ -1,0 +1,16 @@
+INSTRUCTIONS,"Fixed Asset register as of cutover date. Net_Book_Value = Original_Cost minus Accumulated_Depreciation. Validate with: python workday_financial_validator.py fixed_assets this_file.csv 3",,,,,,,,,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,FA-00001,Dell Laptop Model XPS 15,TECHNOLOGY,2024-03-15,2024-03-15,USD,2500.00,1250.00,1250.00,Straight_Line,3,ACME-US,CC-1001,IT-LOCATION-CHI,Active,Office Equipment,,TRUE,John Smith
+Asset_ID,Asset_Description,Asset_Class,Acquisition_Date,Placed_in_Service_Date,Currency,Original_Cost,Accumulated_Depreciation,Net_Book_Value,Depreciation_Method,Useful_Life_Years,Company,Cost_Center,Location,Asset_Status,Asset_Sub_Type,Retirement_Date,Capitalize,Custodian
+,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,
+NOTES:,Asset_Class: Must match a valid Workday Asset Class Reference ID configured in your tenant (e.g. TECHNOLOGY / VEHICLES / FURNITURE / BUILDINGS),,,,,,,,,,,,,,,,,,,,
+NOTES:,Depreciation_Method valid values: Straight_Line | Declining_Balance_150 | Declining_Balance_200 | Sum_of_Years_Digits | Units_of_Production | No_Depreciation,,,,,,,,,,,,,,,,,,,,
+NOTES:,"Accumulated_Depreciation: Cumulative depreciation from inception to cutover date. Original_Cost - Accumulated_Depreciation = Net_Book_Value",,,,,,,,,,,,,,,,,,,,
+NOTES:,"Useful_Life_Years: Remaining useful life is NOT what goes here — enter TOTAL useful life (e.g., 3 years for a laptop, not remaining years)",,,,,,,,,,,,,,,,,,,,
+NOTES:,Asset_Status valid values: Active | Retired | Fully_Depreciated,,,,,,,,,,,,,,,,,,,,
+NOTES:,"Retirement_Date: Only populate for Retired assets. Leave blank for Active and Fully_Depreciated assets",,,,,,,,,,,,,,,,,,,,
+NOTES:,"Reconciliation check: Sum of Original_Cost = Fixed Asset cost per legacy trial balance. Sum of Net_Book_Value = Net Fixed Assets per legacy balance sheet",,,,,,,,,,,,,,,,,,,,
+NOTES:,"Load order: Object 7 — can be loaded after Company and Cost Center setup, independent of AP/AR loads",,,,,,,,,,,,,,,,,,,,

@@ -1,0 +1,13 @@
+INSTRUCTIONS,"Complete all REQUIRED fields. Delete rows 1-3 before loading. Customer_ID must be unique. Validate with: python workday_financial_validator.py customer_master this_file.csv 3",,,,,,,,,,,,,,,,,
+FIELD TYPE,REQUIRED,REQUIRED,REQUIRED,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL,OPTIONAL
+EXAMPLE,CUST-00001,Global Tech Inc,Corporate_Customer,USD,Net30,500000.00,USD,12-3456789,456 Park Ave,,New York,NY,10001,US,John Doe,john.doe@globaltech.com,FALSE
+Customer_ID,Customer_Name,Customer_Category,Currency,Payment_Terms,Credit_Limit_Amount,Credit_Limit_Currency,Tax_ID,Address_Line_1,Address_Line_2,City,State,Postal_Code,Country,Primary_Contact_Name,Primary_Contact_Email,Inactive
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+NOTES:,Customer_Category: Must match a valid Workday Customer Category Reference ID in your tenant,,,,,,,,,,,,,,,,,,
+NOTES:,"Currency: Default billing currency (3-letter ISO code). Individual invoices can override this",,,,,,,,,,,,,,,,,,
+NOTES:,Payment_Terms: Must match a valid Workday Payment Terms Reference ID (e.g. Net30 / Net45 / Due_Upon_Receipt),,,,,,,,,,,,,,,,,,
+NOTES:,"Credit_Limit_Amount: Numeric value only, no currency symbols. Must match Credit_Limit_Currency",,,,,,,,,,,,,,,,,,
+NOTES:,Country: 2-letter ISO country code,,,,,,,,,,,,,,,,,,
+NOTES:,"Load order: Object 4 — load after Cost Centers, before Open AR Invoices",,,,,,,,,,,,,,,,,,

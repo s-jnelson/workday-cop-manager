@@ -1,0 +1,596 @@
+{
+  "practice_goals": [
+    {
+      "id": "4f27a36a-7df2-4bb5-ba27-d673842efb83",
+      "title": "Reduce Average Deployment Timeline by 20%",
+      "description": "Through standardized methodology, reusable assets, and accelerators, reduce the average Workday Finance full-suite deployment from 26 weeks to 20 weeks by end of FY2026.",
+      "kpi": "time_to_deploy_reduction",
+      "target_value": 20,
+      "current_value": 7,
+      "unit": "percent",
+      "due_date": "2026-12-31",
+      "owner": "CoP Manager",
+      "status": "in_progress",
+      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "success_criteria": [
+        "Average Finance full-suite deployment drops from 26 to ≤20 weeks across new client engagements starting H2 2026",
+        "At least 3 projects complete within the 20-week target before EOY 2026",
+        "Timeline reduction measured and tracked via the CoP delivery tracker (actuals vs. baseline)"
+      ],
+      "composition": [
+        "Integration template library reduces Studio build time by eliminating from-scratch development",
+        "Conversion Methodology V2 speeds data preparation and reduces field mapping analysis time",
+        "Standard financial report packages eliminate custom build time for the most common Finance reports",
+        "CoP-managed cutover toolkit reduces go-live prep and rehearsal planning overhead",
+        "Workday Extend reusable application templates reduce custom app development cycles"
+      ],
+      "how_to_achieve": [
+        "Publish and enforce the standard CoP deployment methodology across all Finance projects",
+        "Build and catalog 50+ reusable integration templates in the CoP asset library",
+        "Train all consultants on CoP accelerators and require their use on new engagements",
+        "Track actuals vs. target weekly via project health reports submitted to CoP",
+        "Conduct quarterly retrospectives on timeline performance and update methodology accordingly"
+      ],
+      "requirements": [
+        "Methodology adoption must reach ≥80% before timeline reduction is measurable at scale",
+        "All 4 sub-agent areas must contribute reusable, deployment-ready assets",
+        "Project managers must log actual deployment durations in the CoP delivery tracker",
+        "Asset library must contain published assets for all major Finance deployment phases"
+      ]
+    },
+    {
+      "id": "acb70112-775c-4315-926d-154043860bb1",
+      "title": "Achieve 90% Methodology Adoption Rate",
+      "description": "Ensure 90% of all active Workday Finance projects follow the standard CoP deployment methodology by Q3 2026.",
+      "kpi": "methodology_adoption",
+      "target_value": 90,
+      "current_value": 62,
+      "unit": "percent",
+      "due_date": "2026-09-30",
+      "owner": "CoP Manager",
+      "status": "in_progress",
+      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "success_criteria": [
+        "90% of active Finance projects score ≥80% on the 20-point CoP methodology checklist",
+        "Measurement taken at kickoff, mid-project, and go-live milestones for each engagement",
+        "Non-compliant projects are identified and remediation is in progress within 2 weeks of audit"
+      ],
+      "composition": [
+        "Kickoff alignment: use of CoP project charter and scoping template on day one",
+        "Execution: use of CoP integration, conversion, and reporting templates during delivery",
+        "Governance: weekly status report submitted to CoP in standard format",
+        "Go-live: cutover rehearsal conducted per CoP protocol (minimum 2 dress rehearsals)",
+        "Retrospective: post-go-live lesson capture submitted within 2 weeks of go-live"
+      ],
+      "how_to_achieve": [
+        "Train all project teams on the CoP methodology at engagement kickoff",
+        "Embed a methodology compliance checklist into project governance reviews",
+        "Publish methodology guides for all 4 focus areas (Integrations, Conversion, Reporting, Extend)",
+        "Identify and remediate non-adopting projects through quarterly CoP audits",
+        "Recognize high-adoption projects in CoP meetings to drive cultural buy-in"
+      ],
+      "requirements": [
+        "Published methodology guides must exist for all 4 focus areas before enforcement begins",
+        "Methodology audit scorecard tool must be deployed and accessible to all project leads",
+        "Leadership mandate for CoP compliance on all Finance projects",
+        "CoP Manager must have visibility into all active Finance engagements"
+      ]
+    },
+    {
+      "id": "1f1c3f5e-2849-40b1-abc5-038d1bf3f26a",
+      "title": "Deploy 10 AI Use Cases to Clients",
+      "description": "Identify, build, and deploy at least 10 production AI use cases for Workday Financials across client base by end of FY2026.",
+      "kpi": "ai_use_cases_deployed",
+      "target_value": 10,
+      "current_value": 2,
+      "unit": "count",
+      "due_date": "2026-12-31",
+      "owner": "CoP Manager",
+      "status": "in_progress",
+      "sub_goals": [],
+      "success_criteria": [
+        "10 distinct AI use cases in production at client sites by December 31, 2026",
+        "Each deployed use case is actively used and generates measurable, documented client value",
+        "At least 3 different focus areas (Integrations, Extend, Reporting) are represented across deployments"
+      ],
+      "composition": [
+        "AI Invoice Processing & Exception Routing — Workday Extend + Claude API (in development)",
+        "AI Financial Anomaly Detection — Prism Analytics + Python ML (deployed at Client C)",
+        "AI Integration Error Diagnostics — Claude API + Studio logs (in development)",
+        "Natural Language Financial Query (Ask Workday) — Claude API + RaaS (in development)",
+        "AI Supplier Risk Scoring — Claude API + Workday AP (planning)",
+        "AI Conversion Data Mapping Assistant — Claude API + Python (planning)",
+        "Expense Policy AI Compliance Reviewer — Claude API + Workday Extend (in development)",
+        "Workday Address & Banking Data Validator — Flask + pandas (deployed, 2 clients)",
+        "2+ additional use cases to be identified through client engagements in H2 2026"
+      ],
+      "how_to_achieve": [
+        "Complete internal build and QA of all 8 AI solutions currently in the pipeline",
+        "Pilot 2–3 use cases at client sites in Q2–Q3 2026 with structured feedback loops",
+        "Present AI capabilities in client QBRs and include in proposal responses",
+        "Package each use case with a deployment guide, ROI calculator, and client pitch deck",
+        "Track deployment progress in the AI Pipeline view of this dashboard"
+      ],
+      "requirements": [
+        "ANTHROPIC_API_KEY procurement and client-side approval for AI-powered solutions",
+        "Client data sharing agreements for solutions operating on client data",
+        "Internal security review and validation of each use case before client deployment",
+        "Client-ready packaging: deployment guide, data requirements, and support model defined"
+      ]
+    },
+    {
+      "id": "6e365d06-425d-4a7c-91a1-aa4719f57bac",
+      "title": "Achieve 95% Cutover Success Rate",
+      "description": "Zero rollbacks on go-live cutovers through improved pre-cutover testing frameworks and rehearsal protocols.",
+      "kpi": "cutover_success_rate",
+      "target_value": 95,
+      "current_value": 87,
+      "unit": "percent",
+      "due_date": "2026-12-31",
+      "owner": "CoP Manager",
+      "status": "in_progress",
+      "sub_goals": ["conversion"],
+      "success_criteria": [
+        "Zero rollbacks within 72 hours of go-live on any Workday Finance deployment",
+        "95% of cutovers complete within the planned maintenance window",
+        "Post-cutover data defect rate below 5% of migrated records (measured at T+5 business days)"
+      ],
+      "composition": [
+        "Pre-cutover rehearsal protocol (minimum 2 full dress rehearsals required per project)",
+        "Automated data validation framework (pre-load and post-load automated checks)",
+        "Go-live command center setup with a documented decision-authority matrix",
+        "Rollback plan documented, approved, and tested before cutover weekend",
+        "Post-cutover monitoring checklist (T+1, T+3, T+5 checkpoints with sign-off)"
+      ],
+      "how_to_achieve": [
+        "Mandate 2 full dress rehearsals per the CoP Cutover Playbook before any go-live",
+        "Automate pre-load and post-load data validation using the CoP Validation Framework",
+        "Publish and enforce the Cutover Decision Authority Matrix on all projects",
+        "Conduct post-go-live retrospectives and feed findings back into the cutover playbook",
+        "Build a shared lessons-learned database for cutover issues and resolutions"
+      ],
+      "requirements": [
+        "CoP Cutover Toolkit must be published and accessible to all project teams",
+        "Automated Data Validation Framework must be deployed (linked to Conversion sub-goal)",
+        "All cutover leads must be trained and signed off on the CoP rehearsal protocol",
+        "Post-go-live retrospective must be completed and submitted within 2 weeks of go-live"
+      ]
+    },
+    {
+      "id": "816fd1d3-9b97-4a08-a550-0561c1e22518",
+      "title": "Achieve 80%+ Asset Reuse Rate",
+      "description": "Build and catalog enough standardized assets that 80% of deployment work reuses existing CoP-approved templates and tools.",
+      "kpi": "asset_reuse_rate",
+      "target_value": 80,
+      "current_value": 45,
+      "unit": "percent",
+      "due_date": "2026-09-30",
+      "owner": "CoP Manager",
+      "status": "in_progress",
+      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "success_criteria": [
+        "80% of billable delivery effort on Finance projects leverages a CoP-published asset",
+        "Asset reuse tracked per project via the CoP delivery tracker",
+        "Published asset library contains ≥75 approved assets across all 4 focus areas"
+      ],
+      "composition": [
+        "Integration templates reused per project (target: ≥5 CoP templates per integration stream)",
+        "Conversion iLoad templates reused across all 14 financial objects",
+        "Standard financial report package reused (target: 100+ published reports)",
+        "Workday Extend application templates reused per Extend delivery stream",
+        "Document templates (IDD, SDD, cutover playbook) reused on every project"
+      ],
+      "how_to_achieve": [
+        "Build and publish minimum viable asset sets for all 4 focus areas by Q2 2026",
+        "Make assets discoverable via the CoP Asset Library (Assets view in this dashboard)",
+        "Require asset reuse documentation in project governance reviews",
+        "Incentivize asset contributions through a CoP recognition and acknowledgment program",
+        "Retire outdated assets and replace with updated versions after each deployment"
+      ],
+      "requirements": [
+        "Asset library must be populated with ≥75 published, deployment-ready assets",
+        "Assets must be tagged, searchable, and include deployment guides or usage notes",
+        "Project leads must log asset usage in the CoP delivery tracker",
+        "Asset quality review process must be in place before assets are promoted to 'published'"
+      ]
+    }
+  ],
+  "subagent_goals": {
+    "integrations": [
+      {
+        "id": "5f265cc7-1223-492e-99d1-240910ba60ca",
+        "title": "Build Standard Integration Template Library (50 templates)",
+        "target_value": 50,
+        "current_value": 18,
+        "unit": "count",
+        "due_date": "2026-12-31",
+        "owner": "Integrations Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "50 production-ready integration templates published in the CoP asset library",
+          "Each template covers a distinct Workday Finance integration pattern",
+          "Templates are documented with IDD, error handling, and ISU security guidance"
+        ],
+        "composition": [
+          "Studio integration templates (GL export, AP invoice, bank reconciliation)",
+          "Core Connector templates (supplier, employee, and customer data feeds)",
+          "EIB templates (bulk data loads for common Finance objects)",
+          "REST/SOAP API templates for Workday public API patterns",
+          "RaaS output templates for common Finance reporting feeds"
+        ],
+        "how_to_achieve": [
+          "Catalog all integration patterns used on active projects and identify repeatable templates",
+          "Prioritize the top 20 by deployment frequency and build those first",
+          "Conduct peer review on each template before publishing to the library",
+          "Solicit contributions from project teams via the CoP asset submission process"
+        ],
+        "requirements": [
+          "Integration leads must dedicate time to template development (not 100% billable)",
+          "Peer review process must be established before templates are promoted to the library",
+          "Template testing on a Workday sandbox tenant is required before publishing"
+        ]
+      },
+      {
+        "id": "b21fde7c-1018-4856-bfd5-15692cd2ae67",
+        "title": "Reduce Integration Build Time by 30%",
+        "target_value": 30,
+        "current_value": 12,
+        "unit": "percent",
+        "due_date": "2026-12-31",
+        "owner": "Integrations Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "Average integration build time reduced by 30% vs. FY2025 baseline (measured in days per pattern)",
+          "Reduction validated across at least 5 integration patterns on live projects",
+          "Template reuse rate on integration streams reaches ≥70%"
+        ],
+        "composition": [
+          "Template reuse eliminates from-scratch design and build for common integration patterns",
+          "IDD template pre-fills most design sections, reducing documentation time",
+          "AI Integration Error Diagnostics accelerates testing and debugging cycles",
+          "Standardized ISU security setup reduces configuration time per integration"
+        ],
+        "how_to_achieve": [
+          "Deploy the integration template library and require its use on new builds",
+          "Track build time per integration pattern across all projects in the delivery tracker",
+          "Use AI Error Diagnostics to reduce time-in-testing from typical 3–5 days to 1–2 days",
+          "Quarterly review of build-time data to identify remaining bottlenecks"
+        ],
+        "requirements": [
+          "Integration template library must have ≥20 published templates before measurable reduction is achievable",
+          "Build-time tracking must be implemented in the CoP delivery tracker",
+          "AI Integration Error Diagnostics tool must be deployed and accessible to all integration consultants"
+        ]
+      },
+      {
+        "id": "16b43744-73d4-4261-9172-02ef5dfabcf7",
+        "title": "Develop AI-powered Integration Error Diagnostics",
+        "target_value": 1,
+        "current_value": 0,
+        "unit": "delivery",
+        "due_date": "2026-06-30",
+        "owner": "Integrations Lead",
+        "status": "planning",
+        "success_criteria": [
+          "AI Integration Error Diagnostics tool deployed and accessible to all integration consultants",
+          "Tool covers ≥15 common Workday Studio error patterns with plain-English resolution steps",
+          "Tool reduces average integration support ticket resolution time by ≥50%"
+        ],
+        "composition": [
+          "LLM-powered error log analysis using Claude API for novel and complex error types",
+          "Rule-based pattern library covering 11 common Workday integration error patterns",
+          "Plain-English resolution steps designed for functional consultants without Studio expertise",
+          "Integration with Workday Studio error log format (copy-paste input workflow)"
+        ],
+        "how_to_achieve": [
+          "Expand the existing rule-based pattern library from 11 to 15+ error patterns",
+          "Integrate Claude API for enhanced diagnosis on novel or complex errors",
+          "Package as a web tool accessible without Python or command-line knowledge",
+          "Pilot with 3 integration consultants before broad rollout"
+        ],
+        "requirements": [
+          "ANTHROPIC_API_KEY required for AI-enhanced diagnosis mode",
+          "Integration consultant input to identify and document the most common error patterns",
+          "Web hosting or internal tool deployment for non-technical consultant access"
+        ]
+      }
+    ],
+    "conversion": [
+      {
+        "id": "0993db38-371a-4d41-b50e-6997d7877123",
+        "title": "Publish V2 Conversion Methodology (covering all 14 Financial objects)",
+        "target_value": 14,
+        "current_value": 9,
+        "unit": "objects_covered",
+        "due_date": "2026-09-30",
+        "owner": "Conversion Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "V2 Conversion Methodology published covering all 14 Workday Financial data objects",
+          "Each object includes: iLoad template, field mapping guide, validation rules, and load-sequence guidance",
+          "Methodology reviewed and approved by at least 2 senior conversion consultants before publishing"
+        ],
+        "composition": [
+          "14 Workday Financial objects: COA, Cost Centers, Suppliers, Customers, Open AP, Open AR, Fixed Assets, Banks, Bank Accounts, Spend Categories, Revenue Categories, Company, Worktags, GL Balances",
+          "For each object: iLoad template (CSV), field mapping guide (Markdown), validation rule set, and load-sequence diagram",
+          "Cross-object dependency map showing required load order"
+        ],
+        "how_to_achieve": [
+          "Complete the remaining 5 objects: Banks, Bank Accounts, Spend Categories, Revenue Categories, and GL Balances",
+          "Conduct peer review for each new section before publishing",
+          "Package the full methodology as a versioned guide in the CoP asset library"
+        ],
+        "requirements": [
+          "Conversion leads must allocate time to methodology documentation alongside client delivery",
+          "Workday tenant access required for testing each iLoad template before publishing",
+          "Peer review sign-off from at least 2 senior conversion consultants required"
+        ]
+      },
+      {
+        "id": "de6e9767-cea7-422a-8d83-a9fb51c57365",
+        "title": "Build Automated Data Validation Framework",
+        "target_value": 1,
+        "current_value": 0,
+        "unit": "delivery",
+        "due_date": "2026-06-30",
+        "owner": "Conversion Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "Automated framework validates conversion data for all 14 Workday Financial objects",
+          "Framework produces a per-row, per-field validation report with ERROR and WARNING classifications",
+          "Framework reduces manual data review time by ≥60%"
+        ],
+        "composition": [
+          "Python-based validation engine applying Workday field rules per conversion object type",
+          "Address and banking validation covering 40+ countries (linked to Workday Address & Banking Validator)",
+          "Per-row validation report with pass/fail status and specific issue descriptions",
+          "Excel download with corrected values and load-ready formatting"
+        ],
+        "how_to_achieve": [
+          "Extend the existing Address & Banking Validator to cover all 14 Financial conversion objects",
+          "Define validation rules for each field in each object (required, format, allowed values)",
+          "Build a web UI accessible to non-technical consultants and clients",
+          "Pilot on a live conversion project before Q3 2026 go-live"
+        ],
+        "requirements": [
+          "Field-level validation rules must be documented for all 14 conversion objects",
+          "Workday field mapping guides must be current and embedded in the validator logic",
+          "Non-technical access required — must be a web-based tool, no Python or command-line"
+        ]
+      },
+      {
+        "id": "a9ba6a8e-e33a-44b3-8e0b-d2477cc3d7ec",
+        "title": "Achieve <5% Data Defect Rate on Go-Live",
+        "target_value": 5,
+        "current_value": 11,
+        "unit": "percent",
+        "due_date": "2026-12-31",
+        "owner": "Conversion Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "Data defect rate (errors found within T+5 business days of go-live) falls below 5%",
+          "Measured across all Finance projects going live from Q3 2026 onwards",
+          "No P1/critical data defects (system-down or financial-reporting-impacting) on any go-live"
+        ],
+        "composition": [
+          "Pre-load validation: automated framework catches format, missing field, and logic errors before load",
+          "Post-load reconciliation: record count, amount totals, and spot-checks by business team at T+1",
+          "Cutover rehearsal validation: defects caught and resolved in dress rehearsal, not in production"
+        ],
+        "how_to_achieve": [
+          "Deploy the Automated Data Validation Framework before every conversion load",
+          "Mandate 2 conversion rehearsals per the CoP Cutover Playbook to catch defects pre-production",
+          "Enforce a zero-known-defects policy before each dress rehearsal is promoted to production-ready",
+          "Track defect rates per project and feed into CoP retrospective process"
+        ],
+        "requirements": [
+          "Automated Data Validation Framework must be deployed (linked sub-goal)",
+          "Business users must be available for T+1 and T+3 post-go-live validation sign-off",
+          "All conversion data must pass automated validation before any production load is authorized"
+        ]
+      }
+    ],
+    "reporting": [
+      {
+        "id": "68a81775-eb90-46bd-9a29-f44be4eaae26",
+        "title": "Build Standard Financial Report Package (100+ reports)",
+        "target_value": 100,
+        "current_value": 43,
+        "unit": "count",
+        "due_date": "2026-09-30",
+        "owner": "Reporting Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "100+ Workday Financial reports published in the CoP asset library",
+          "Reports cover all core Finance modules: GL, AP, AR, Expenses, Fixed Assets, Cash Management",
+          "Each report includes: Workday report definition, field list, security group mapping, and usage guide"
+        ],
+        "composition": [
+          "General Ledger reports: trial balance, journal detail, account activity, period close summary",
+          "Accounts Payable reports: aging, payment run, supplier spend, invoice status",
+          "Accounts Receivable reports: aging, customer balance, collection activity, DSO",
+          "Expense Management reports: by employee, policy violation summary, spend category",
+          "Fixed Asset reports: register, depreciation schedule, disposal summary",
+          "Management reporting: P&L, balance sheet, budget vs. actual, variance analysis"
+        ],
+        "how_to_achieve": [
+          "Catalog all reports built on active and completed projects and submit to the library",
+          "Identify the 57 remaining report gaps and assign to reporting team members",
+          "Conduct peer review on each report before publishing",
+          "Solicit report submissions via a quarterly CoP reporting drive"
+        ],
+        "requirements": [
+          "Workday tenant access required for testing and exporting report definitions",
+          "Each report must have a published usage guide and security group guidance",
+          "Reporting lead must coordinate submissions across all active projects"
+        ]
+      },
+      {
+        "id": "dc0f3b7a-4691-44de-9d00-13c56687d0f8",
+        "title": "Publish Report Design Standards Guide",
+        "target_value": 1,
+        "current_value": 1,
+        "unit": "delivery",
+        "due_date": "2026-03-31",
+        "owner": "Reporting Lead",
+        "status": "complete",
+        "success_criteria": [
+          "Report Design Standards Guide published and distributed to all reporting consultants",
+          "Guide adopted on ≥80% of new report builds within 60 days of publication",
+          "Guide covers naming conventions, field ordering, security group mapping, and performance best practices"
+        ],
+        "composition": [
+          "Naming convention standards for custom reports (prefix, module, type, version)",
+          "Field selection and ordering standards for the most common report types",
+          "Security group mapping matrix showing who sees what by role",
+          "Performance optimization checklist (filters, calculated fields, indexing)",
+          "Discovery Board and Prism Analytics design standards"
+        ],
+        "how_to_achieve": [
+          "Draft guide in collaboration with senior reporting consultants (target: Q1 2026 draft)",
+          "Circulate for peer review with 3 reporting leads before publishing",
+          "Present in CoP all-hands and distribute via the CoP knowledge hub",
+          "Update guide quarterly with lessons learned from active projects"
+        ],
+        "requirements": [
+          "Senior reporting consultant bandwidth for guide authorship (2–3 focused days of work)",
+          "Leadership endorsement to drive adoption across all projects",
+          "CoP knowledge hub or SharePoint site for hosting and versioning the guide"
+        ]
+      },
+      {
+        "id": "6a96f52c-eb08-4a85-9557-91257d0fc38d",
+        "title": "Deploy AI Financial Insights Dashboard to 3 clients",
+        "target_value": 3,
+        "current_value": 0,
+        "unit": "clients",
+        "due_date": "2026-12-31",
+        "owner": "Reporting Lead",
+        "status": "planning",
+        "success_criteria": [
+          "AI Financial Insights Dashboard deployed and in active use at 3 client sites",
+          "Each client dashboard provides real-time anomaly detection and NL query capabilities",
+          "Client satisfaction rating of ≥8/10 on dashboard utility within 30 days of deployment"
+        ],
+        "composition": [
+          "AI Financial Anomaly Detection (Python ML on Prism Analytics data)",
+          "Natural Language Financial Query — Ask Workday (Claude API + RaaS)",
+          "Prism Analytics Discovery Board as the client-facing UI layer",
+          "Automated alerting for material anomalies to the accounting team"
+        ],
+        "how_to_achieve": [
+          "Identify 3 client sponsors willing to pilot the AI dashboard in H2 2026",
+          "Configure the anomaly detection model on each client's GL transaction data",
+          "Set up client-specific RaaS report templates for the NL query tool",
+          "Provide 90-day hypercare support post-deployment for each client"
+        ],
+        "requirements": [
+          "ANTHROPIC_API_KEY at the client's cloud environment for NL query capability",
+          "Prism Analytics license on the client Workday tenant",
+          "Client data privacy review and approval for AI model training on GL data",
+          "Dedicated reporting consultant for configuration and client training (1–2 weeks per client)"
+        ]
+      }
+    ],
+    "extend": [
+      {
+        "id": "f43da6fc-7c5b-4189-98bd-24a3435e8894",
+        "title": "Build 5 Reusable Extend Application Templates",
+        "target_value": 5,
+        "current_value": 1,
+        "unit": "count",
+        "due_date": "2026-12-31",
+        "owner": "Extend Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "5 Workday Extend application templates published in the CoP asset library",
+          "Each template includes: App Design export, Orchestration definitions, Business Object schema, and deployment guide",
+          "Templates are tested on a Workday Sandbox before publishing to the library"
+        ],
+        "composition": [
+          "Invoice Exception Handler — Extend app for AI-powered exception routing",
+          "Expense Policy Reviewer — Extend app for real-time policy compliance checking",
+          "Month-End Close Tracker — Extend app for task management and close checklist",
+          "Supplier Onboarding Workflow — Extend app for guided supplier data collection",
+          "Budget Alert & Approval — Extend app for threshold-triggered budget variance approvals"
+        ],
+        "how_to_achieve": [
+          "Prioritize templates based on frequency of client requests and deployment complexity",
+          "Build and test each template on a non-production Workday tenant",
+          "Document each template with an SDD and a step-by-step deployment guide",
+          "Submit for peer review with Extend lead sign-off before publishing"
+        ],
+        "requirements": [
+          "Workday Extend sandbox tenant access for template development and testing",
+          "Extend development expertise from senior Extend consultants on the team",
+          "SDD (Standard Design Document) completed for each app before build begins",
+          "Approximately 3–5 days per template for build and documentation"
+        ]
+      },
+      {
+        "id": "1a027f75-7240-4bc2-bf62-6ac2f54ebeb8",
+        "title": "Develop AI Invoice Processing Extend App",
+        "target_value": 1,
+        "current_value": 0,
+        "unit": "delivery",
+        "due_date": "2026-09-30",
+        "owner": "Extend Lead",
+        "status": "in_progress",
+        "success_criteria": [
+          "AI Invoice Processing Extend App deployed and operating in Workday Extend on at least 1 client tenant",
+          "App classifies ≥85% of invoice exceptions without human intervention",
+          "App reduces invoice escalations by ≥60% vs. manual baseline"
+        ],
+        "composition": [
+          "Workday Extend orchestration that triggers on new invoice exception event",
+          "Claude API integration for invoice classification and resolution recommendation",
+          "Natural-language explanation generated for approver review in Workday",
+          "Routing rules: auto-route to resolver based on exception type and invoice amount",
+          "Audit trail: all AI decisions logged in Workday with explanation text"
+        ],
+        "how_to_achieve": [
+          "Complete the existing AI Invoice Exception Classifier solution (Solution 01 in AI Pipeline)",
+          "Integrate the classifier with a Workday Extend orchestration and Business Object",
+          "Complete the SDD and obtain client ISU setup before tenant deployment",
+          "Pilot on 1 client with a high volume of AP exceptions (target: Q2–Q3 2026)"
+        ],
+        "requirements": [
+          "ANTHROPIC_API_KEY for Claude API integration",
+          "Workday Extend license on the client tenant",
+          "ISU (Integration System User) with appropriate AP domain security policies",
+          "Client AP team availability for testing and exception classification validation",
+          "SDD reviewed and approved by the client Workday team before production deployment"
+        ]
+      },
+      {
+        "id": "b53bc833-c8fe-4209-864e-b27674df32e0",
+        "title": "Publish Extend Development Standards",
+        "target_value": 1,
+        "current_value": 1,
+        "unit": "delivery",
+        "due_date": "2026-03-31",
+        "owner": "Extend Lead",
+        "status": "complete",
+        "success_criteria": [
+          "Extend Development Standards published and in active use on all Extend builds",
+          "Standards cover: App Design naming, Orchestration patterns, Business Object schema, error handling, and testing protocol"
+        ],
+        "composition": [
+          "Naming convention standards for Extend apps, orchestrations, and Business Objects",
+          "Orchestration design patterns for common Finance workflows",
+          "Business Object schema design principles and field type guidance",
+          "Error handling and retry logic standards",
+          "Testing protocol: unit test, integration test, and UAT sign-off checklist"
+        ],
+        "how_to_achieve": [
+          "Standards have been drafted, reviewed, and published — this goal is COMPLETE",
+          "Ongoing: update standards quarterly as Workday releases new Extend capabilities"
+        ],
+        "requirements": [
+          "Quarterly review cycle to keep standards current with Workday Extend releases",
+          "Extend lead responsible for communicating standards updates to all Extend team members"
+        ]
+      }
+    ]
+  }
+}

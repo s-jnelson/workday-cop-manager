@@ -1,0 +1,102 @@
+{
+  "last_updated": "2026-07-08",
+  "practice_summary": {
+    "total_consultants": 11,
+    "active_projects": 8,
+    "methodology_adoption_pct": 62,
+    "avg_utilization_pct": 77,
+    "assets_published": 12,
+    "assets_in_progress": 4
+  },
+  "deployment_metrics": {
+    "avg_deployment_weeks_current": 24.2,
+    "avg_deployment_weeks_baseline": 26.0,
+    "reduction_pct": 6.9,
+    "projects_on_methodology": 5,
+    "total_active_projects": 8,
+    "cutover_attempts": 23,
+    "cutover_successes": 20,
+    "cutover_success_rate_pct": 87
+  },
+  "quality_metrics": {
+    "defect_escape_rate_pct": 8.2,
+    "target_defect_escape_pct": 3.0,
+    "avg_client_satisfaction": 8.1,
+    "target_client_satisfaction": 9.0,
+    "data_defect_rate_pct": 11.0,
+    "target_data_defect_pct": 5.0
+  },
+  "asset_metrics": {
+    "total_assets": 27,
+    "published_assets": 22,
+    "total_deployments_across_assets": 145,
+    "asset_reuse_rate_pct": 45,
+    "target_reuse_pct": 80
+  },
+  "ai_metrics": {
+    "use_cases_identified": 12,
+    "use_cases_in_development": 4,
+    "use_cases_deployed": 3,
+    "use_cases_target": 10
+  },
+  "focus_area_health": {
+    "integrations": {
+      "health": "good",
+      "score": 74,
+      "open_risks": 1
+    },
+    "conversion": {
+      "health": "at_risk",
+      "score": 58,
+      "open_risks": 3
+    },
+    "reporting": {
+      "health": "at_risk",
+      "score": 61,
+      "open_risks": 2
+    },
+    "extend": {
+      "health": "good",
+      "score": 78,
+      "open_risks": 1
+    }
+  },
+  "monthly_trend": [
+    {
+      "month": "2026-01",
+      "methodology_adoption": 50,
+      "asset_reuse": 35,
+      "client_satisfaction": 7.8
+    },
+    {
+      "month": "2026-02",
+      "methodology_adoption": 54,
+      "asset_reuse": 38,
+      "client_satisfaction": 7.9
+    },
+    {
+      "month": "2026-03",
+      "methodology_adoption": 57,
+      "asset_reuse": 41,
+      "client_satisfaction": 8.0
+    },
+    {
+      "month": "2026-04",
+      "methodology_adoption": 59,
+      "asset_reuse": 43,
+      "client_satisfaction": 8.0
+    },
+    {
+      "month": "2026-05",
+      "methodology_adoption": 60,
+      "asset_reuse": 44,
+      "client_satisfaction": 8.1
+    },
+    {
+      "month": "2026-06",
+      "methodology_adoption": 62,
+      "asset_reuse": 45,
+      "client_satisfaction": 8.1
+    }
+  ]
+}

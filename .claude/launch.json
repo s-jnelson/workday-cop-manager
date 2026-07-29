@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "CoP Dashboard",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["dashboard_server.py"],
+      "port": 3030
+    },
+    {
+      "name": "Workday Validator",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["assets/files/ai/solutions/08_address_banking_validator/app.py"],
+      "port": 8090
+    }
+  ]
+}

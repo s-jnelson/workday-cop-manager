@@ -1,0 +1,18 @@
+# Workday Finance Tech CoP — AI Solutions Requirements
+# Install all: pip install -r requirements.txt
+
+# Core AI (required by solutions 01, 03, 04, 05, 06, 07)
+anthropic>=0.40.0
+
+# Data processing (required by solutions 02, 05, 06)
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Statistical methods (required by solution 02)
+scipy>=1.10.0
+
+# Excel output support (optional — solution 07)
+openpyxl>=3.1.0
+
+# Formatted table output (optional — solution 04)
+tabulate>=0.9.0

@@ -1,0 +1,9 @@
+Supplier_ID,Supplier_Name,Supplier_Category,Address_Country,Preferred_Payment_Type,Payment_Terms_Days,Score_Completeness,Score_PaymentTerms,Score_Geographic,Score_PaymentType,Total_Risk_Score,Risk_Level,Top_Risk_Factor,AI_Narrative
+SUP-001,Acme Office Supplies,Office Supplies,United States,ACH,30.0,25,5,0,3,33,MEDIUM,Payment Terms,
+SUP-002,Global Tech Partners,IT Services,Russia,Wire,90.0,25,25,25,20,95,CRITICAL,Payment Terms,
+SUP-003,Fast Freight LLC,Logistics,Mexico,Check,,7,12,0,8,27,MEDIUM,Data Completeness,
+SUP-004,Premier Consulting,Professional Services,United Kingdom,EFT,45.0,25,15,0,5,45,MEDIUM,Payment Terms,
+SUP-005,BestDeal Imports,Manufacturing,Iran,Wire,75.0,15,25,25,20,85,CRITICAL,Payment Terms,
+SUP-006,Local Print Shop,Marketing,United States,ACH,15.0,25,0,0,3,28,MEDIUM,Payment Type,
+SUP-007,Regional Staffing Co,Staffing,,Check,60.0,21,15,10,8,54,HIGH,Payment Terms,
+SUP-008,Delta Energy Corp,Utilities,Venezuela,,20.0,25,5,25,15,70,HIGH,Geographic,

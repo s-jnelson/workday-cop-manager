@@ -1,0 +1,420 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workday Finance â€” Report Build Workstream Tracker</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #07030f;
+  --bg-card: rgba(20,7,41,0.85);
+  --bg-panel: rgba(14,5,30,0.90);
+  --border: rgba(161,0,255,0.28);
+  --accent: #4ade80;
+  --teal: #C561F6;
+  --text: #f2ecff;
+  --text-muted: #9d88b8;
+  --text-dim: #5a4470;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --purple: #e879f9;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+#header{background:linear-gradient(135deg,#1a0533 0%,#0d0220 100%);border-top:4px solid #4ade80;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;min-height:52px;}
+#header h1{font-size:14px;font-weight:700;color:#4ade80;white-space:nowrap;margin-right:4px;}
+.ptabs{display:flex;gap:3px;}
+.ptab{padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:11px;transition:all .15s;}
+.ptab:hover{border-color:var(--accent);color:var(--text);}
+.ptab.active{background:rgba(74,222,128,0.13);border-color:var(--accent);color:var(--accent);}
+#hdr-spacer{flex:1;}
+#last-saved{font-size:10px;color:var(--text-dim);white-space:nowrap;}
+.hbtn{padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:11px;transition:all .15s;white-space:nowrap;}
+.hbtn:hover{border-color:var(--accent);color:var(--accent);}
+.hbtn.primary{background:rgba(74,222,128,0.15);border-color:var(--accent);color:var(--accent);}
+#main{flex:1;display:flex;overflow:hidden;min-height:0;}
+#left{width:40%;min-width:200px;display:flex;flex-direction:column;border-right:1px solid var(--border);background:var(--bg-panel);}
+#task-scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+#task-scroll::-webkit-scrollbar{width:5px;}
+#task-scroll::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+#splitter{width:5px;background:rgba(161,0,255,0.15);cursor:col-resize;flex-shrink:0;transition:background .15s;}
+#splitter:hover,#splitter.active{background:rgba(74,222,128,0.5);}
+#right{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+#g-hdr-wrap{overflow:hidden;flex-shrink:0;border-bottom:1px solid var(--border);}
+#g-body-wrap{flex:1;overflow:auto;position:relative;}
+#g-body-wrap::-webkit-scrollbar{width:5px;height:5px;}
+#g-body-wrap::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+#status-bar{background:rgba(14,5,30,0.95);border-top:1px solid var(--border);padding:5px 14px;display:flex;gap:16px;align-items:center;flex-shrink:0;font-size:11px;color:var(--text-muted);}
+.stat-item strong{color:var(--text);}
+.tl-row{display:flex;align-items:center;gap:5px;padding:0 8px;cursor:pointer;border-bottom:1px solid rgba(161,0,255,0.07);user-select:none;}
+.tl-row:hover{background:rgba(161,0,255,0.06);}
+.tl-row.ph-row{height:28px;background:rgba(20,7,41,0.9);border-bottom:1px solid rgba(161,0,255,0.18);}
+.tl-row.gr-row{height:22px;background:rgba(14,5,30,0.65);padding-left:18px;}
+.tl-row.task-row{height:34px;padding-left:12px;}
+.tl-row.sub-row{height:30px;padding-left:36px;background:rgba(7,3,15,0.45);}
+.ph-name{font-size:11px;font-weight:700;letter-spacing:0.4px;}
+.ph-pct{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;}
+.ph-prog{height:3px;border-radius:2px;background:rgba(161,0,255,0.18);flex:1;margin-left:4px;}
+.ph-prog-fill{height:100%;border-radius:2px;transition:width .3s;}
+.gr-name{font-size:10px;font-weight:600;color:var(--text-muted);}
+.gr-count{font-size:9px;color:var(--text-dim);margin-left:3px;}
+.chevron{font-size:9px;color:var(--text-dim);width:11px;flex-shrink:0;}
+.drag-handle{color:var(--text-dim);font-size:12px;cursor:grab;flex-shrink:0;}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.id-badge{font-family:monospace;font-size:9px;background:rgba(161,0,255,0.13);border:1px solid rgba(161,0,255,0.18);padding:1px 4px;border-radius:3px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;max-width:96px;overflow:hidden;text-overflow:ellipsis;}
+.task-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.sub-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text-muted);}
+.owner-chip{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0;font-weight:500;color:#fff;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
+.wk-badge{font-size:9px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.exp-btn{font-size:9px;color:var(--text-dim);cursor:pointer;padding:1px 3px;border-radius:2px;flex-shrink:0;background:rgba(161,0,255,0.1);border:1px solid rgba(161,0,255,0.18);}
+.exp-btn:hover{color:var(--text);background:rgba(161,0,255,0.22);}
+.dep-line{font-size:9px;color:var(--text-dim);padding-left:12px;line-height:1.4;}
+.xdep-line{font-size:9px;color:var(--amber);padding-left:12px;line-height:1.4;}
+#g-hdr{position:relative;}
+.g-ph-band{position:absolute;top:0;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:0.4px;overflow:hidden;}
+.g-wk-row{display:flex;margin-top:18px;}
+.g-wk-cell{width:36px;flex-shrink:0;font-size:9px;color:var(--text-dim);text-align:center;border-right:1px solid rgba(161,0,255,0.07);height:20px;line-height:20px;}
+.g-wk-cell.cur{color:var(--accent);font-weight:700;}
+#g-body{position:relative;}
+.g-row{position:relative;border-bottom:1px solid rgba(161,0,255,0.05);}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:18px;border-radius:3px;cursor:grab;min-width:4px;z-index:2;}
+.g-bar:hover{filter:brightness(1.3);}
+.g-bar.sub-bar{height:12px;border-radius:2px;}
+.g-bar:active{cursor:grabbing;}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:rgba(250,204,21,0.6);z-index:5;pointer-events:none;}
+.g-ph-bg{position:absolute;top:0;bottom:0;pointer-events:none;}
+.dep-svg{position:absolute;top:0;left:0;pointer-events:none;z-index:4;overflow:visible;}
+#modal-ov{display:none;position:fixed;inset:0;background:rgba(7,3,15,0.82);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+#modal-ov.open{display:flex;}
+#modal{background:#0e051e;border:1px solid rgba(161,0,255,0.4);border-radius:10px;width:620px;max-width:96vw;max-height:93vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);}
+#modal-hdr{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#modal-hdr h2{font-size:13px;font-weight:600;}
+#modal-x{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1;}
+#modal-x:hover{color:var(--text);}
+#modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
+#modal-body::-webkit-scrollbar{width:5px;}
+#modal-body::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.3);border-radius:3px;}
+.form-row{display:flex;gap:10px;margin-bottom:10px;}
+.fg{display:flex;flex-direction:column;gap:4px;flex:1;}
+.fg label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;}
+.fg input,.fg select,.fg textarea{background:rgba(161,0,255,0.08);border:1px solid rgba(161,0,255,0.25);color:var(--text);padding:6px 9px;border-radius:5px;font-size:12px;font-family:inherit;outline:none;width:100%;transition:border-color .15s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(161,0,255,0.55);}
+.fg textarea{resize:vertical;min-height:54px;}
+.fg select option{background:#0e051e;}
+#modal-ftr{padding:11px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.btn{padding:6px 15px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#07030f;}
+.btn-primary:hover{opacity:0.85;}
+.btn-cancel{background:rgba(255,255,255,0.07);color:var(--text-muted);border:1px solid var(--border);}
+.btn-cancel:hover{background:rgba(255,255,255,0.13);color:var(--text);}
+.btn-danger{background:rgba(248,113,113,0.13);color:var(--red);border:1px solid rgba(248,113,113,0.28);}
+.btn-danger:hover{background:rgba(248,113,113,0.28);}
+#ctx-menu{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.38);border-radius:6px;z-index:200;min-width:158px;box-shadow:0 8px 32px rgba(0,0,0,0.6);display:none;}
+#ctx-menu.open{display:block;}
+.ctx-item{padding:7px 14px;cursor:pointer;font-size:12px;color:var(--text-muted);transition:all .12s;}
+.ctx-item:hover{background:rgba(161,0,255,0.14);color:var(--text);}
+.ctx-sep{height:1px;background:var(--border);margin:3px 0;}
+.ctx-item.danger{color:var(--red);}
+.ctx-item.danger:hover{background:rgba(248,113,113,0.12);}
+.g-tooltip{position:fixed;background:#0e051e;border:1px solid rgba(161,0,255,0.38);border-radius:5px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:50;max-width:210px;line-height:1.5;}
+.toast-msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#0e051e;border:1px solid rgba(161,0,255,0.45);color:var(--text);padding:8px 18px;border-radius:6px;font-size:12px;z-index:1000;animation:toastIn .2s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>Workday Finance &#8212; Report Build Workstream Tracker</h1>
+  <div class="ptabs" id="ptabs"></div>
+  <div id="hdr-spacer"></div>
+  <span id="last-saved"></span>
+  <button class="hbtn" onclick="confirmReset()">Reset</button>
+  <button class="hbtn" onclick="document.getElementById('imp-inp').click()">Import</button>
+  <input type="file" id="imp-inp" accept=".xlsx,.xls" style="display:none" onchange="doImport(this)">
+  <button class="hbtn" onclick="doExport()">Export</button>
+  <button class="hbtn primary" onclick="openNewModal()">+ Add</button>
+</div>
+<div id="main">
+  <div id="left">
+    <div id="task-scroll"><div id="task-list"></div></div>
+  </div>
+  <div id="splitter"></div>
+  <div id="right">
+    <div id="g-hdr-wrap"><div id="g-hdr"></div></div>
+    <div id="g-body-wrap"><div id="g-body"></div></div>
+  </div>
+</div>
+<div id="status-bar">
+  <div class="stat-item">Total: <strong id="st-total">0</strong></div>
+  <div class="stat-item">Complete: <strong id="st-complete" style="color:var(--green)">0</strong></div>
+  <div class="stat-item">In Progress: <strong id="st-inprog" style="color:var(--accent)">0</strong></div>
+  <div class="stat-item">Blocked: <strong id="st-blocked" style="color:var(--red)">0</strong></div>
+  <div class="stat-item" style="margin-left:auto;font-size:10px;color:var(--text-dim)">N=New | E=Export | Ctrl+Z=Undo | Esc=Close</div>
+</div>
+<div id="modal-ov">
+  <div id="modal">
+    <div id="modal-hdr">
+      <h2 id="modal-title">Edit Task</h2>
+      <button id="modal-x" onclick="closeModal()">x</button>
+    </div>
+    <div id="modal-body">
+      <div class="form-row">
+        <div class="fg" style="flex:3"><label>Task Name</label><input type="text" id="f-task" placeholder="Task description..."></div>
+        <div class="fg" style="flex:1"><label>ID</label><input type="text" id="f-id" placeholder="RPT-P1-G1-001"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Phase</label><select id="f-phase">
+          <option value="Plan">Plan</option><option value="Architect">Architect</option>
+          <option value="Configure">Configure</option><option value="Test">Test</option><option value="Deploy">Deploy</option>
+        </select></div>
+        <div class="fg"><label>Group</label><input type="text" id="f-group" placeholder="Group name"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Owner</label><select id="f-owner">
+          <option>Reporting Lead</option><option>Report Developer</option><option>Workday Architect</option>
+          <option>Business Analyst</option><option>Security Admin</option><option>Project Manager</option>
+          <option>Controller</option><option>CFO</option><option>AP Manager</option><option>AR Manager</option>
+          <option>FP&amp;A Analyst</option><option>Treasury Analyst</option><option>Finance Manager</option><option>Data Analyst</option>
+        </select></div>
+        <div class="fg"><label>Status</label><select id="f-status">
+          <option value="not_started">Not Started</option><option value="in_progress">In Progress</option>
+          <option value="complete">Complete</option><option value="blocked">Blocked</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Start Week (1-28)</label><input type="number" id="f-start" min="1" max="28" value="1"></div>
+        <div class="fg"><label>Duration (weeks)</label><input type="number" id="f-dur" min="1" max="28" value="1"></div>
+        <div class="fg"><label>Priority</label><select id="f-priority">
+          <option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Dependencies (comma IDs)</label><textarea id="f-deps" rows="2" placeholder="RPT-P1-G1-001, RPT-P1-G2-001"></textarea></div>
+        <div class="fg"><label>Cross-WS Dependencies</label><textarea id="f-crossdeps" rows="2" placeholder="DC-P3-G5-001"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Parent Task ID (if subtask)</label><input type="text" id="f-parent" placeholder="RPT-P1-G1-001"></div>
+        <div class="fg"><label>Notes</label><textarea id="f-notes" rows="2" placeholder="Additional context..."></textarea></div>
+      </div>
+    </div>
+    <div id="modal-ftr">
+      <button class="btn btn-danger" id="modal-del" onclick="deleteCurrentTask()">Delete</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="ctx-menu">
+  <div class="ctx-item" data-action="edit">Edit</div>
+  <div class="ctx-item" data-action="addSub">Add Subtask</div>
+  <div class="ctx-item" data-action="addBelow">Add Task Below</div>
+  <div class="ctx-item" data-action="duplicate">Duplicate</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="dep">Set Dependency</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" data-action="delete">Delete</div>
+</div>
+<script>
+const PHASES=['Plan','Architect','Configure','Test','Deploy'];
+const PHASE_COLORS={Plan:'#3b82f6',Architect:'#0d9488',Configure:'#f59e0b',Test:'#a855f7',Deploy:'#22c55e'};
+const PHASE_RANGES={Plan:[1,4],Architect:[5,10],Configure:[11,18],Test:[19,24],Deploy:[25,28]};
+const STATUS_COLORS={not_started:'rgba(90,68,112,0.55)',in_progress:'#4ade80',complete:'#22c55e',blocked:'#f87171'};
+const STATUS_LABELS={not_started:'Not Started',in_progress:'In Progress',complete:'Complete',blocked:'Blocked'};
+const CELL_W=36,TOTAL_WEEKS=28,ROW_H=34,SUB_H=30,PH_ROW_H=28,GR_ROW_H=22;
+const OWNER_COLORS={'Reporting Lead':'#15803d','Report Developer':'#0f766e','Workday Architect':'#1d4ed8','Business Analyst':'#b45309','Security Admin':'#b91c1c','Project Manager':'#15803d','Controller':'#ca8a04','CFO':'#7c3aed','AP Manager':'#a16207','AR Manager':'#0f766e','FP&A Analyst':'#4338ca','Treasury Analyst':'#6d28d9','Finance Manager':'#047857','Data Analyst':'#0f766e'};
+const LS_KEY='cop_rpt_tracker';
+const PROJECT_START=new Date('2026-02-02');
+function ownerColor(o){return OWNER_COLORS[o]||'#4b5563';}
+function shortOwner(o){const m={'Reporting Lead':'RL','Report Developer':'RD','Workday Architect':'WA','Business Analyst':'BA','Security Admin':'SA','Project Manager':'PM','Controller':'CTL','CFO':'CFO','AP Manager':'APM','AR Manager':'ARM','FP&A Analyst':'FPA','Treasury Analyst':'TA','Finance Manager':'FM','Data Analyst':'DA'};return m[o]||(o||'').split(' ').map(w=>w[0]).join('').toUpperCase();}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function buildSeed(){
+  const tasks=[];
+  function t(id,phase,group,task,owner,sw,dur,priority,deps,xdeps,subtasks){return {id,phase,group,task,owner,startWeek:sw,duration:dur,status:'not_started',priority:priority||'medium',dependencies:deps||[],crossDeps:xdeps||[],notes:'',subtasks:subtasks||[]};}
+  function s(id,task,owner,sw){return {id,task,owner,startWeek:sw,duration:1,status:'not_started',priority:'medium',dependencies:[],notes:''};}
+  // PLAN
+  tasks.push(t('RPT-P1-G1-001','Plan','Mobilization','Attend report workstream kickoff','Reporting Lead',1,1,'high',[],[],[s('RPT-P1-G1-001a','Review reporting scope in project charter','Reporting Lead',1),s('RPT-P1-G1-001b','Confirm report team roles','Reporting Lead',1)]));
+  tasks.push(t('RPT-P1-G1-002','Plan','Mobilization','Set up report workstream environment','Reporting Lead',1,1,'medium',[],[],[s('RPT-P1-G1-002a','Create report folder structure and SharePoint site','Project Manager',1),s('RPT-P1-G1-002b','Set up report tracker template','Reporting Lead',1),s('RPT-P1-G1-002c','Schedule recurring report workstream meetings','Project Manager',1)]));
+  tasks.push(t('RPT-P1-G2-001','Plan','Report Inventory','Build complete report inventory','Reporting Lead',1,2,'high',[],[],[s('RPT-P1-G2-001a','Catalog all legacy reports currently in use','Business Analyst',1),s('RPT-P1-G2-001b','Map each legacy report to Workday standard/custom equivalent','Report Developer',1),s('RPT-P1-G2-001c','Identify reports requiring custom calculated fields','Report Developer',2),s('RPT-P1-G2-001d','Identify reports for decommission (not needed in Workday)','Business Analyst',2),s('RPT-P1-G2-001e','Document report data sources for each report','Report Developer',2)]));
+  tasks.push(t('RPT-P1-G2-002','Plan','Report Inventory','Prioritize and score report inventory','Reporting Lead',2,1,'high',[],[],[s('RPT-P1-G2-002a','Score each report by business criticality','Reporting Lead',2),s('RPT-P1-G2-002b','Categorize as standard vs custom vs dashboard','Report Developer',2),s('RPT-P1-G2-002c','Confirm report priorities with finance leadership','Controller',3),s('RPT-P1-G2-002d','Confirm final report list -- 20 reports + 4 dashboards','Reporting Lead',3)]));
+  tasks.push(t('RPT-P1-G3-001','Plan','Standards & Security','Adopt reporting standards guide','Reporting Lead',2,1,'high',[],[],[s('RPT-P1-G3-001a','Review Workday CoP reporting standards guide','Reporting Lead',2),s('RPT-P1-G3-001b','Adapt naming conventions for this client','Report Developer',2),s('RPT-P1-G3-001c','Define report folder structure in Workday','Reporting Lead',3),s('RPT-P1-G3-001d','Document client-specific reporting standards','Report Developer',3)]));
+  tasks.push(t('RPT-P1-G3-002','Plan','Standards & Security','Design report security group structure','Security Admin',3,1,'high',[],[],[s('RPT-P1-G3-002a','Map report access to Workday security roles','Security Admin',3),s('RPT-P1-G3-002b','Define report-specific security groups where needed','Security Admin',3),s('RPT-P1-G3-002c','Get client approval on report access model','Reporting Lead',4),s('RPT-P1-G3-002d','Document security group plan for all reports','Security Admin',4)]));
+  tasks.push(t('RPT-P1-G3-003','Plan','Standards & Security','Create report build schedule','Project Manager',4,1,'high',[],[],[s('RPT-P1-G3-003a','Build report workstream schedule in project plan','Project Manager',4),s('RPT-P1-G3-003b','Sequence report builds (dependencies on conversion data)','Reporting Lead',4),s('RPT-P1-G3-003c','Identify which reports require conversion data before testing','Reporting Lead',4)]));
+  // ARCHITECT
+  tasks.push(t('RPT-P2-G1-001','Architect','Business Requirements','Business requirements -- Financial Statements','Business Analyst',5,2,'high',[],[],[s('RPT-P2-G1-001a','BRD: R001 Income Statement -- periods, dimensions, comparisons','Controller',5),s('RPT-P2-G1-001b','BRD: R002 Balance Sheet -- as-of-date, rollup structure','Controller',5),s('RPT-P2-G1-001c','BRD: R003 Cash Flow Statement -- direct/indirect method, cash categories','Controller',6),s('RPT-P2-G1-001d','BRD: R004 Trial Balance -- account range, cost center filters','Finance Manager',6),s('RPT-P2-G1-001e','BRD: R005 GL by Cost Center -- dimensions, drill-down requirements','Finance Manager',6)]));
+  tasks.push(t('RPT-P2-G1-002','Architect','Business Requirements','Business requirements -- AP and AR reports','Business Analyst',5,2,'high',[],[],[s('RPT-P2-G1-002a','BRD: R006 AP Aging -- aging buckets, supplier filters, drill-to-invoice','AP Manager',5),s('RPT-P2-G1-002b','BRD: R007 Supplier Payment Summary -- payment method, bank, period','AP Manager',5),s('RPT-P2-G1-002c','BRD: R008 Invoice Approval Status -- workflow status, aging','AP Manager',6),s('RPT-P2-G1-002d','BRD: R009 AR Aging -- customer aging buckets, dispute flags','AR Manager',6),s('RPT-P2-G1-002e','BRD: R010 Customer Statement -- customer-facing format, period balance','AR Manager',6),s('RPT-P2-G1-002f','BRD: R011 Revenue Recognition -- recognition schedule, deferred revenue','Controller',6)]));
+  tasks.push(t('RPT-P2-G1-003','Architect','Business Requirements','Business requirements -- Budget, Fixed Assets, Compliance','Business Analyst',6,2,'high',[],[],[s('RPT-P2-G1-003a','BRD: R012 Budget vs Actual -- budget version, variance calc, % var','FP&A Analyst',6),s('RPT-P2-G1-003b','BRD: R013 Expense Trend -- rolling 12 months, category rollup','FP&A Analyst',6),s('RPT-P2-G1-003c','BRD: R014 Department Budget Status -- dept manager view, traffic light','FP&A Analyst',7),s('RPT-P2-G1-003d','BRD: R015 Fixed Asset Register -- asset class, location, book value','Finance Manager',7),s('RPT-P2-G1-003e','BRD: R016 Depreciation Schedule -- method, useful life, YTD depreciation','Finance Manager',7),s('RPT-P2-G1-003f','BRD: R017 Asset Disposition -- disposed assets, gain/loss','Finance Manager',7),s('RPT-P2-G1-003g','BRD: R018 1099 Prep -- vendor tax ID, payment YTD','AP Manager',7),s('RPT-P2-G1-003h','BRD: R019 Audit Trail -- field change history, who/what/when','Controller',7),s('RPT-P2-G1-003i','BRD: R020 Security Access Report -- user roles, report access','Security Admin',7)]));
+  tasks.push(t('RPT-P2-G1-004','Architect','Business Requirements','Business requirements -- Dashboards','Business Analyst',7,2,'high',[],[],[s('RPT-P2-G1-004a','BRD: D001 CFO Finance Dashboard -- KPIs: revenue, EBITDA, cash, AP/AR','CFO',7),s('RPT-P2-G1-004b','BRD: D002 AP Manager Dashboard -- invoice volume, aging, payment status','AP Manager',7),s('RPT-P2-G1-004c','BRD: D003 AR Manager Dashboard -- collections, aging, DSO','AR Manager',8),s('RPT-P2-G1-004d','BRD: D004 FP&A Dashboard -- budget vs actual, forecast, trend charts','FP&A Analyst',8)]));
+  tasks.push(t('RPT-P2-G2-001','Architect','Technical Specs','Technical specs -- Financial Statement reports','Report Developer',7,2,'high',[],[],[s('RPT-P2-G2-001a','Tech spec R001 Income Statement -- data source, calculated fields, prompts, security group','Report Developer',7),s('RPT-P2-G2-001b','Tech spec R002 Balance Sheet -- rollup structure, as-of prompt design','Report Developer',7),s('RPT-P2-G2-001c','Tech spec R003 Cash Flow -- data source mapping, calculated lines','Report Developer',8),s('RPT-P2-G2-001d','Tech spec R004 Trial Balance -- account range filter design','Report Developer',8),s('RPT-P2-G2-001e','Tech spec R005 GL by Cost Center -- dimension columns, drill-through','Report Developer',8)]));
+  tasks.push(t('RPT-P2-G2-002','Architect','Technical Specs','Technical specs -- AP, AR, Budget, Fixed Assets','Report Developer',8,2,'high',[],[],[s('RPT-P2-G2-002a','Tech spec R006-R008 AP reports -- data sources, aging bucket calc fields','Report Developer',8),s('RPT-P2-G2-002b','Tech spec R009-R011 AR reports -- aging, statement format, rev rec','Report Developer',8),s('RPT-P2-G2-002c','Tech spec R012-R014 Budget reports -- budget vs actual variance formula','Report Developer',9),s('RPT-P2-G2-002d','Tech spec R015-R017 Fixed Asset reports -- asset fields, depreciation calc','Report Developer',9),s('RPT-P2-G2-002e','Tech spec R018-R020 Compliance reports -- audit trail data source, security report design','Security Admin',9)]));
+  tasks.push(t('RPT-P2-G2-003','Architect','Technical Specs','Technical specs -- Dashboards','Report Developer',9,1,'high',[],[],[s('RPT-P2-G2-003a','Tech spec D001 CFO Dashboard -- worklets, metrics, data sources','Report Developer',9),s('RPT-P2-G2-003b','Tech spec D002 AP Manager Dashboard -- worklets and filters','Report Developer',9),s('RPT-P2-G2-003c','Tech spec D003 AR Manager Dashboard -- DSO calc, aging worklet','Report Developer',10),s('RPT-P2-G2-003d','Tech spec D004 FP&A Dashboard -- chart worklets, budget vs actual tile','Report Developer',10)]));
+  tasks.push(t('RPT-P2-G2-004','Architect','Technical Specs','Technical review and sign-off','Reporting Lead',10,1,'high',[],[],[s('RPT-P2-G2-004a','Peer review of all technical specs','Reporting Lead',10),s('RPT-P2-G2-004b','Workday Architect review of calculated field designs','Workday Architect',10),s('RPT-P2-G2-004c','Client sign-off on technical specs','Business Analyst',10)]));
+  // CONFIGURE
+  tasks.push(t('RPT-P3-G1-001','Configure','Financial Statements Build','Build R001 Income Statement','Report Developer',11,2,'high',[],['DC-P3-G5-001'],[s('RPT-P3-G1-001a','Create composite report with P&L data source','Report Developer',11),s('RPT-P3-G1-001b','Configure period prompts (current period, YTD, prior year)','Report Developer',11),s('RPT-P3-G1-001c','Build calculated fields: gross margin %, EBITDA','Report Developer',12),s('RPT-P3-G1-001d','Configure subtotaling and row grouping','Report Developer',12),s('RPT-P3-G1-001e','Assign security group','Security Admin',12),s('RPT-P3-G1-001f','Format report (column widths, number format, headers)','Report Developer',12)]));
+  tasks.push(t('RPT-P3-G1-002','Configure','Financial Statements Build','Build R002 Balance Sheet','Report Developer',11,2,'high',[],[],[s('RPT-P3-G1-002a','Create composite report with balance sheet data source','Report Developer',11),s('RPT-P3-G1-002b','Configure as-of-date prompt','Report Developer',11),s('RPT-P3-G1-002c','Build rollup rows for asset/liability/equity sections','Report Developer',12),s('RPT-P3-G1-002d','Verify balance: assets = liabilities + equity','Report Developer',12),s('RPT-P3-G1-002e','Assign security group, format report','Report Developer',12)]));
+  tasks.push(t('RPT-P3-G1-003','Configure','Financial Statements Build','Build R003 Cash Flow Statement','Report Developer',12,1,'high',[],[],[s('RPT-P3-G1-003a','Create composite report -- operating/investing/financing sections','Report Developer',12),s('RPT-P3-G1-003b','Build calculated fields for each cash flow line','Report Developer',12),s('RPT-P3-G1-003c','Configure period prompts','Report Developer',12),s('RPT-P3-G1-003d','Assign security group, format report','Report Developer',13)]));
+  tasks.push(t('RPT-P3-G1-004','Configure','Financial Statements Build','Build R004 Trial Balance','Report Developer',12,1,'medium',[],[],[s('RPT-P3-G1-004a','Create standard report from GL data source','Report Developer',12),s('RPT-P3-G1-004b','Configure account range and cost center filters','Report Developer',12),s('RPT-P3-G1-004c','Add debit/credit columns and balance calculated field','Report Developer',13),s('RPT-P3-G1-004d','Assign security group','Security Admin',13)]));
+  tasks.push(t('RPT-P3-G1-005','Configure','Financial Statements Build','Build R005 GL by Cost Center','Report Developer',13,1,'medium',[],[],[s('RPT-P3-G1-005a','Create report with GL data source, cost center dimension columns','Report Developer',13),s('RPT-P3-G1-005b','Configure drill-down to journal line detail','Report Developer',13),s('RPT-P3-G1-005c','Configure cost center prompt','Report Developer',13),s('RPT-P3-G1-005d','Assign security group, format report','Report Developer',13)]));
+  tasks.push(t('RPT-P3-G2-001','Configure','AP Reports Build','Build R006 AP Aging','Report Developer',12,2,'high',[],[],[s('RPT-P3-G2-001a','Create report from supplier invoice data source','Report Developer',12),s('RPT-P3-G2-001b','Build aging bucket calculated fields (0-30, 31-60, 61-90, 90+ days)','Report Developer',13),s('RPT-P3-G2-001c','Configure supplier and payment status prompts','Report Developer',13),s('RPT-P3-G2-001d','Add drill-to-invoice functionality','Report Developer',13),s('RPT-P3-G2-001e','Assign AP security group','Security Admin',13)]));
+  tasks.push(t('RPT-P3-G2-002','Configure','AP Reports Build','Build R007 Supplier Payment Summary','Report Developer',13,1,'medium',[],[],[s('RPT-P3-G2-002a','Create report from payment data source','Report Developer',13),s('RPT-P3-G2-002b','Configure payment method, bank, and period filters','Report Developer',13),s('RPT-P3-G2-002c','Assign AP security group, format report','Report Developer',14)]));
+  tasks.push(t('RPT-P3-G2-003','Configure','AP Reports Build','Build R008 Invoice Approval Status','Report Developer',13,1,'medium',[],[],[s('RPT-P3-G2-003a','Create report from invoice workflow data source','Report Developer',13),s('RPT-P3-G2-003b','Add workflow status and aging columns','Report Developer',14),s('RPT-P3-G2-003c','Configure pending-action filter','Report Developer',14),s('RPT-P3-G2-003d','Assign security group','Security Admin',14)]));
+  tasks.push(t('RPT-P3-G3-001','Configure','AR Reports Build','Build R009 AR Aging','Report Developer',13,2,'high',[],['INT-P3-G2-001'],[s('RPT-P3-G3-001a','Create report from customer invoice data source','Report Developer',13),s('RPT-P3-G3-001b','Build aging bucket calculated fields','Report Developer',14),s('RPT-P3-G3-001c','Add dispute flag and collection status columns','Report Developer',14),s('RPT-P3-G3-001d','Configure customer and aging filters','Report Developer',14),s('RPT-P3-G3-001e','Assign AR security group','Security Admin',14)]));
+  tasks.push(t('RPT-P3-G3-002','Configure','AR Reports Build','Build R010 Customer Statement','Report Developer',14,1,'medium',[],[],[s('RPT-P3-G3-002a','Create customer-facing statement report','Report Developer',14),s('RPT-P3-G3-002b','Configure customer and period prompts','Report Developer',14),s('RPT-P3-G3-002c','Format for external distribution (logo, professional layout)','Report Developer',15),s('RPT-P3-G3-002d','Assign AR security group','Security Admin',15)]));
+  tasks.push(t('RPT-P3-G3-003','Configure','AR Reports Build','Build R011 Revenue Recognition','Report Developer',14,2,'high',[],[],[s('RPT-P3-G3-003a','Create report from revenue recognition data source','Report Developer',14),s('RPT-P3-G3-003b','Build recognized vs deferred columns','Report Developer',14),s('RPT-P3-G3-003c','Configure period and contract prompts','Report Developer',15),s('RPT-P3-G3-003d','Assign Controller security group','Security Admin',15)]));
+  tasks.push(t('RPT-P3-G4-001','Configure','Budget Reports Build','Build R012 Budget vs Actual','Report Developer',13,2,'high',[],[],[s('RPT-P3-G4-001a','Create composite report -- budget and actuals data sources','Report Developer',13),s('RPT-P3-G4-001b','Build variance and % variance calculated fields','Report Developer',14),s('RPT-P3-G4-001c','Configure budget version and period prompts','Report Developer',14),s('RPT-P3-G4-001d','Configure cost center drill-down','Report Developer',14),s('RPT-P3-G4-001e','Assign FP&A security group','Security Admin',14)]));
+  tasks.push(t('RPT-P3-G4-002','Configure','Budget Reports Build','Build R013 Expense Trend','Report Developer',14,1,'medium',[],[],[s('RPT-P3-G4-002a','Create report with rolling 12-month expense data','Report Developer',14),s('RPT-P3-G4-002b','Configure expense category grouping','Report Developer',15),s('RPT-P3-G4-002c','Add period-over-period variance columns','Report Developer',15),s('RPT-P3-G4-002d','Assign FP&A security group','Security Admin',15)]));
+  tasks.push(t('RPT-P3-G4-003','Configure','Budget Reports Build','Build R014 Department Budget Status','Report Developer',15,1,'medium',[],[],[s('RPT-P3-G4-003a','Create department-manager-facing budget report','Report Developer',15),s('RPT-P3-G4-003b','Add traffic-light status calculated field (green/amber/red by % spent)','Report Developer',15),s('RPT-P3-G4-003c','Configure department prompts','Report Developer',15),s('RPT-P3-G4-003d','Assign department manager security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G5-001','Configure','Fixed Asset Reports Build','Build R015 Fixed Asset Register','Report Developer',14,2,'high',[],[],[s('RPT-P3-G5-001a','Create report from fixed asset data source','Report Developer',14),s('RPT-P3-G5-001b','Configure asset class, location, and status columns','Report Developer',15),s('RPT-P3-G5-001c','Add book value and accumulated depreciation columns','Report Developer',15),s('RPT-P3-G5-001d','Configure asset class and location prompts','Report Developer',15),s('RPT-P3-G5-001e','Assign Finance Manager security group','Security Admin',15)]));
+  tasks.push(t('RPT-P3-G5-002','Configure','Fixed Asset Reports Build','Build R016 Depreciation Schedule','Report Developer',15,1,'medium',[],[],[s('RPT-P3-G5-002a','Create depreciation schedule report','Report Developer',15),s('RPT-P3-G5-002b','Add depreciation method, useful life, and YTD depreciation columns','Report Developer',16),s('RPT-P3-G5-002c','Configure period and asset class prompts','Report Developer',16),s('RPT-P3-G5-002d','Assign Finance Manager security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G5-003','Configure','Fixed Asset Reports Build','Build R017 Asset Disposition','Report Developer',15,1,'medium',[],[],[s('RPT-P3-G5-003a','Create report from disposed asset data source','Report Developer',15),s('RPT-P3-G5-003b','Add gain/loss calculated field','Report Developer',16),s('RPT-P3-G5-003c','Configure disposal date range prompt','Report Developer',16),s('RPT-P3-G5-003d','Assign Finance Manager security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G6-001','Configure','Compliance Reports Build','Build R018 1099 Prep Report','Report Developer',15,1,'high',[],[],[s('RPT-P3-G6-001a','Create report from supplier payment data source','Report Developer',15),s('RPT-P3-G6-001b','Filter to 1099-reportable vendors (tax classification)','Report Developer',15),s('RPT-P3-G6-001c','Add payment YTD and tax ID columns','Report Developer',16),s('RPT-P3-G6-001d','Assign AP and Controller security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G6-002','Configure','Compliance Reports Build','Build R019 Audit Trail Report','Report Developer',15,1,'high',[],[],[s('RPT-P3-G6-002a','Create report from audit trail data source','Report Developer',15),s('RPT-P3-G6-002b','Configure who/what/when columns with before/after values','Report Developer',16),s('RPT-P3-G6-002c','Configure user, date range, and field name prompts','Report Developer',16),s('RPT-P3-G6-002d','Assign Controller and Audit security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G6-003','Configure','Compliance Reports Build','Build R020 Security Access Report','Security Admin',16,1,'high',[],[],[s('RPT-P3-G6-003a','Create report from security group membership data source','Security Admin',16),s('RPT-P3-G6-003b','Add user, role, and report access columns','Security Admin',16),s('RPT-P3-G6-003c','Configure user and security group prompts','Security Admin',16),s('RPT-P3-G6-003d','Assign HRIS Admin security group','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G7-001','Configure','Dashboards Build','Build D001 CFO Finance Dashboard','Report Developer',15,3,'high',[],[],[s('RPT-P3-G7-001a','Create dashboard page in Workday','Report Developer',15),s('RPT-P3-G7-001b','Add Revenue KPI worklet','Report Developer',15),s('RPT-P3-G7-001c','Add EBITDA KPI worklet with trend sparkline','Report Developer',16),s('RPT-P3-G7-001d','Add Cash Position worklet','Report Developer',16),s('RPT-P3-G7-001e','Add AP Aging summary worklet','Report Developer',16),s('RPT-P3-G7-001f','Add AR Aging summary worklet','Report Developer',17),s('RPT-P3-G7-001g','Configure role-based visibility (CFO and Controller)','Security Admin',17),s('RPT-P3-G7-001h','Format and layout final dashboard','Report Developer',17)]));
+  tasks.push(t('RPT-P3-G7-002','Configure','Dashboards Build','Build D002 AP Manager Dashboard','Report Developer',15,2,'medium',[],[],[s('RPT-P3-G7-002a','Create AP dashboard page','Report Developer',15),s('RPT-P3-G7-002b','Add invoice volume by status worklet','Report Developer',16),s('RPT-P3-G7-002c','Add AP aging worklet','Report Developer',16),s('RPT-P3-G7-002d','Add pending approvals worklet','Report Developer',16),s('RPT-P3-G7-002e','Configure AP Manager security group access','Security Admin',16)]));
+  tasks.push(t('RPT-P3-G7-003','Configure','Dashboards Build','Build D003 AR Manager Dashboard','Report Developer',16,2,'medium',[],[],[s('RPT-P3-G7-003a','Create AR dashboard page','Report Developer',16),s('RPT-P3-G7-003b','Add AR aging worklet','Report Developer',16),s('RPT-P3-G7-003c','Add DSO calculated metric worklet','Report Developer',17),s('RPT-P3-G7-003d','Add collections pipeline worklet','Report Developer',17),s('RPT-P3-G7-003e','Configure AR Manager security group','Security Admin',17)]));
+  tasks.push(t('RPT-P3-G7-004','Configure','Dashboards Build','Build D004 FP&A Dashboard','Report Developer',16,2,'high',[],[],[s('RPT-P3-G7-004a','Create FP&A dashboard page','Report Developer',16),s('RPT-P3-G7-004b','Add budget vs actual summary tile','Report Developer',17),s('RPT-P3-G7-004c','Add expense trend chart worklet','Report Developer',17),s('RPT-P3-G7-004d','Add forecast vs budget variance worklet','Report Developer',17),s('RPT-P3-G7-004e','Configure FP&A Analyst security group','Security Admin',17),s('RPT-P3-G7-004f','Format and finalize layout','Report Developer',18)]));
+  // TEST
+  tasks.push(t('RPT-P4-G1-001','Test','SIT','SIT -- Financial Statement reports','Report Developer',19,2,'high',[],['DC-P4-G1-001'],[s('RPT-P4-G1-001a','Validate R001 Income Statement -- compare to source GL data','Report Developer',19),s('RPT-P4-G1-001b','Validate R002 Balance Sheet -- verify assets = liabilities + equity','Report Developer',19),s('RPT-P4-G1-001c','Validate R003 Cash Flow -- tie to GL cash accounts','Report Developer',20),s('RPT-P4-G1-001d','Validate R004 Trial Balance -- reconcile to source','Report Developer',20),s('RPT-P4-G1-001e','Validate R005 GL by Cost Center -- verify drill-down works','Report Developer',20)]));
+  tasks.push(t('RPT-P4-G1-002','Test','SIT','SIT -- AP, AR, and Budget reports','Report Developer',19,2,'high',[],[],[s('RPT-P4-G1-002a','Validate R006 AP Aging -- reconcile aging totals to AP subledger','Report Developer',19),s('RPT-P4-G1-002b','Validate R007 Supplier Payment Summary -- tie to payment records','Report Developer',19),s('RPT-P4-G1-002c','Validate R008 Invoice Approval -- verify workflow status accuracy','Report Developer',20),s('RPT-P4-G1-002d','Validate R009 AR Aging -- reconcile to AR subledger','Report Developer',20),s('RPT-P4-G1-002e','Validate R012 Budget vs Actual -- verify variance calculations','Report Developer',20),s('RPT-P4-G1-002f','Validate R013, R014 Budget reports -- verify data accuracy','Report Developer',20)]));
+  tasks.push(t('RPT-P4-G1-003','Test','SIT','SIT -- Fixed Asset, Compliance, and Dashboards','Report Developer',20,1,'high',[],[],[s('RPT-P4-G1-003a','Validate R015-R017 Fixed Asset reports -- reconcile to asset register','Report Developer',20),s('RPT-P4-G1-003b','Validate R018-R020 Compliance reports -- verify data accuracy','Report Developer',20),s('RPT-P4-G1-003c','Validate D001-D004 Dashboards -- verify all worklets display correctly','Report Developer',21)]));
+  tasks.push(t('RPT-P4-G1-004','Test','SIT','Security testing -- run-as validation','Security Admin',20,1,'high',[],[],[s('RPT-P4-G1-004a','Run each report as AP Manager role -- verify access and data scope','Security Admin',20),s('RPT-P4-G1-004b','Run each report as Controller role','Security Admin',20),s('RPT-P4-G1-004c','Run each report as FP&A Analyst role','Security Admin',21),s('RPT-P4-G1-004d','Verify no unauthorized data visible to any role','Security Admin',21),s('RPT-P4-G1-004e','Document security test results','Security Admin',21)]));
+  tasks.push(t('RPT-P4-G2-001','Test','UAT','UAT -- Financial leadership sign-off','Business Analyst',21,2,'high',[],[],[s('RPT-P4-G2-001a','Controller reviews R001-R004 Financial Statements -- verifies accuracy','Controller',21),s('RPT-P4-G2-001b','Controller reviews R005 GL by Cost Center','Controller',21),s('RPT-P4-G2-001c','CFO reviews D001 CFO Dashboard -- approves design and data','CFO',22),s('RPT-P4-G2-001d','FP&A Analyst reviews R012-R014 Budget reports and D004 Dashboard','FP&A Analyst',22),s('RPT-P4-G2-001e','Document UAT sign-off for financial reports','Business Analyst',22)]));
+  tasks.push(t('RPT-P4-G2-002','Test','UAT','UAT -- AP, AR, and Operations sign-off','Business Analyst',21,2,'high',[],[],[s('RPT-P4-G2-002a','AP Manager reviews R006-R008 AP reports and D002 Dashboard','AP Manager',21),s('RPT-P4-G2-002b','AR Manager reviews R009-R011 AR reports and D003 Dashboard','AR Manager',21),s('RPT-P4-G2-002c','Finance Manager reviews R015-R017 Fixed Asset reports','Finance Manager',22),s('RPT-P4-G2-002d','Controller reviews R018-R020 Compliance reports','Controller',22),s('RPT-P4-G2-002e','Document UAT sign-off for all remaining reports','Business Analyst',22)]));
+  tasks.push(t('RPT-P4-G2-003','Test','UAT','Defect resolution and regression testing','Report Developer',22,2,'high',[],[],[s('RPT-P4-G2-003a','Triage UAT defects by severity','Reporting Lead',22),s('RPT-P4-G2-003b','Fix high-severity report defects','Report Developer',22),s('RPT-P4-G2-003c','Fix medium-severity report and dashboard defects','Report Developer',23),s('RPT-P4-G2-003d','Regression test fixed reports','Report Developer',23),s('RPT-P4-G2-003e','Final sign-off from business stakeholders','Business Analyst',23)]));
+  tasks.push(t('RPT-P4-G3-001','Test','Cutover Prep','Report go-live preparation','Reporting Lead',23,1,'high',[],[],[s('RPT-P4-G3-001a','Final review of all report security assignments','Security Admin',23),s('RPT-P4-G3-001b','Verify report folder structure in production tenant','Reporting Lead',23),s('RPT-P4-G3-001c','Prepare report catalog document','Report Developer',24),s('RPT-P4-G3-001d','Define report activation sequence for go-live','Reporting Lead',24)]));
+  // DEPLOY
+  tasks.push(t('RPT-P5-G1-001','Deploy','Production Publish','Publish all reports to production','Reporting Lead',25,1,'high',[],[],[s('RPT-P5-G1-001a','Publish R001-R005 Financial Statement reports to production','Report Developer',25),s('RPT-P5-G1-001b','Publish R006-R011 AP and AR reports to production','Report Developer',25),s('RPT-P5-G1-001c','Publish R012-R014 Budget reports to production','Report Developer',25),s('RPT-P5-G1-001d','Publish R015-R017 Fixed Asset reports to production','Report Developer',26),s('RPT-P5-G1-001e','Publish R018-R020 Compliance reports to production','Security Admin',26),s('RPT-P5-G1-001f','Publish D001-D004 Dashboards to production','Report Developer',26)]));
+  tasks.push(t('RPT-P5-G1-002','Deploy','Production Publish','Activate production report security','Security Admin',25,1,'high',[],[],[s('RPT-P5-G1-002a','Assign reports to production security groups','Security Admin',25),s('RPT-P5-G1-002b','Verify report access by role in production','Security Admin',25),s('RPT-P5-G1-002c','Smoke test all reports with real production data','Report Developer',26),s('RPT-P5-G1-002d','Go/No-Go sign-off on report readiness','Reporting Lead',26)]));
+  tasks.push(t('RPT-P5-G2-001','Deploy','Training & Handover','User training on reports and dashboards','Reporting Lead',26,2,'high',[],[],[s('RPT-P5-G2-001a','Deliver training session: Finance leadership -- dashboards and financial statements','Reporting Lead',26),s('RPT-P5-G2-001b','Deliver training session: AP team -- AP reports and dashboard','Reporting Lead',27),s('RPT-P5-G2-001c','Deliver training session: AR team -- AR reports and dashboard','Reporting Lead',27),s('RPT-P5-G2-001d','Deliver training session: FP&A team -- budget reports and FP&A dashboard','Reporting Lead',27),s('RPT-P5-G2-001e','Distribute report user guide','Report Developer',27)]));
+  tasks.push(t('RPT-P5-G2-002','Deploy','Training & Handover','Report catalog and knowledge transfer','Reporting Lead',27,1,'medium',[],[],[s('RPT-P5-G2-002a','Finalize report catalog with descriptions, owners, and refresh schedule','Report Developer',27),s('RPT-P5-G2-002b','Document calculated field logic for all custom reports','Report Developer',27),s('RPT-P5-G2-002c','Train client report admin on how to clone and modify reports','Reporting Lead',28),s('RPT-P5-G2-002d','Hand over report catalog to client','Reporting Lead',28)]));
+  tasks.push(t('RPT-P5-G2-003','Deploy','Training & Handover','Hypercare reporting support','Reporting Lead',27,2,'medium',[],[],[s('RPT-P5-G2-003a','Monitor report usage and address user questions','Reporting Lead',27),s('RPT-P5-G2-003b','Fix any production report issues during hypercare period','Report Developer',28),s('RPT-P5-G2-003c','Complete report workstream closure report','Project Manager',28)]));
+  return tasks;
+}
+
+let tasks=[],history=[],currentFilter='all',collapsedPhases={},collapsedGroups={},expandedTasks={},modalTask=null,isNew=false,ctxId=null,dragState=null,splDrag=false,saveTimer=null,ttEl=null;
+const currentWeek=Math.max(1,Math.min(28,Math.ceil((Date.now()-new Date('2026-02-02').getTime())/(7*24*60*60*1000))));
+
+function save(){localStorage.setItem(LS_KEY,JSON.stringify({tasks,collapsedPhases,collapsedGroups,expandedTasks}));document.getElementById('last-saved').textContent='Saved '+new Date().toLocaleTimeString();}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(save,500);}
+function load(){try{const raw=localStorage.getItem(LS_KEY);if(raw){const d=JSON.parse(raw);tasks=d.tasks||buildSeed();collapsedPhases=d.collapsedPhases||{};collapsedGroups=d.collapsedGroups||{};expandedTasks=d.expandedTasks||{};}else tasks=buildSeed();}catch{tasks=buildSeed();}}
+function pushHistory(){history.push(JSON.stringify(tasks));if(history.length>20)history.shift();}
+function undo(){if(!history.length)return;tasks=JSON.parse(history.pop());renderAll();scheduleSave();showToast('Undone');}
+function confirmReset(){if(!confirm('Reset all data to defaults?'))return;localStorage.removeItem(LS_KEY);tasks=buildSeed();collapsedPhases={};collapsedGroups={};expandedTasks={};history=[];renderAll();scheduleSave();showToast('Reset to defaults');}
+
+function findTask(id){for(const t of tasks){if(t.id===id)return t;if(t.subtasks)for(const s of t.subtasks)if(s.id===id)return s;}return null;}
+function findParent(id){for(const t of tasks)if(t.subtasks)for(const s of t.subtasks)if(s.id===id)return t;return null;}
+function removeTask(id){const i=tasks.findIndex(t=>t.id===id);if(i>=0){tasks.splice(i,1);return;}for(const t of tasks){if(t.subtasks){const si=t.subtasks.findIndex(s=>s.id===id);if(si>=0){t.subtasks.splice(si,1);return;}}}}
+function allFlat(){const a=[];tasks.forEach(t=>{a.push(t);(t.subtasks||[]).forEach(s=>a.push(s));});return a;}
+function phasePct(ph){const pt=tasks.filter(t=>t.phase===ph);if(!pt.length)return 0;const all=[];pt.forEach(t=>{all.push(t);(t.subtasks||[]).forEach(s=>all.push(s));});return Math.round(all.filter(t=>t.status==='complete').length/all.length*100);}
+let _nid=0;function genId(){return 'RPT-NEW-'+(++_nid);}
+
+function buildRows(){const rows=[];const phases=(currentFilter==='all')?PHASES:[currentFilter];for(const phase of phases){const pt=tasks.filter(t=>t.phase===phase);if(!pt.length)continue;rows.push({type:'phase',phase});if(!collapsedPhases[phase]){const groups=[...new Set(pt.map(t=>t.group))];for(const group of groups){rows.push({type:'group',phase,group});if(!collapsedGroups[phase+'::'+group]){const gt=pt.filter(t=>t.group===group);for(const task of gt){rows.push({type:'task',task});if(expandedTasks[task.id]&&task.subtasks&&task.subtasks.length)for(const sub of task.subtasks)rows.push({type:'subtask',task:sub,parent:task});}}}}}return rows;}
+
+function renderAll(){const rows=buildRows();renderTabsDOM();renderTaskList(rows);renderGantt(rows);updateStatusBar();requestAnimationFrame(()=>drawArrows(rows));}
+function renderTabsDOM(){const c=document.getElementById('ptabs');let h='';['all',...PHASES].forEach(ph=>{const active=currentFilter===ph;const col=ph!=='all'&&active?`color:${PHASE_COLORS[ph]};`:'' ;h+=`<button class="ptab${active?' active':''}" style="${col}" onclick="setFilter('${ph}')">${ph==='all'?'All':ph}</button>`;});c.innerHTML=h;}
+function setFilter(ph){currentFilter=ph;renderAll();}
+
+function renderTaskList(rows){
+  const tl=document.getElementById('task-list');let html='';
+  for(const row of rows){
+    if(row.type==='phase'){const pct=phasePct(row.phase);const col=PHASE_COLORS[row.phase];const arr=collapsedPhases[row.phase]?'&rsaquo;':'&lsaquo;';
+      html+=`<div class="tl-row ph-row" onclick="togglePh('${row.phase}')" style="border-left:3px solid ${col}"><span class="chevron" style="color:${col}">${arr}</span><span class="ph-name" style="color:${col}">${row.phase}</span><span class="ph-pct" style="background:${col}22;color:${col}">${pct}%</span><div class="ph-prog"><div class="ph-prog-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+    }else if(row.type==='group'){const k=row.phase+'::'+row.group;const cnt=tasks.filter(t=>t.phase===row.phase&&t.group===row.group).length;const arr=collapsedGroups[k]?'&rsaquo;':'&lsaquo;';
+      html+=`<div class="tl-row gr-row" onclick="toggleGr('${escH(k)}')"><span class="chevron">${arr}</span><span class="gr-name">${escH(row.group)}</span><span class="gr-count">(${cnt})</span></div>`;
+    }else if(row.type==='task'){const t=row.task;const oc=ownerColor(t.owner);const sc=STATUS_COLORS[t.status];const hasSub=t.subtasks&&t.subtasks.length>0;const expArr=expandedTasks[t.id]?'v':'^';let depH='';
+      if(t.dependencies&&t.dependencies.length)depH+=`<div class="dep-line">dep: ${t.dependencies.join(', ')}</div>`;
+      if(t.crossDeps&&t.crossDeps.length)depH+=`<div class="xdep-line">cross: ${t.crossDeps.join(', ')}</div>`;
+      html+=`<div><div class="tl-row task-row" data-id="${t.id}" oncontextmenu="showCtx(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))"><span class="drag-handle">&#8942;</span><span class="sdot" style="background:${sc}"></span><span class="id-badge">${escH(t.id)}</span><span class="task-name" title="${escH(t.task)}">${escH(t.task)}</span><span class="owner-chip" style="background:${oc}" title="${escH(t.owner)}">${shortOwner(t.owner)}</span><span class="wk-badge">W${t.startWeek}</span>${hasSub?`<span class="exp-btn" onclick="event.stopPropagation();toggleExp('${t.id}')">${expArr}</span>`:''}</div>${depH}</div>`;
+    }else if(row.type==='subtask'){const t=row.task;const oc=ownerColor(t.owner);const sc=STATUS_COLORS[t.status];
+      html+=`<div><div class="tl-row sub-row" data-id="${t.id}" oncontextmenu="showCtx(event,'${t.id}')" onclick="openModal(findTask('${t.id}'))"><span class="sdot" style="background:${sc}"></span><span class="id-badge" style="font-size:8px">${escH(t.id)}</span><span class="sub-name" title="${escH(t.task)}">${escH(t.task)}</span><span class="owner-chip" style="background:${oc}" title="${escH(t.owner)}">${shortOwner(t.owner)}</span><span class="wk-badge">W${t.startWeek}</span></div></div>`;
+    }
+  }
+  tl.innerHTML=html;
+}
+function togglePh(ph){collapsedPhases[ph]=!collapsedPhases[ph];renderAll();}
+function toggleGr(k){collapsedGroups[k]=!collapsedGroups[k];renderAll();}
+function toggleExp(id){expandedTasks[id]=!expandedTasks[id];renderAll();}
+
+function renderGantt(rows){
+  const totalW=TOTAL_WEEKS*CELL_W;
+  let hh=`<div style="position:relative;height:38px;width:${totalW}px;">`;
+  for(const [ph,[s,e]] of Object.entries(PHASE_RANGES)){const l=(s-1)*CELL_W,w=(e-s+1)*CELL_W,col=PHASE_COLORS[ph];hh+=`<div class="g-ph-band" style="left:${l}px;width:${w}px;background:${col}22;border-bottom:2px solid ${col};color:${col}">${ph}</div>`;}
+  hh+=`<div class="g-wk-row" style="position:absolute;top:18px;left:0">`;
+  for(let w=1;w<=TOTAL_WEEKS;w++)hh+=`<div class="g-wk-cell${w===currentWeek?' cur':''}">W${w}</div>`;
+  hh+=`</div></div>`;
+  document.getElementById('g-hdr').innerHTML=hh;
+  let totalH=0;for(const row of rows){if(row.type==='phase')totalH+=PH_ROW_H;else if(row.type==='group')totalH+=GR_ROW_H;else if(row.type==='task')totalH+=ROW_H;else totalH+=SUB_H;}
+  let bh=`<div style="width:${totalW}px;position:relative;min-height:${Math.max(totalH,200)}px;">`;
+  for(const [ph,[s,e]] of Object.entries(PHASE_RANGES)){const l=(s-1)*CELL_W,w=(e-s+1)*CELL_W,col=PHASE_COLORS[ph];bh+=`<div class="g-ph-bg" style="left:${l}px;width:${w}px;height:100%;background:${col};opacity:0.04;position:absolute;top:0;"></div>`;}
+  for(let w=0;w<TOTAL_WEEKS;w++)bh+=`<div style="position:absolute;left:${w*CELL_W}px;top:0;bottom:0;width:1px;background:rgba(161,0,255,0.06);"></div>`;
+  const tx=(currentWeek-1)*CELL_W+CELL_W/2;bh+=`<div class="g-today" style="left:${tx}px;position:absolute;"></div>`;
+  for(const row of rows){
+    if(row.type==='phase'){const col=PHASE_COLORS[row.phase];bh+=`<div class="g-row" style="height:${PH_ROW_H}px;border-left:3px solid ${col};"></div>`;}
+    else if(row.type==='group'){bh+=`<div class="g-row" style="height:${GR_ROW_H}px;background:rgba(14,5,30,0.3);"></div>`;}
+    else if(row.type==='task'){const t=row.task;const l=(t.startWeek-1)*CELL_W;const w=Math.max(t.duration*CELL_W,4);const col=STATUS_COLORS[t.status];const phCol=PHASE_COLORS[t.phase]||'#A100FF';
+      bh+=`<div class="g-row" style="height:${ROW_H}px;"><div class="g-bar" data-id="${t.id}" style="left:${l}px;width:${w}px;background:${col};border-left:2px solid ${phCol};" onmousedown="barDown(event,'${t.id}')" ondblclick="openModal(findTask('${t.id}'))" onmouseenter="showTT(event,'${escH(t.task)}','${escH(t.owner)}',${t.startWeek},${t.startWeek+t.duration-1},'${STATUS_LABELS[t.status]}')" onmouseleave="hideTT()">${w>40?`<span style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:9px;color:rgba(0,0,0,0.75);white-space:nowrap;overflow:hidden;max-width:calc(100% - 8px)">${escH(shortOwner(t.owner))}</span>`:''}</div></div>`;}
+    else if(row.type==='subtask'){const t=row.task;const l=(t.startWeek-1)*CELL_W;const dur=t.duration||1;const w=Math.max(dur*CELL_W,4);const col=STATUS_COLORS[t.status];
+      bh+=`<div class="g-row" style="height:${SUB_H}px;background:rgba(7,3,15,0.25);"><div class="g-bar sub-bar" data-id="${t.id}" style="left:${l}px;width:${w}px;background:${col};opacity:0.78;" onmousedown="barDown(event,'${t.id}')" ondblclick="openModal(findTask('${t.id}'))" onmouseenter="showTT(event,'${escH(t.task)}','${escH(t.owner||'')}',${t.startWeek},${t.startWeek+dur-1},'${STATUS_LABELS[t.status]}')" onmouseleave="hideTT()"></div></div>`;}
+  }
+  bh+=`<svg id="dep-svg" class="dep-svg" style="width:${totalW}px;height:${Math.max(totalH,200)}px;position:absolute;top:0;left:0;"></svg></div>`;
+  document.getElementById('g-body').innerHTML=bh;
+}
+
+function drawArrows(rows){
+  const svg=document.getElementById('dep-svg');if(!svg)return;svg.innerHTML='';
+  function getPos(id){const bar=document.querySelector('.g-bar[data-id="'+id+'"]');if(!bar)return null;const gbEl=document.getElementById('g-body').firstElementChild;const gbRect=gbEl.getBoundingClientRect();const bRect=bar.getBoundingClientRect();const sc=document.getElementById('g-body-wrap').scrollLeft;const st=document.getElementById('g-body-wrap').scrollTop;return{left:bRect.left-gbRect.left+sc,right:bRect.right-gbRect.left+sc,midY:bRect.top-gbRect.top+st+bRect.height/2};}
+  function drawArrow(svg,x1,y1,x2,y2,color,dashed){const mid=(x1+x2)/2;const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','M '+x1+' '+y1+' C '+mid+' '+y1+', '+mid+' '+y2+', '+x2+' '+y2);path.setAttribute('fill','none');path.setAttribute('stroke',color);path.setAttribute('stroke-width','1.5');path.setAttribute('opacity','0.6');if(dashed)path.setAttribute('stroke-dasharray','4,3');const ang=Math.atan2(y2-y1,x2-x1);const aw=6;const ax1=x2-aw*Math.cos(ang-Math.PI/7),ay1=y2-aw*Math.sin(ang-Math.PI/7);const ax2=x2-aw*Math.cos(ang+Math.PI/7),ay2=y2-aw*Math.sin(ang+Math.PI/7);const arrowh=document.createElementNS('http://www.w3.org/2000/svg','polygon');arrowh.setAttribute('points',x2+','+y2+' '+ax1+','+ay1+' '+ax2+','+ay2);arrowh.setAttribute('fill',color);arrowh.setAttribute('opacity','0.7');svg.appendChild(path);svg.appendChild(arrowh);}
+  for(const row of rows){if(row.type!=='task')continue;const t=row.task;const to=getPos(t.id);if(!to)continue;for(const depId of(t.dependencies||[])){const from=getPos(depId);if(from)drawArrow(svg,from.right,from.midY,to.left,to.midY,'#4ade80',false);}for(const depId of(t.crossDeps||[])){const from=getPos(depId);if(from)drawArrow(svg,from.right,from.midY,to.left,to.midY,'#fbbf24',true);else drawArrow(svg,0,to.midY,to.left,to.midY,'#fbbf24',true);}}
+}
+
+function barDown(e,id){if(e.button!==0)return;e.preventDefault();e.stopPropagation();const task=findTask(id);if(!task)return;dragState={task,startX:e.clientX,origWeek:task.startWeek};}
+document.addEventListener('mousemove',e=>{
+  if(dragState){const dx=e.clientX-dragState.startX;const dw=Math.round(dx/CELL_W);const nw=Math.max(1,Math.min(TOTAL_WEEKS-(dragState.task.duration||1)+1,dragState.origWeek+dw));dragState.task.startWeek=nw;const bar=document.querySelector('.g-bar[data-id="'+dragState.task.id+'"]');if(bar)bar.style.left=((nw-1)*CELL_W)+'px';}
+  if(ttEl)positionTT(e);
+  if(splDrag){const main=document.getElementById('main');const left=document.getElementById('left');const newW=Math.max(200,Math.min(main.offsetWidth*0.72,e.clientX-main.getBoundingClientRect().left));left.style.width=newW+'px';}
+});
+document.addEventListener('mouseup',e=>{if(dragState){pushHistory();renderAll();dragState=null;scheduleSave();}if(splDrag){splDrag=false;document.getElementById('splitter').classList.remove('active');document.body.style.userSelect='';}});
+document.getElementById('splitter').addEventListener('mousedown',e=>{splDrag=true;document.getElementById('splitter').classList.add('active');document.body.style.userSelect='none';e.preventDefault();});
+
+let syncV=false;
+document.getElementById('task-scroll').addEventListener('scroll',function(){if(syncV)return;syncV=true;document.getElementById('g-body-wrap').scrollTop=this.scrollTop;syncV=false;});
+document.getElementById('g-body-wrap').addEventListener('scroll',function(){if(syncV)return;syncV=true;document.getElementById('task-scroll').scrollTop=this.scrollTop;document.getElementById('g-hdr-wrap').scrollLeft=this.scrollLeft;syncV=false;});
+
+function showTT(e,name,owner,s,end,status){hideTT();ttEl=document.createElement('div');ttEl.className='g-tooltip';ttEl.innerHTML='<strong>'+name+'</strong><br>'+owner+'<br>W'+s+'&ndash;W'+end+'<br><span style="color:var(--text-muted)">'+status+'</span>';document.body.appendChild(ttEl);positionTT(e);}
+function positionTT(e){if(!ttEl)return;ttEl.style.left=(e.clientX+12)+'px';ttEl.style.top=(e.clientY-10)+'px';}
+function hideTT(){if(ttEl){ttEl.remove();ttEl=null;}}
+
+function updateStatusBar(){const flat=allFlat();document.getElementById('st-total').textContent=flat.length;document.getElementById('st-complete').textContent=flat.filter(t=>t.status==='complete').length;document.getElementById('st-inprog').textContent=flat.filter(t=>t.status==='in_progress').length;document.getElementById('st-blocked').textContent=flat.filter(t=>t.status==='blocked').length;}
+
+function openModal(task){if(!task)return;modalTask=task;isNew=false;document.getElementById('modal-title').textContent='Edit Task';document.getElementById('f-id').value=task.id||'';document.getElementById('f-task').value=task.task||'';document.getElementById('f-phase').value=task.phase||'Plan';document.getElementById('f-group').value=task.group||'';document.getElementById('f-owner').value=task.owner||'Reporting Lead';document.getElementById('f-status').value=task.status||'not_started';document.getElementById('f-start').value=task.startWeek||1;document.getElementById('f-dur').value=task.duration||1;document.getElementById('f-priority').value=task.priority||'medium';document.getElementById('f-deps').value=(task.dependencies||[]).join(', ');document.getElementById('f-crossdeps').value=(task.crossDeps||[]).join(', ');document.getElementById('f-parent').value=(findParent(task.id)||{}).id||'';document.getElementById('f-notes').value=task.notes||'';document.getElementById('modal-del').style.display='';document.getElementById('modal-ov').classList.add('open');}
+function openNewModal(prefillPhase,prefillGroup,prefillParent){modalTask=null;isNew=true;document.getElementById('modal-title').textContent='New Task';document.getElementById('f-id').value=genId();document.getElementById('f-task').value='';document.getElementById('f-phase').value=prefillPhase||(currentFilter!=='all'?currentFilter:'Plan');document.getElementById('f-group').value=prefillGroup||'';document.getElementById('f-owner').value='Reporting Lead';document.getElementById('f-status').value='not_started';document.getElementById('f-start').value=1;document.getElementById('f-dur').value=1;document.getElementById('f-priority').value='medium';document.getElementById('f-deps').value='';document.getElementById('f-crossdeps').value='';document.getElementById('f-parent').value=prefillParent||'';document.getElementById('f-notes').value='';document.getElementById('modal-del').style.display='none';document.getElementById('modal-ov').classList.add('open');}
+function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+document.getElementById('modal-ov').addEventListener('click',e=>{if(e.target===document.getElementById('modal-ov'))closeModal();});
+
+function saveModal(){const taskName=document.getElementById('f-task').value.trim();if(!taskName){showToast('Task name required');return;}pushHistory();const id=document.getElementById('f-id').value.trim()||genId();const phase=document.getElementById('f-phase').value;const group=document.getElementById('f-group').value.trim()||'General';const owner=document.getElementById('f-owner').value;const status=document.getElementById('f-status').value;const sw=parseInt(document.getElementById('f-start').value)||1;const dur=parseInt(document.getElementById('f-dur').value)||1;const priority=document.getElementById('f-priority').value;const deps=document.getElementById('f-deps').value.split(',').map(s=>s.trim()).filter(Boolean);const xdeps=document.getElementById('f-crossdeps').value.split(',').map(s=>s.trim()).filter(Boolean);const parentId=document.getElementById('f-parent').value.trim();const notes=document.getElementById('f-notes').value.trim();if(isNew){const nt={id,phase,group,task:taskName,owner,startWeek:sw,duration:dur,status,priority,dependencies:deps,crossDeps:xdeps,notes,subtasks:[]};if(parentId){const par=findTask(parentId);if(par){if(!par.subtasks)par.subtasks=[];par.subtasks.push(nt);}}else tasks.push(nt);}else{Object.assign(modalTask,{id,phase,group,task:taskName,owner,startWeek:sw,duration:dur,status,priority,dependencies:deps,crossDeps:xdeps,notes});}closeModal();renderAll();scheduleSave();}
+function deleteCurrentTask(){if(!modalTask)return;if(!confirm('Delete this task?'))return;pushHistory();removeTask(modalTask.id);closeModal();renderAll();scheduleSave();}
+
+function showCtx(e,id){e.preventDefault();ctxId=id;const m=document.getElementById('ctx-menu');m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.classList.add('open');}
+function hideCtx(){document.getElementById('ctx-menu').classList.remove('open');}
+document.addEventListener('click',hideCtx);
+document.getElementById('ctx-menu').addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(!item)return;const action=item.dataset.action;const id=ctxId;hideCtx();if(action==='edit'){openModal(findTask(id));}else if(action==='addSub'){const t=findTask(id);openNewModal(t&&t.phase,t&&t.group,id);}else if(action==='addBelow'){const t=findTask(id);openNewModal(t&&t.phase,t&&t.group,null);}else if(action==='duplicate'){pushHistory();const res=findTask(id);if(!res)return;const copy=JSON.parse(JSON.stringify(res));copy.id=genId();copy.task='Copy of '+copy.task;const par=findParent(id);if(par){if(!par.subtasks)par.subtasks=[];par.subtasks.push(copy);}else{const i=tasks.findIndex(t=>t.id===id);tasks.splice(i+1,0,copy);}renderAll();scheduleSave();}else if(action==='dep'){const depId=prompt('Enter dependency task ID:');if(!depId)return;pushHistory();const t=findTask(id);if(!t)return;if(!t.dependencies)t.dependencies=[];if(!t.dependencies.includes(depId))t.dependencies.push(depId);renderAll();scheduleSave();}else if(action==='delete'){if(!confirm('Delete this task?'))return;pushHistory();removeTask(id);renderAll();scheduleSave();}});
+
+function doImport(inp){const file=inp.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{defval:''});pushHistory();function gv(row,keys){for(const k of keys){for(const rk of Object.keys(row)){if(rk.toLowerCase()===k.toLowerCase()&&row[rk]!=='')return String(row[rk]);}}return '';}const newTasks=[];const tmap={};let added=0,errs=0;for(const row of data){try{const id=gv(row,['id','ID'])||genId();const parentId=gv(row,['parentid','parent_id','ParentID','parentId']);const phase=gv(row,['phase','Phase'])||'Plan';const group=gv(row,['group','Group'])||'General';const task=gv(row,['task','Task','name','Name']);if(!task)continue;const owner=gv(row,['owner','Owner'])||'Reporting Lead';const sw=parseInt(gv(row,['startweek','start_week','StartWeek']))||1;const dur=parseInt(gv(row,['duration','Duration']))||1;const status=gv(row,['status','Status'])||'not_started';const priority=gv(row,['priority','Priority'])||'medium';const deps=gv(row,['dependencies','Dependencies']).split(',').map(s=>s.trim()).filter(Boolean);const xdeps=gv(row,['crossdeps','cross_deps','CrossDeps']).split(',').map(s=>s.trim()).filter(Boolean);const notes=gv(row,['notes','Notes']);const obj={id,phase,group,task,owner,startWeek:sw,duration:dur,status,priority,dependencies:deps,crossDeps:xdeps,notes,subtasks:[]};tmap[id]={obj,parentId};if(!parentId){newTasks.push(obj);added++;}}catch{errs++;}}for(const[,entry] of Object.entries(tmap)){if(entry.parentId){const par=tmap[entry.parentId]?.obj||newTasks.find(t=>t.id===entry.parentId);if(par){if(!par.subtasks)par.subtasks=[];par.subtasks.push(entry.obj);}}}tasks=newTasks;renderAll();scheduleSave();showToast('Imported: '+added+' tasks, '+errs+' errors');}catch(err){showToast('Import failed: '+err.message);}inp.value='';};reader.readAsBinaryString(file);}
+
+function doExport(){const wb=XLSX.utils.book_new();const allData=[];for(const t of tasks){allData.push({ID:t.id,Phase:t.phase,Group:t.group,Task:t.task,Owner:t.owner,StartWeek:t.startWeek,Duration:t.duration,Status:t.status,Priority:t.priority,Dependencies:(t.dependencies||[]).join(', '),CrossDeps:(t.crossDeps||[]).join(', '),Notes:t.notes,ParentID:''});for(const s of(t.subtasks||[])){allData.push({ID:s.id,Phase:t.phase,Group:t.group,Task:s.task,Owner:s.owner,StartWeek:s.startWeek,Duration:s.duration||1,Status:s.status,Priority:s.priority||'medium',Dependencies:'',CrossDeps:'',Notes:s.notes||'',ParentID:t.id});}}XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(allData),'All Tasks');for(const ph of PHASES){const pd=allData.filter(r=>r.Phase===ph);if(pd.length)XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pd),ph);}const sumData=PHASES.map(ph=>{const pt=tasks.filter(t=>t.phase===ph);const all=[];pt.forEach(t=>{all.push(t);all.push(...(t.subtasks||[]));});return{Phase:ph,Tasks:pt.length,Complete:all.filter(t=>t.status==='complete').length,InProgress:all.filter(t=>t.status==='in_progress').length,Blocked:all.filter(t=>t.status==='blocked').length,NotStarted:all.filter(t=>t.status==='not_started').length,PctComplete:pt.length?Math.round(pt.filter(t=>t.status==='complete').length/pt.length*100)+'%':'0%'};});XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(sumData),'Summary');XLSX.writeFile(wb,'report_tracker_export.xlsx');showToast('Exported to report_tracker_export.xlsx');}
+
+let toastTimer=null;function showToast(msg){const existing=document.querySelector('.toast-msg');if(existing)existing.remove();const d=document.createElement('div');d.className='toast-msg';d.textContent=msg;document.body.appendChild(d);clearTimeout(toastTimer);toastTimer=setTimeout(()=>d.remove(),2800);}
+
+document.addEventListener('keydown',e=>{if(document.getElementById('modal-ov').classList.contains('open')){if(e.key==='Escape')closeModal();return;}if(e.ctrlKey&&e.key==='z'){undo();return;}const tag=document.activeElement.tagName;if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;if(e.key==='n'||e.key==='='||e.key==='+')openNewModal();if(e.key==='e')doExport();if(e.key==='Escape')hideCtx();});
+
+load();
+renderAll();
+</script>
+</body>
+</html>
+
+

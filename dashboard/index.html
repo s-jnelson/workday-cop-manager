@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workday Finance Tech CoP Manager</title>
+  <link rel="stylesheet" href="styles.css?v=6" />
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">WD</div>
+    <div class="brand-text">
+      <div class="brand-title">Finance Tech CoP</div>
+      <div class="brand-sub">Practice Manager</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="nav-item active" data-view="overview" onclick="switchView('overview')">
+      <span class="nav-icon">◈</span> Overview
+    </a>
+    <a class="nav-item" data-view="goals" onclick="switchView('goals')">
+      <span class="nav-icon">◎</span> Goals & KPIs
+    </a>
+    <a class="nav-item" data-view="initiatives" onclick="switchView('initiatives')">
+      <span class="nav-icon">◆</span> Initiatives
+    </a>
+    <a class="nav-item" data-view="consultants" onclick="switchView('consultants')">
+      <span class="nav-icon">◉</span> Consultants
+    </a>
+    <a class="nav-item" data-view="assets" onclick="switchView('assets')">
+      <span class="nav-icon">▣</span> Asset Library
+    </a>
+    <a class="nav-item" data-view="ai" onclick="switchView('ai')">
+      <span class="nav-icon">◈</span> AI Pipeline
+    </a>
+    <a class="nav-item" data-view="methodology" onclick="switchView('methodology')">
+      <span class="nav-icon">▥</span> Methodology
+    </a>
+    <a class="nav-item" data-view="agent" onclick="switchView('agent')">
+      <span class="nav-icon">◫</span> CoP Agent
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="refresh-btn" onclick="loadAllData()">↺ Refresh Data</div>
+    <div class="last-updated" id="lastUpdated">Loading...</div>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- OVERVIEW VIEW -->
+  <div id="view-overview" class="view active">
+    <div class="view-header">
+      <h1>Practice Overview</h1>
+      <div class="view-sub">Workday Finance & Technical Sub-Community of Practice</div>
+    </div>
+
+    <!-- Health band -->
+    <div class="health-band" id="healthBand">
+      <div class="health-item tile-link" id="health-integrations" onclick="switchView('goals');switchGoalTab('integrations')" title="View Integrations goals">
+        <div class="health-label">Integrations</div>
+        <div class="health-score" id="score-integrations">—</div>
+        <div class="health-status" id="status-integrations">—</div>
+        <div class="score-breakdown" id="breakdown-integrations"></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="health-item tile-link" id="health-conversion" onclick="switchView('goals');switchGoalTab('conversion')" title="View Conversion goals">
+        <div class="health-label">Conversion</div>
+        <div class="health-score" id="score-conversion">—</div>
+        <div class="health-status" id="status-conversion">—</div>
+        <div class="score-breakdown" id="breakdown-conversion"></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="health-item tile-link" id="health-reporting" onclick="switchView('goals');switchGoalTab('reporting')" title="View Reporting goals">
+        <div class="health-label">Reporting</div>
+        <div class="health-score" id="score-reporting">—</div>
+        <div class="health-status" id="status-reporting">—</div>
+        <div class="score-breakdown" id="breakdown-reporting"></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="health-item tile-link" id="health-extend" onclick="switchView('goals');switchGoalTab('extend')" title="View Extend goals">
+        <div class="health-label">Extend</div>
+        <div class="health-score" id="score-extend">—</div>
+        <div class="health-status" id="status-extend">—</div>
+        <div class="score-breakdown" id="breakdown-extend"></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+    </div>
+
+    <!-- KPI cards row 1 -->
+    <div class="card-grid cols-4">
+      <div class="kpi-card tile-link" onclick="switchView('methodology')" title="View Methodology">
+        <div class="kpi-label">Methodology Adoption</div>
+        <div class="kpi-value" id="kpi-methodology">—</div>
+        <div class="kpi-target">Target: 90%</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-methodology"></div></div>
+        <div class="tile-link-hint">View methodology →</div>
+      </div>
+      <div class="kpi-card tile-link" onclick="switchView('assets')" title="View Asset Library">
+        <div class="kpi-label">Asset Reuse Rate</div>
+        <div class="kpi-value" id="kpi-reuse">—</div>
+        <div class="kpi-target">Target: 80%</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-reuse"></div></div>
+        <div class="tile-link-hint">View assets →</div>
+      </div>
+      <div class="kpi-card tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
+        <div class="kpi-label">Cutover Success Rate</div>
+        <div class="kpi-value" id="kpi-cutover">—</div>
+        <div class="kpi-target">Target: 95%</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-cutover"></div></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="kpi-card tile-link" onclick="switchView('ai')" title="View AI Pipeline">
+        <div class="kpi-label">AI Use Cases Deployed</div>
+        <div class="kpi-value" id="kpi-ai">—</div>
+        <div class="kpi-target">Target: 10 by EOY</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-ai"></div></div>
+        <div class="tile-link-hint">View AI pipeline →</div>
+      </div>
+    </div>
+
+    <!-- KPI cards row 2 -->
+    <div class="card-grid cols-4">
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('consultants')" title="View Consultant Roster">
+        <div class="kpi-label">Total Consultants</div>
+        <div class="kpi-value" id="kpi-headcount">—</div>
+        <div class="kpi-target">Avg Utilization: <span id="kpi-util">—</span></div>
+        <div class="tile-link-hint">View roster →</div>
+      </div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('assets')" title="View Asset Library">
+        <div class="kpi-label">Published Assets</div>
+        <div class="kpi-value" id="kpi-assets">—</div>
+        <div class="kpi-target">Total in library: <span id="kpi-assets-total">—</span></div>
+        <div class="tile-link-hint">View assets →</div>
+      </div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('initiatives')" title="View Initiatives">
+        <div class="kpi-label">Active Initiatives</div>
+        <div class="kpi-value" id="kpi-initiatives">—</div>
+        <div class="kpi-target">Across all domains</div>
+        <div class="tile-link-hint">View initiatives →</div>
+      </div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
+        <div class="kpi-label">Deploy Time Reduction</div>
+        <div class="kpi-value" id="kpi-deploy">—</div>
+        <div class="kpi-target">Target: 20% (20 wks)</div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+    </div>
+
+    <!-- Bottom split -->
+    <div class="card-grid cols-2">
+      <div class="panel tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View all goals">
+        <div class="panel-header">Practice Goals — Progress <span class="panel-link-hint">View all →</span></div>
+        <div id="overviewGoalsList" class="goal-list"></div>
+      </div>
+      <div class="panel tile-link" onclick="switchView('initiatives')" title="View all initiatives">
+        <div class="panel-header">Active Initiatives <span class="panel-link-hint">View all →</span></div>
+        <div id="overviewInitList" class="initiative-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOALS VIEW -->
+  <div id="view-goals" class="view">
+    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h1>Goals &amp; KPIs</h1>
+        <div class="view-sub">Practice-wide and sub-agent measurable goals</div>
+      </div>
+      <button class="pm-trigger-btn" onclick="openGoalManager()">⊕ Manage Goals &amp; KPIs</button>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchGoalTab('practice')">Practice Goals</button>
+      <button class="tab-btn" onclick="switchGoalTab('integrations')">Integrations</button>
+      <button class="tab-btn" onclick="switchGoalTab('conversion')">Conversion</button>
+      <button class="tab-btn" onclick="switchGoalTab('reporting')">Reporting</button>
+      <button class="tab-btn" onclick="switchGoalTab('extend')">Extend</button>
+    </div>
+    <div id="goalContent"></div>
+  </div>
+
+  <!-- INITIATIVES VIEW -->
+  <div id="view-initiatives" class="view">
+    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h1>Practice Initiatives</h1>
+        <div class="view-sub">Firm-wide programs driving deployment excellence and AI innovation</div>
+      </div>
+      <button class="pm-trigger-btn" onclick="openInitiativeManager()">⊕ Manage Initiatives</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterInitiatives('all')">All</button>
+      <button class="filter-btn" onclick="filterInitiatives('active')">Active</button>
+      <button class="filter-btn" onclick="filterInitiatives('planning')">Planning</button>
+      <button class="filter-btn" onclick="filterInitiatives('complete')">Complete</button>
+    </div>
+    <div id="initiativeCards" class="initiative-cards"></div>
+  </div>
+
+  <!-- CONSULTANTS VIEW -->
+  <div id="view-consultants" class="view">
+    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h1>Consultant Roster</h1>
+        <div class="view-sub">Team by focus area — utilization, certifications, active projects</div>
+      </div>
+      <button class="pm-trigger-btn" onclick="openConsultantManager()">◉ Manage Consultants</button>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchConsultantTab('all')">All</button>
+      <button class="tab-btn" onclick="switchConsultantTab('integrations')">Integrations</button>
+      <button class="tab-btn" onclick="switchConsultantTab('conversion')">Conversion</button>
+      <button class="tab-btn" onclick="switchConsultantTab('reporting')">Reporting</button>
+      <button class="tab-btn" onclick="switchConsultantTab('extend')">Extend</button>
+    </div>
+    <div id="consultantGrid" class="consultant-grid"></div>
+  </div>
+
+  <!-- ASSETS VIEW -->
+  <div id="view-assets" class="view">
+    <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h1>Asset Library</h1>
+        <div class="view-sub">CoP-approved templates, tools, and reusable components</div>
+      </div>
+      <button class="pm-trigger-btn" onclick="openAssetManager()">▣ Manage Assets</button>
+    </div>
+    <div class="filter-row" style="margin-bottom:4px">
+      <button class="filter-btn active" onclick="filterAssets('all','all')">All</button>
+      <button class="filter-btn" onclick="filterAssets('integrations','all')">Integrations</button>
+      <button class="filter-btn" onclick="filterAssets('conversion','all')">Conversion</button>
+      <button class="filter-btn" onclick="filterAssets('reporting','all')">Reporting</button>
+      <button class="filter-btn" onclick="filterAssets('extend','all')">Extend</button>
+    </div>
+    <div class="filter-row" id="assetStatusRow">
+      <button class="filter-btn active" onclick="filterAssets(null,'all')" id="asf-all">All Statuses</button>
+      <button class="filter-btn" onclick="filterAssets(null,'published')" id="asf-pub">Published</button>
+      <button class="filter-btn" onclick="filterAssets(null,'in_progress')" id="asf-inprog">In Progress</button>
+      <button class="filter-btn" onclick="filterAssets(null,'draft')" id="asf-draft">Draft</button>
+    </div>
+    <div id="assetGrid" class="asset-grid"></div>
+  </div>
+
+  <!-- AI PIPELINE VIEW -->
+  <div id="view-ai" class="view">
+    <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>AI Use Case Pipeline</h1>
+        <div class="view-sub">AI innovations for Workday Financials — internal tools and client deployments</div>
+      </div>
+      <button class="pm-trigger-btn" onclick="openPipelineManager()">⚙ Manage Solutions</button>
+    </div>
+    <div class="ai-pipeline-summary" id="aiPipelineSummary"></div>
+    <div class="ai-kanban" id="aiKanban"></div>
+  </div>
+
+  <!-- METHODOLOGY VIEW -->
+  <div id="view-methodology" class="view">
+    <div class="view-header">
+      <h1>Deployment Methodology</h1>
+      <div class="view-sub">Standard 5-phase Workday Finance deployment framework</div>
+    </div>
+    <div class="methodology-phases" id="methodologyPhases"></div>
+  </div>
+
+  <!-- AGENT VIEW -->
+  <div id="view-agent" class="view">
+    <div class="view-header">
+      <h1>CoP Agent Console</h1>
+      <div class="view-sub">Interact with the main CoP Manager agent or any sub-agent directly</div>
+    </div>
+    <div class="agent-console">
+      <div class="agent-select-row">
+        <label>Agent:</label>
+        <select id="agentSelector">
+          <option value="auto">Auto-route (Recommended)</option>
+          <option value="main">CoP Manager (Main)</option>
+          <option value="integrations">Integrations Sub-agent</option>
+          <option value="conversion">Conversion Sub-agent</option>
+          <option value="reporting">Reporting Sub-agent</option>
+          <option value="extend">Extend Sub-agent</option>
+        </select>
+        <div class="agent-status" id="agentStatus">Ready</div>
+      </div>
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-message system">
+          <strong>CoP Manager Agent</strong> — Ask me anything about the practice, deployment methodology, Workday financials, integration design, conversion planning, report design, or AI use cases. I'll route your question to the right expert.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="Ask the CoP agent..." rows="2" onkeydown="handleChatKey(event)"></textarea>
+        <button class="send-btn" onclick="sendAgentQuery()">Send</button>
+      </div>
+      <div class="quick-prompts">
+        <div class="quick-prompt-label">Quick prompts:</div>
+        <button class="qp-btn" onclick="quickPrompt('Give me a full practice health report')">Practice health report</button>
+        <button class="qp-btn" onclick="quickPrompt('What are our top risks across all sub-agents?')">Top risks</button>
+        <button class="qp-btn" onclick="quickPrompt('Design a Studio integration for GL journal entry outbound to a data warehouse')">Design a GL integration</button>
+        <button class="qp-btn" onclick="quickPrompt('What conversion objects still need iLoad templates?')">Conversion template gaps</button>
+        <button class="qp-btn" onclick="quickPrompt('Recommend an AI use case for accounts payable that we could build with Workday Extend')">AI use case idea</button>
+        <button class="qp-btn" onclick="quickPrompt('Assess the Conversion sub-agent status and recommend priority actions')">Conversion status</button>
+      </div>
+    </div>
+  </div>
+
+
+</main>
+
+<!-- ── Consultant Manager Modal ──────────────────────────────────────── -->
+<div id="consultantManager" class="pm-overlay" onclick="if(event.target===this)closeConsultantManager()">
+  <div class="pm-drawer">
+    <div class="pm-drawer-header">
+      <div>
+        <div class="pm-drawer-title">◉ Consultant Manager</div>
+        <div class="pm-drawer-sub">Add, edit, and manage the practice consultant roster</div>
+      </div>
+      <button class="pm-close-btn" onclick="closeConsultantManager()">✕</button>
+    </div>
+    <div class="pm-drawer-body">
+      <div class="pm-list-panel">
+        <button class="pm-add-new-btn" onclick="cmOpenAdd()">＋ Add Consultant</button>
+        <div id="cmConsultantList" class="pm-solution-list"></div>
+      </div>
+      <div class="pm-form-panel" id="cmFormPanel">
+        <div class="pm-form-empty">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">◉</div>
+          <div style="color:var(--text-muted);font-size:13px">Select a consultant to edit, or click <strong>Add Consultant</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Asset Manager Modal ───────────────────────────────────────────── -->
+<div id="assetManager" class="pm-overlay" onclick="if(event.target===this)closeAssetManager()">
+  <div class="pm-drawer">
+    <div class="pm-drawer-header">
+      <div>
+        <div class="pm-drawer-title">▣ Asset Manager</div>
+        <div class="pm-drawer-sub">Add, edit, and manage the CoP Asset Library</div>
+      </div>
+      <button class="pm-close-btn" onclick="closeAssetManager()">✕</button>
+    </div>
+    <div class="pm-drawer-body">
+      <div class="pm-list-panel">
+        <button class="pm-add-new-btn" onclick="amOpenAdd()">＋ Add Asset</button>
+        <div id="amAssetList" class="pm-solution-list"></div>
+      </div>
+      <div class="pm-form-panel" id="amFormPanel">
+        <div class="pm-form-empty">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">▣</div>
+          <div style="color:var(--text-muted);font-size:13px">Select an asset to edit, or click <strong>Add Asset</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Initiative Manager Modal ─────────────────────────────────────── -->
+<div id="initiativeManager" class="pm-overlay" onclick="if(event.target===this)closeInitiativeManager()">
+  <div class="pm-drawer">
+    <div class="pm-drawer-header">
+      <div>
+        <div class="pm-drawer-title">◆ Initiative Manager</div>
+        <div class="pm-drawer-sub">Add, edit, assign owners, and track all practice initiatives</div>
+      </div>
+      <button class="pm-close-btn" onclick="closeInitiativeManager()">✕</button>
+    </div>
+    <div class="pm-drawer-body">
+      <div class="pm-list-panel">
+        <button class="pm-add-new-btn" onclick="imOpenAdd()">＋ Add New Initiative</button>
+        <div id="imInitiativeList" class="pm-solution-list"></div>
+      </div>
+      <div class="pm-form-panel" id="imFormPanel">
+        <div class="pm-form-empty">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">◆</div>
+          <div style="color:var(--text-muted);font-size:13px">Select an initiative to edit, or click <strong>Add New Initiative</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Goal Manager Modal ────────────────────────────────────────── -->
+<div id="goalManager" class="pm-overlay" onclick="if(event.target===this)closeGoalManager()">
+  <div class="pm-drawer">
+    <div class="pm-drawer-header">
+      <div>
+        <div class="pm-drawer-title">◎ Goals &amp; KPIs Manager</div>
+        <div class="pm-drawer-sub">Add, edit, or remove goals and KPIs across all practice areas</div>
+      </div>
+      <button class="pm-close-btn" onclick="closeGoalManager()">✕</button>
+    </div>
+    <div class="gm-tab-row">
+      <button class="gm-tab-btn active" data-tab="practice"     onclick="gmSwitchTab('practice')">Practice</button>
+      <button class="gm-tab-btn"        data-tab="integrations" onclick="gmSwitchTab('integrations')">Integrations</button>
+      <button class="gm-tab-btn"        data-tab="conversion"   onclick="gmSwitchTab('conversion')">Conversion</button>
+      <button class="gm-tab-btn"        data-tab="reporting"    onclick="gmSwitchTab('reporting')">Reporting</button>
+      <button class="gm-tab-btn"        data-tab="extend"       onclick="gmSwitchTab('extend')">Extend</button>
+    </div>
+    <div class="pm-drawer-body">
+      <div class="pm-list-panel">
+        <button class="pm-add-new-btn" onclick="gmOpenAdd()">＋ Add New Goal</button>
+        <div id="gmGoalList" class="pm-solution-list"></div>
+      </div>
+      <div class="pm-form-panel" id="gmFormPanel">
+        <div class="pm-form-empty">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">◎</div>
+          <div style="color:var(--text-muted);font-size:13px">Select a goal to edit, or click <strong>Add New Goal</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI Pipeline Manager Modal ───────────────────────────────────── -->
+<div id="pipelineManager" class="pm-overlay" onclick="if(event.target===this)closePipelineManager()">
+  <div class="pm-drawer">
+    <div class="pm-drawer-header">
+      <div>
+        <div class="pm-drawer-title">⚙ AI Pipeline Manager</div>
+        <div class="pm-drawer-sub">Add, edit, or remove AI solutions from the pipeline</div>
+      </div>
+      <button class="pm-close-btn" onclick="closePipelineManager()">✕</button>
+    </div>
+    <div class="pm-drawer-body">
+      <div class="pm-list-panel">
+        <button class="pm-add-new-btn" onclick="pmOpenAdd()">＋ Add New Solution</button>
+        <input type="text" class="pm-search-input" id="pmSearch" placeholder="Search solutions…" oninput="pmFilterList(this.value)">
+        <div id="pmSolutionList" class="pm-solution-list"></div>
+      </div>
+      <div class="pm-form-panel" id="pmFormPanel">
+        <div class="pm-form-empty">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.3">⊙</div>
+          <div style="color:var(--text-muted);font-size:13px">Select a solution to edit, or click <strong>Add New Solution</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=8"></script>
+</body>
+</html>
