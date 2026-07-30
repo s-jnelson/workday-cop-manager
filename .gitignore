@@ -1,5 +1,6 @@
 # Secrets
 .env
+.github_token
 
 # Python
 __pycache__/
