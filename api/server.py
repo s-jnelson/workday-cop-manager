@@ -134,6 +134,15 @@ def _get_live_anthropic_key() -> str:
     return key
 
 
+def _get_live_groq_key() -> str:
+    """Read Groq API key from config file first, then env var."""
+    cfg = _load_config()
+    key = cfg.get("groq_api_key", "")
+    if not key:
+        key = os.environ.get("GROQ_API_KEY", "")
+    return key if key.startswith("gsk_") and len(key) > 20 else ""
+
+
 def _load(filename: str):
     path = DATA_DIR / filename
     if not path.exists():
@@ -602,13 +611,14 @@ class AgentQuery(BaseModel):
 @app.post("/api/agent/query")
 async def query_agent(body: AgentQuery):
     """Send a query to the appropriate agent and get a response."""
-    from agents.base_agent import _get_anthropic_key, _get_ollama_model
+    from agents.base_agent import _get_anthropic_key, _get_groq_key, _get_ollama_model
 
     has_key = bool(_get_anthropic_key())
+    has_groq = bool(_get_groq_key())
     has_ollama = bool(_get_ollama_model())
 
-    # Only fall back to rule-based when neither LLM backend is available
-    if not has_key and not has_ollama:
+    # Only fall back to rule-based when no LLM backend is available at all
+    if not has_key and not has_groq and not has_ollama:
         from agents.rule_based_agent import query as rule_query
         response = rule_query(body.query)
         return {"response": response, "agent_used": "rule_based", "mode": "offline"}
@@ -623,10 +633,9 @@ async def query_agent(body: AgentQuery):
             _PROC_POOL,
             lambda: cop.run(body.query, force_agent=force, verbose=False),
         )
-        from agents.base_agent import _get_groq_key
         if has_key:
             backend = "anthropic"
-        elif _get_groq_key():
+        elif has_groq:
             backend = "groq"
         else:
             backend = "ollama"
@@ -659,15 +668,14 @@ async def run_ai_solution(solution_id: str):
     if not script.exists():
         raise HTTPException(404, f"Script file not found: {sol['file']}")
 
-    # Solutions that need Claude API — check for key
-    if sol.get("requires_api") and not _get_live_anthropic_key():
+    # Solutions that need an AI API — accept Anthropic or Groq
+    if sol.get("requires_api") and not _get_live_anthropic_key() and not _get_live_groq_key():
         async def no_key():
-            yield f"⚠  {sol['description']} requires ANTHROPIC_API_KEY\n\n"
-            yield "Steps to enable:\n"
-            yield "  1. Get a key at https://console.anthropic.com\n"
-            yield "  2. export ANTHROPIC_API_KEY='sk-ant-...'\n"
-            yield "  3. Restart: python main.py --serve\n\n"
-            yield "You can still ⬇ download the script and run it locally once the key is set.\n"
+            yield f"⚠  {sol['description']} requires an AI API key.\n\n"
+            yield "Add one in Settings:\n"
+            yield "  • Groq (free): https://console.groq.com  — keys start with gsk_\n"
+            yield "  • Anthropic Claude: https://console.anthropic.com  — keys start with sk-ant-\n\n"
+            yield "After saving a key in Settings, reload this page and try again.\n"
         return StreamingResponse(no_key(), media_type="text/plain; charset=utf-8")
 
     stdin_text: str | None = sol.get("stdin_text")
@@ -675,12 +683,21 @@ async def run_ai_solution(solution_id: str):
     def _run_script() -> tuple[str, int]:
         """Run the solution script synchronously in a thread (Windows-safe)."""
         cmd = [sys.executable, str(script)] + list(sol["args"])
+        # Build env with API keys injected so scripts can use whichever is available
+        script_env = os.environ.copy()
+        live_anthro = _get_live_anthropic_key()
+        live_groq = _get_live_groq_key()
+        if live_anthro:
+            script_env["ANTHROPIC_API_KEY"] = live_anthro
+        if live_groq:
+            script_env["GROQ_API_KEY"] = live_groq
         proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE if stdin_text else None,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             cwd=str(SOLUTIONS_DIR),
+            env=script_env,
             text=True,
             encoding="utf-8",
             errors="replace",
