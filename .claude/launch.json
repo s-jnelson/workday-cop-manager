@@ -5,7 +5,7 @@
       "name": "CoP Dashboard",
       "runtimeExecutable": "python",
       "runtimeArgs": ["dashboard_server.py"],
-      "port": 3030
+      "autoPort": true
     },
     {
       "name": "Workday Validator",

@@ -27,6 +27,7 @@ _write_lock = threading.Lock()  # Serialise JSON file writes for concurrent acce
 DATA_DIR      = Path(__file__).parent.parent / "data"
 DASHBOARD_DIR = Path(__file__).parent.parent / "dashboard"
 SOLUTIONS_DIR = Path(__file__).parent.parent / "assets" / "files" / "ai" / "solutions"
+CONFIG_FILE   = DATA_DIR / "config.json"
 
 # Demo-mode configuration for each AI solution (safe to run without client data)
 SOLUTION_DEMO_MAP: dict[str, dict] = {
@@ -110,7 +111,27 @@ app.add_middleware(
 if DASHBOARD_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
 
-_anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+def _load_config() -> dict:
+    if not CONFIG_FILE.exists():
+        return {}
+    try:
+        return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_config(data: dict) -> None:
+    with _write_lock:
+        CONFIG_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _get_live_anthropic_key() -> str:
+    """Read Anthropic API key from config file first, then env var."""
+    cfg = _load_config()
+    key = cfg.get("anthropic_api_key", "")
+    if not key:
+        key = os.environ.get("ANTHROPIC_API_KEY", "")
+    return key
 
 
 def _load(filename: str):
@@ -595,7 +616,7 @@ async def query_agent(body: AgentQuery):
     try:
         # Create a fresh orchestrator per request — prevents conversation history
         # from leaking between concurrent users sharing the same agent instance.
-        cop = CoPOrchestrator(api_key=_anthropic_api_key)
+        cop = CoPOrchestrator(api_key=_get_live_anthropic_key())
         force = None if body.agent == "auto" else body.agent
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
@@ -612,7 +633,7 @@ async def query_agent(body: AgentQuery):
 async def collect_status_reports():
     """Trigger all sub-agents to generate status reports."""
     try:
-        cop = CoPOrchestrator(api_key=_anthropic_api_key)
+        cop = CoPOrchestrator(api_key=_get_live_anthropic_key())
         reports = cop.collect_all_status_reports(verbose=False)
         return {"reports": reports}
     except Exception as e:
@@ -633,7 +654,7 @@ async def run_ai_solution(solution_id: str):
         raise HTTPException(404, f"Script file not found: {sol['file']}")
 
     # Solutions that need Claude API — check for key
-    if sol.get("requires_api") and not os.environ.get("ANTHROPIC_API_KEY"):
+    if sol.get("requires_api") and not _get_live_anthropic_key():
         async def no_key():
             yield f"⚠  {sol['description']} requires ANTHROPIC_API_KEY\n\n"
             yield "Steps to enable:\n"
@@ -679,6 +700,50 @@ async def run_ai_solution(solution_id: str):
             yield f"\n\n─── ERROR: {type(exc).__name__}: {exc} ───\n"
 
     return StreamingResponse(stream(), media_type="text/plain; charset=utf-8")
+
+
+# ── Config / API-key management ───────────────────────────────────────────────
+
+class ConfigBody(BaseModel):
+    anthropic_api_key: str | None = None
+
+
+def _mask(key: str) -> str:
+    if not key or len(key) < 12:
+        return ""
+    return key[:8] + "…" + key[-4:]
+
+
+@app.get("/api/config")
+async def get_config():
+    cfg = _load_config()
+    anthro = cfg.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY", "")
+    return {
+        "anthropic_api_key_set": bool(anthro),
+        "anthropic_api_key_preview": _mask(anthro),
+    }
+
+
+@app.post("/api/config")
+async def save_config(body: ConfigBody):
+    import datetime
+    cfg = _load_config()
+    if body.anthropic_api_key is not None:
+        val = body.anthropic_api_key.strip()
+        if val:
+            cfg["anthropic_api_key"] = val
+        else:
+            cfg.pop("anthropic_api_key", None)
+    cfg["updated_at"] = datetime.datetime.now().isoformat()
+    _save_config(cfg)
+    return {"saved": True}
+
+
+# ── Status endpoint (used as Render health check) ─────────────────────────────
+
+@app.get("/api/status")
+async def status():
+    return {"status": "ok", "service": "Workday Finance Tech CoP Manager"}
 
 
 # ── Health & metadata ──────────────────────────────────────────────────────────

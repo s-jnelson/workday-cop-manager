@@ -24,6 +24,15 @@ _agent_write_lock = threading.Lock()  # shared across all agent instances
 # ── Backend detection ──────────────────────────────────────────────────────────
 
 def _get_anthropic_key() -> str:
+    config_file = DATA_DIR / "config.json"
+    if config_file.exists():
+        try:
+            import json as _json
+            key = _json.loads(config_file.read_text(encoding="utf-8")).get("anthropic_api_key", "")
+            if key.startswith("sk-ant-") and len(key) > 20:
+                return key
+        except Exception:
+            pass
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     return key if key.startswith("sk-ant-") and len(key) > 20 else ""
 

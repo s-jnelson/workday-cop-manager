@@ -43,6 +43,9 @@
     <a class="nav-item" data-view="agent" onclick="switchView('agent')">
       <span class="nav-icon">◫</span> CoP Agent
     </a>
+    <a class="nav-item" data-view="settings" onclick="switchView('settings')">
+      <span class="nav-icon">⚙</span> Settings
+    </a>
   </nav>
 
   <div class="sidebar-footer">
@@ -306,6 +309,78 @@
         <button class="qp-btn" onclick="quickPrompt('Recommend an AI use case for accounts payable that we could build with Workday Extend')">AI use case idea</button>
         <button class="qp-btn" onclick="quickPrompt('Assess the Conversion sub-agent status and recommend priority actions')">Conversion status</button>
       </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div id="view-settings" class="view">
+    <div class="view-header">
+      <h1>Settings</h1>
+      <div class="view-sub">Configure API connections for AI-powered features</div>
+    </div>
+
+    <div style="max-width:680px">
+
+      <!-- API Keys section -->
+      <div class="panel" style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:18px">API Connections</div>
+
+        <!-- Anthropic -->
+        <div class="settings-api-card" id="cardAnthropic">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px">
+            <div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Anthropic (Claude AI)</div>
+              <div style="font-size:12px;color:var(--text-muted)">Powers the CoP Agent, natural-language queries, and AI Pipeline solutions</div>
+            </div>
+            <div id="statusAnthropic" style="white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border)">Checking…</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+              <input id="inputAnthropicKey" type="password" placeholder="sk-ant-api03-…"
+                style="width:100%;padding:9px 70px 9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-family:monospace;box-sizing:border-box"
+                autocomplete="off" onkeydown="if(event.key==='Enter')saveApiKey('anthropic')" />
+              <button onclick="toggleKeyVis('inputAnthropicKey',this)"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:2px 6px">Show</button>
+            </div>
+            <button onclick="saveApiKey('anthropic')"
+              style="padding:9px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
+              Save Key
+            </button>
+            <button onclick="clearApiKey('anthropic')"
+              style="padding:9px 14px;border-radius:8px;background:none;color:var(--text-muted);border:1px solid var(--border);font-size:13px;cursor:pointer">
+              Clear
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+            Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--accent)">console.anthropic.com</a> — keys start with <code style="font-size:11px">sk-ant-</code>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);margin:18px 0"></div>
+
+        <!-- Render (placeholder) -->
+        <div style="opacity:0.45;pointer-events:none">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+            <div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Render Deployment API</div>
+              <div style="font-size:12px;color:var(--text-muted)">Enables one-click redeployment from the dashboard</div>
+            </div>
+            <div style="white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border)">Coming soon</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About section -->
+      <div class="panel">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px">About</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+          <div><span style="color:var(--text-muted)">Application</span><br><strong>Workday Finance Tech CoP Manager</strong></div>
+          <div><span style="color:var(--text-muted)">Version</span><br><strong>2.0.0</strong></div>
+          <div><span style="color:var(--text-muted)">Hosted on</span><br><strong>Render.com</strong></div>
+          <div><span style="color:var(--text-muted)">GitHub</span><br><a href="https://github.com/s-jnelson/workday-cop-manager" target="_blank" style="color:var(--accent)">s-jnelson/workday-cop-manager</a></div>
+        </div>
+      </div>
+
     </div>
   </div>
 

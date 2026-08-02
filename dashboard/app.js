@@ -82,6 +82,7 @@ function switchView(name) {
       state.chatHistory.forEach(m => appendChat(m.role, m.text));
     }
   }
+  if (name === 'settings') loadSettings();
 }
 
 // ── Overview ───────────────────────────────────────────────────────────────
@@ -2472,3 +2473,88 @@ window.pmSave = async function(isNew) {
     alert('Could not save: ' + e.message + '\n\nNote: requires the API server to be running on port 8000.');
   }
 };
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+async function loadSettings() {
+  const badge = document.getElementById('statusAnthropic');
+  if (!badge) return;
+  badge.textContent = 'Checking…';
+  badge.style.cssText = 'white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border)';
+  try {
+    const res = await apiFetch(`${API_BASE}/config`);
+    if (!res.ok) throw new Error('API unavailable');
+    const cfg = await res.json();
+    if (cfg.anthropic_api_key_set) {
+      badge.textContent = '✓ Connected — ' + cfg.anthropic_api_key_preview;
+      badge.style.background = 'rgba(52,199,89,.15)';
+      badge.style.color = 'var(--green, #34c759)';
+      badge.style.borderColor = 'rgba(52,199,89,.3)';
+      document.getElementById('inputAnthropicKey').placeholder = 'Enter new key to replace…';
+    } else {
+      badge.textContent = '○ Not configured';
+      badge.style.background = 'rgba(255,59,48,.1)';
+      badge.style.color = 'var(--red, #ff3b30)';
+      badge.style.borderColor = 'rgba(255,59,48,.2)';
+      document.getElementById('inputAnthropicKey').placeholder = 'sk-ant-api03-…';
+    }
+  } catch {
+    badge.textContent = '— API offline';
+  }
+}
+
+async function saveApiKey(service) {
+  if (service !== 'anthropic') return;
+  const input = document.getElementById('inputAnthropicKey');
+  const val = input.value.trim();
+  if (!val) { showSettingsToast('Enter a key first', 'warn'); return; }
+  if (!val.startsWith('sk-ant-')) { showSettingsToast('Anthropic keys start with sk-ant-', 'error'); return; }
+  try {
+    const res = await apiFetch(`${API_BASE}/config`, {
+      method: 'POST',
+      body: JSON.stringify({ anthropic_api_key: val }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    input.value = '';
+    if (input.type === 'text') { input.type = 'password'; }
+    showSettingsToast('API key saved — AI features are now active', 'success');
+    loadSettings();
+  } catch (e) {
+    showSettingsToast('Save failed: ' + e.message, 'error');
+  }
+}
+
+async function clearApiKey(service) {
+  if (service !== 'anthropic') return;
+  if (!confirm('Remove the saved Anthropic API key? AI features will stop working until a new key is entered.')) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/config`, {
+      method: 'POST',
+      body: JSON.stringify({ anthropic_api_key: '' }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    document.getElementById('inputAnthropicKey').value = '';
+    showSettingsToast('Key cleared', 'warn');
+    loadSettings();
+  } catch (e) {
+    showSettingsToast('Clear failed: ' + e.message, 'error');
+  }
+}
+
+function toggleKeyVis(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+  else { inp.type = 'password'; btn.textContent = 'Show'; }
+}
+
+function showSettingsToast(msg, type) {
+  const colors = { success: '#34c759', warn: '#ff9f0a', error: '#ff3b30' };
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+    background:${colors[type] || '#333'};color:#fff;padding:10px 22px;border-radius:10px;
+    font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);
+    animation:fadeIn .2s ease`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
