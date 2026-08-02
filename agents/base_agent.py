@@ -282,7 +282,11 @@ class BaseAgent:
         if self._use_groq():
             url = f"{GROQ_BASE_URL}/chat/completions"
             model = GROQ_DEFAULT_MODEL
-            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self._groq_key}"}
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self._groq_key}",
+                "User-Agent": "groq-python/0.11.0",
+            }
             payload = {"model": model, "messages": messages, "stream": False}
             timeout = 60
         else:
@@ -454,7 +458,11 @@ class BaseAgent:
         req = urllib.request.Request(
             f"{base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Authorization": auth_header},
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": auth_header,
+                "User-Agent": "groq-python/0.11.0",
+            },
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=60) as resp:

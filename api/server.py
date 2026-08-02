@@ -623,7 +623,13 @@ async def query_agent(body: AgentQuery):
             _PROC_POOL,
             lambda: cop.run(body.query, force_agent=force, verbose=False),
         )
-        backend = "anthropic" if has_key else "ollama"
+        from agents.base_agent import _get_groq_key
+        if has_key:
+            backend = "anthropic"
+        elif _get_groq_key():
+            backend = "groq"
+        else:
+            backend = "ollama"
         return {"response": response, "agent_used": body.agent, "backend": backend}
     except Exception as e:
         raise HTTPException(500, f"Agent error: {str(e)}")
