@@ -2477,47 +2477,110 @@ window.pmSave = async function(isNew) {
 // ── Settings ───────────────────────────────────────────────────────────────
 
 async function loadSettings() {
-  const badge = document.getElementById('statusAnthropic');
-  if (!badge) return;
-  badge.textContent = 'Checking…';
-  badge.style.cssText = 'white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border)';
+  const badgeA = document.getElementById('statusAnthropic');
+  const badgeR = document.getElementById('statusRender');
+  if (!badgeA) return;
+
+  _setBadge(badgeA, 'checking');
+  if (badgeR) _setBadge(badgeR, 'checking');
+
   try {
     const res = await apiFetch(`${API_BASE}/config`);
     if (!res.ok) throw new Error('API unavailable');
     const cfg = await res.json();
+
+    // Anthropic
     if (cfg.anthropic_api_key_set) {
-      badge.textContent = '✓ Connected — ' + cfg.anthropic_api_key_preview;
-      badge.style.background = 'rgba(52,199,89,.15)';
-      badge.style.color = 'var(--green, #34c759)';
-      badge.style.borderColor = 'rgba(52,199,89,.3)';
+      _setBadge(badgeA, 'ok', '✓ Connected — ' + cfg.anthropic_api_key_preview);
       document.getElementById('inputAnthropicKey').placeholder = 'Enter new key to replace…';
     } else {
-      badge.textContent = '○ Not configured';
-      badge.style.background = 'rgba(255,59,48,.1)';
-      badge.style.color = 'var(--red, #ff3b30)';
-      badge.style.borderColor = 'rgba(255,59,48,.2)';
+      _setBadge(badgeA, 'off', '○ Not configured');
       document.getElementById('inputAnthropicKey').placeholder = 'sk-ant-api03-…';
     }
+
+    // Render
+    if (badgeR) {
+      if (cfg.render_api_key_set) {
+        _setBadge(badgeR, 'ok', '✓ Connected — ' + cfg.render_api_key_preview);
+        document.getElementById('inputRenderKey').placeholder = 'Enter new key to replace…';
+        loadRenderStatus();
+      } else {
+        _setBadge(badgeR, 'off', '○ Not configured');
+        document.getElementById('inputRenderKey').placeholder = 'rnd_…';
+        const panel = document.getElementById('renderDeployPanel');
+        if (panel) panel.style.display = 'none';
+      }
+    }
   } catch {
-    badge.textContent = '— API offline';
+    _setBadge(badgeA, 'off', '— API offline');
+    if (badgeR) _setBadge(badgeR, 'off', '— API offline');
   }
 }
 
+function _setBadge(el, state, text) {
+  const styles = {
+    checking: 'background:var(--bg-card);color:var(--text-muted);border-color:var(--border)',
+    ok:  'background:rgba(52,199,89,.15);color:#34c759;border-color:rgba(52,199,89,.3)',
+    off: 'background:rgba(255,59,48,.10);color:#ff3b30;border-color:rgba(255,59,48,.2)',
+  };
+  el.textContent = text || (state === 'checking' ? 'Checking…' : '');
+  el.style.cssText = `white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid;${styles[state] || styles.checking}`;
+}
+
+async function loadRenderStatus() {
+  const panel = document.getElementById('renderDeployPanel');
+  const statusEl = document.getElementById('renderServiceStatus');
+  const deployEl = document.getElementById('renderLastDeploy');
+  if (!panel) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/render/status`);
+    if (!res.ok) { panel.style.display = 'none'; return; }
+    const data = await res.json();
+    if (!data.found) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    const suspended = data.status === 'suspended';
+    statusEl.textContent = suspended ? '⏸ Suspended' : '● Live';
+    statusEl.style.color = suspended ? '#ff9f0a' : '#34c759';
+    if (data.updated_at) {
+      const d = new Date(data.updated_at);
+      deployEl.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }
+  } catch {
+    panel.style.display = 'none';
+  }
+}
+
+async function triggerRedeploy() {
+  if (!confirm('Trigger a new Render deployment? The site will be briefly unavailable while it builds.')) return;
+  showSettingsToast('Deploy triggered — build starting on Render…', 'success');
+  try {
+    const res = await apiFetch(`${API_BASE}/render/deploy`, { method: 'POST' });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    showSettingsToast(`Deploy started (${data.status || 'in progress'})`, 'success');
+    setTimeout(loadRenderStatus, 5000);
+  } catch (e) {
+    showSettingsToast('Deploy failed: ' + e.message, 'error');
+  }
+}
+
+const _KEY_CONFIG = {
+  anthropic: { inputId: 'inputAnthropicKey', prefix: 'sk-ant-', bodyKey: 'anthropic_api_key', label: 'Anthropic API key', feature: 'AI features' },
+  render:    { inputId: 'inputRenderKey',    prefix: 'rnd_',    bodyKey: 'render_api_key',    label: 'Render API key',    feature: 'deployment management' },
+};
+
 async function saveApiKey(service) {
-  if (service !== 'anthropic') return;
-  const input = document.getElementById('inputAnthropicKey');
+  const cfg = _KEY_CONFIG[service]; if (!cfg) return;
+  const input = document.getElementById(cfg.inputId);
   const val = input.value.trim();
   if (!val) { showSettingsToast('Enter a key first', 'warn'); return; }
-  if (!val.startsWith('sk-ant-')) { showSettingsToast('Anthropic keys start with sk-ant-', 'error'); return; }
+  if (!val.startsWith(cfg.prefix)) { showSettingsToast(`${cfg.label}s start with ${cfg.prefix}`, 'error'); return; }
   try {
-    const res = await apiFetch(`${API_BASE}/config`, {
-      method: 'POST',
-      body: JSON.stringify({ anthropic_api_key: val }),
-    });
+    const res = await apiFetch(`${API_BASE}/config`, { method: 'POST', body: JSON.stringify({ [cfg.bodyKey]: val }) });
     if (!res.ok) throw new Error(await res.text());
     input.value = '';
-    if (input.type === 'text') { input.type = 'password'; }
-    showSettingsToast('API key saved — AI features are now active', 'success');
+    if (input.type === 'text') input.type = 'password';
+    showSettingsToast(`${cfg.label} saved — ${cfg.feature} now active`, 'success');
     loadSettings();
   } catch (e) {
     showSettingsToast('Save failed: ' + e.message, 'error');
@@ -2525,15 +2588,12 @@ async function saveApiKey(service) {
 }
 
 async function clearApiKey(service) {
-  if (service !== 'anthropic') return;
-  if (!confirm('Remove the saved Anthropic API key? AI features will stop working until a new key is entered.')) return;
+  const cfg = _KEY_CONFIG[service]; if (!cfg) return;
+  if (!confirm(`Remove the saved ${cfg.label}? ${cfg.feature} will stop working until a new key is entered.`)) return;
   try {
-    const res = await apiFetch(`${API_BASE}/config`, {
-      method: 'POST',
-      body: JSON.stringify({ anthropic_api_key: '' }),
-    });
+    const res = await apiFetch(`${API_BASE}/config`, { method: 'POST', body: JSON.stringify({ [cfg.bodyKey]: '' }) });
     if (!res.ok) throw new Error(await res.text());
-    document.getElementById('inputAnthropicKey').value = '';
+    document.getElementById(cfg.inputId).value = '';
     showSettingsToast('Key cleared', 'warn');
     loadSettings();
   } catch (e) {

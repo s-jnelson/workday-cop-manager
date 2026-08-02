@@ -706,6 +706,7 @@ async def run_ai_solution(solution_id: str):
 
 class ConfigBody(BaseModel):
     anthropic_api_key: str | None = None
+    render_api_key: str | None = None
 
 
 def _mask(key: str) -> str:
@@ -718,9 +719,12 @@ def _mask(key: str) -> str:
 async def get_config():
     cfg = _load_config()
     anthro = cfg.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY", "")
+    render = cfg.get("render_api_key") or os.environ.get("RENDER_API_KEY", "")
     return {
         "anthropic_api_key_set": bool(anthro),
         "anthropic_api_key_preview": _mask(anthro),
+        "render_api_key_set": bool(render),
+        "render_api_key_preview": _mask(render),
     }
 
 
@@ -728,15 +732,94 @@ async def get_config():
 async def save_config(body: ConfigBody):
     import datetime
     cfg = _load_config()
-    if body.anthropic_api_key is not None:
-        val = body.anthropic_api_key.strip()
-        if val:
-            cfg["anthropic_api_key"] = val
-        else:
-            cfg.pop("anthropic_api_key", None)
+    for field, env_name in [("anthropic_api_key", "ANTHROPIC_API_KEY"), ("render_api_key", "RENDER_API_KEY")]:
+        val = getattr(body, field)
+        if val is not None:
+            stripped = val.strip()
+            if stripped:
+                cfg[field] = stripped
+            else:
+                cfg.pop(field, None)
     cfg["updated_at"] = datetime.datetime.now().isoformat()
     _save_config(cfg)
     return {"saved": True}
+
+
+def _get_render_key() -> str:
+    cfg = _load_config()
+    return cfg.get("render_api_key") or os.environ.get("RENDER_API_KEY", "")
+
+
+@app.get("/api/render/status")
+async def render_status():
+    import urllib.request as _req
+    key = _get_render_key()
+    if not key:
+        raise HTTPException(400, "Render API key not configured — add it in Settings")
+    try:
+        request = _req.Request(
+            "https://api.render.com/v1/services?limit=10",
+            headers={"Authorization": f"Bearer {key}", "Accept": "application/json"},
+        )
+        with _req.urlopen(request, timeout=10) as resp:
+            services = json.loads(resp.read())
+        # Find a service matching our app name
+        svc = next(
+            (s["service"] for s in services if "cop-manager" in s["service"].get("name", "").lower()),
+            services[0]["service"] if services else None,
+        )
+        if not svc:
+            return {"found": False, "services": [s["service"]["name"] for s in services]}
+        return {
+            "found": True,
+            "id": svc["id"],
+            "name": svc["name"],
+            "status": svc.get("suspended", "not_suspended"),
+            "url": svc.get("serviceDetails", {}).get("url", ""),
+            "updated_at": svc.get("updatedAt", ""),
+        }
+    except Exception as exc:
+        raise HTTPException(502, f"Render API error: {exc}")
+
+
+@app.post("/api/render/deploy")
+async def render_deploy():
+    import urllib.request as _req
+    key = _get_render_key()
+    if not key:
+        raise HTTPException(400, "Render API key not configured — add it in Settings")
+    try:
+        # First get the service id
+        request = _req.Request(
+            "https://api.render.com/v1/services?limit=10",
+            headers={"Authorization": f"Bearer {key}", "Accept": "application/json"},
+        )
+        with _req.urlopen(request, timeout=10) as resp:
+            services = json.loads(resp.read())
+        svc = next(
+            (s["service"] for s in services if "cop-manager" in s["service"].get("name", "").lower()),
+            services[0]["service"] if services else None,
+        )
+        if not svc:
+            raise HTTPException(404, "cop-manager service not found in Render account")
+        svc_id = svc["id"]
+        deploy_req = _req.Request(
+            f"https://api.render.com/v1/services/{svc_id}/deploys",
+            data=b"{}",
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with _req.urlopen(deploy_req, timeout=10) as resp:
+            deploy = json.loads(resp.read())
+        return {"triggered": True, "deploy_id": deploy.get("id"), "status": deploy.get("status")}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(502, f"Render deploy error: {exc}")
 
 
 # ── Status endpoint (used as Render health check) ─────────────────────────────
