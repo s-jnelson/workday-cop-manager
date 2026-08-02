@@ -2591,9 +2591,11 @@ async function saveApiKey(service) {
   try {
     const res = await apiFetch(`${API_BASE}/config`, { method: 'POST', body: JSON.stringify({ [cfg.bodyKey]: val }) });
     if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
     input.value = '';
     if (input.type === 'text') input.type = 'password';
-    showSettingsToast(`${cfg.label} saved — ${cfg.feature} now active`, 'success');
+    const synced = data.render_persisted ? ' + synced to Render' : '';
+    showSettingsToast(`${cfg.label} saved${synced} — ${cfg.feature} now active`, 'success');
     loadSettings();
   } catch (e) {
     showSettingsToast('Save failed: ' + e.message, 'error');

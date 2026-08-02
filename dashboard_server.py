@@ -424,44 +424,58 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
     def _proxy_api(self) -> None:
         """Forward any /api/* request to the FastAPI server on port 8000."""
+        import time as _time
         target_url = API_SERVER_URL + self.path
-        try:
-            length = int(self.headers.get("Content-Length", 0) or 0)
-            body = self.rfile.read(length) if length else None
 
-            # Forward all headers except Host
-            fwd_headers = {}
-            for key, val in self.headers.items():
-                if key.lower() not in ("host", "content-length"):
-                    fwd_headers[key] = val
-            if body:
-                fwd_headers["Content-Length"] = str(len(body))
+        # Buffer body once — socket can only be read once, so buffer before retry loop
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        body = self.rfile.read(length) if length else None
 
-            req = urllib.request.Request(
-                target_url,
-                data=body,
-                headers=fwd_headers,
-                method=self.command,
-            )
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                raw = resp.read()
-                self.send_response(resp.status)
-                for key, val in resp.headers.items():
-                    if key.lower() not in ("transfer-encoding", "connection"):
-                        self.send_header(key, val)
+        fwd_headers = {}
+        for key, val in self.headers.items():
+            if key.lower() not in ("host", "content-length"):
+                fwd_headers[key] = val
+        if body:
+            fwd_headers["Content-Length"] = str(len(body))
+
+        last_exc: Exception | None = None
+        for attempt in range(6):
+            try:
+                req = urllib.request.Request(
+                    target_url,
+                    data=body,
+                    headers=fwd_headers,
+                    method=self.command,
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read()
+                    self.send_response(resp.status)
+                    for key, val in resp.headers.items():
+                        if key.lower() not in ("transfer-encoding", "connection"):
+                            self.send_header(key, val)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(raw)
+                return
+            except urllib.error.HTTPError as exc:
+                raw = exc.read()
+                self.send_response(exc.code)
+                self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(raw)))
                 self.end_headers()
                 self.wfile.write(raw)
-        except urllib.error.HTTPError as exc:
-            raw = exc.read()
-            self.send_response(exc.code)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Content-Length", str(len(raw)))
-            self.end_headers()
-            self.wfile.write(raw)
-        except Exception as exc:
-            self._send_json(502, {"error": f"API proxy error: {exc}"})
+                return
+            except Exception as exc:
+                last_exc = exc
+                err_str = str(exc).lower()
+                is_conn_err = any(s in err_str for s in ("connection refused", "cannot connect", "failed to establish", "remotely closed"))
+                if is_conn_err and attempt < 5:
+                    _time.sleep(1)
+                    continue
+                break
+
+        self._send_json(502, {"error": f"API proxy error: {last_exc}"})
 
     def log_message(self, fmt, *args):  # silence access log
         pass
@@ -482,6 +496,7 @@ def _start_api_server() -> None:
                 "api.server:app",
                 "--host", "0.0.0.0",
                 "--port", "8000",
+                "--workers", "1",
                 "--log-level", "warning",
             ],
             cwd=str(project_dir),
@@ -491,6 +506,19 @@ def _start_api_server() -> None:
         print("API server     ->  http://localhost:8000  (agents + data CRUD)")
     except Exception as exc:
         print(f"API server     ->  FAILED to start: {exc}")
+
+
+def _wait_for_api_server(timeout: int = 30) -> bool:
+    """Poll the FastAPI server until it responds or timeout elapses."""
+    import time
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            urllib.request.urlopen(f"{API_SERVER_URL}/api/status", timeout=2)
+            return True
+        except Exception:
+            time.sleep(0.75)
+    return False
 
 
 def main() -> None:
@@ -510,6 +538,11 @@ def main() -> None:
         print("                   Option B: Set ANTHROPIC_API_KEY in .env and restart")
 
     _start_api_server()
+    print("Waiting for API server", end="", flush=True)
+    if _wait_for_api_server(30):
+        print(" — ready.")
+    else:
+        print(" — timed out (requests may fail briefly).")
 
     server = ThreadedServer(("", PORT), DashboardHandler)
     try:

@@ -748,16 +748,85 @@ async def save_config(body: ConfigBody):
             stripped = val.strip()
             if stripped:
                 cfg[field] = stripped
+                os.environ[env_name] = stripped  # apply immediately to running process
             else:
                 cfg.pop(field, None)
     cfg["updated_at"] = datetime.datetime.now().isoformat()
     _save_config(cfg)
-    return {"saved": True}
+
+    # Fire-and-forget: push API keys to Render env vars for persistence across redeploys
+    render_persisted = False
+    try:
+        loop = asyncio.get_event_loop()
+        render_persisted = await loop.run_in_executor(_PROC_POOL, lambda: _push_to_render_env_vars(cfg))
+    except Exception:
+        pass
+
+    return {"saved": True, "render_persisted": render_persisted}
 
 
 def _get_render_key() -> str:
     cfg = _load_config()
     return cfg.get("render_api_key") or os.environ.get("RENDER_API_KEY", "")
+
+
+def _push_to_render_env_vars(cfg: dict) -> bool:
+    """Push API keys to Render service env vars so they survive redeploys. Returns True on success."""
+    import urllib.request as _req
+    render_key = cfg.get("render_api_key") or os.environ.get("RENDER_API_KEY", "")
+    if not render_key:
+        return False
+
+    vars_to_push = {}
+    if cfg.get("anthropic_api_key"):
+        vars_to_push["ANTHROPIC_API_KEY"] = cfg["anthropic_api_key"]
+    if cfg.get("groq_api_key"):
+        vars_to_push["GROQ_API_KEY"] = cfg["groq_api_key"]
+    if not vars_to_push:
+        return False
+
+    try:
+        # Get service ID
+        svc_req = _req.Request(
+            "https://api.render.com/v1/services?limit=20",
+            headers={"Authorization": f"Bearer {render_key}", "Accept": "application/json"},
+        )
+        with _req.urlopen(svc_req, timeout=10) as resp:
+            services = json.loads(resp.read())
+        svc = next(
+            (s["service"] for s in services if "cop-manager" in s["service"].get("name", "").lower()),
+            services[0]["service"] if services else None,
+        )
+        if not svc:
+            return False
+        svc_id = svc["id"]
+
+        # Fetch current env vars to avoid wiping unrelated vars
+        env_req = _req.Request(
+            f"https://api.render.com/v1/services/{svc_id}/env-vars",
+            headers={"Authorization": f"Bearer {render_key}", "Accept": "application/json"},
+        )
+        with _req.urlopen(env_req, timeout=10) as resp:
+            current = json.loads(resp.read())
+        env_map = {item["envVar"]["key"]: item["envVar"]["value"] for item in current if "envVar" in item}
+        env_map.update(vars_to_push)
+
+        put_body = json.dumps([{"key": k, "value": v} for k, v in env_map.items()]).encode()
+        put_req = _req.Request(
+            f"https://api.render.com/v1/services/{svc_id}/env-vars",
+            data=put_body,
+            headers={
+                "Authorization": f"Bearer {render_key}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            method="PUT",
+        )
+        with _req.urlopen(put_req, timeout=10):
+            pass
+        return True
+    except Exception:
+        return False
 
 
 @app.get("/api/render/status")
