@@ -2498,6 +2498,18 @@ async function loadSettings() {
       document.getElementById('inputAnthropicKey').placeholder = 'sk-ant-api03-…';
     }
 
+    // Groq
+    const badgeG = document.getElementById('statusGroq');
+    if (badgeG) {
+      if (cfg.groq_api_key_set) {
+        _setBadge(badgeG, 'ok', '✓ Connected — ' + cfg.groq_api_key_preview);
+        document.getElementById('inputGroqKey').placeholder = 'Enter new key to replace…';
+      } else {
+        _setBadge(badgeG, 'off', '○ Not configured');
+        document.getElementById('inputGroqKey').placeholder = 'gsk_…';
+      }
+    }
+
     // Render
     if (badgeR) {
       if (cfg.render_api_key_set) {
@@ -2566,6 +2578,7 @@ async function triggerRedeploy() {
 
 const _KEY_CONFIG = {
   anthropic: { inputId: 'inputAnthropicKey', prefix: 'sk-ant-', bodyKey: 'anthropic_api_key', label: 'Anthropic API key', feature: 'AI features' },
+  groq:      { inputId: 'inputGroqKey',      prefix: 'gsk_',    bodyKey: 'groq_api_key',      label: 'Groq API key',      feature: 'AI features (Groq)' },
   render:    { inputId: 'inputRenderKey',    prefix: 'rnd_',    bodyKey: 'render_api_key',    label: 'Render API key',    feature: 'deployment management' },
 };
 

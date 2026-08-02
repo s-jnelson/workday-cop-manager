@@ -358,6 +358,39 @@
 
         <div style="border-top:1px solid var(--border);margin:18px 0"></div>
 
+        <!-- Groq -->
+        <div class="settings-api-card" id="cardGroq">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px">
+            <div>
+              <div style="font-weight:600;font-size:15px;margin-bottom:4px">Groq AI <span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px;background:rgba(52,199,89,.15);color:#34c759;margin-left:6px">Free tier available</span></div>
+              <div style="font-size:12px;color:var(--text-muted)">Fast open-source models (Llama 3.3 70B) — free alternative to Anthropic</div>
+            </div>
+            <div id="statusGroq" style="white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border)">Checking…</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+              <input id="inputGroqKey" type="password" placeholder="gsk_…"
+                style="width:100%;padding:9px 70px 9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-family:monospace;box-sizing:border-box"
+                autocomplete="off" onkeydown="if(event.key==='Enter')saveApiKey('groq')" />
+              <button onclick="toggleKeyVis('inputGroqKey',this)"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:2px 6px">Show</button>
+            </div>
+            <button onclick="saveApiKey('groq')"
+              style="padding:9px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">
+              Save Key
+            </button>
+            <button onclick="clearApiKey('groq')"
+              style="padding:9px 14px;border-radius:8px;background:none;color:var(--text-muted);border:1px solid var(--border);font-size:13px;cursor:pointer">
+              Clear
+            </button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+            Free tier at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com</a> — keys start with <code style="font-size:11px">gsk_</code> · Used when no Anthropic key is set
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);margin:18px 0"></div>
+
         <!-- Render -->
         <div class="settings-api-card" id="cardRender">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px">

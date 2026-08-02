@@ -706,6 +706,7 @@ async def run_ai_solution(solution_id: str):
 
 class ConfigBody(BaseModel):
     anthropic_api_key: str | None = None
+    groq_api_key: str | None = None
     render_api_key: str | None = None
 
 
@@ -719,10 +720,13 @@ def _mask(key: str) -> str:
 async def get_config():
     cfg = _load_config()
     anthro = cfg.get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY", "")
-    render = cfg.get("render_api_key") or os.environ.get("RENDER_API_KEY", "")
+    groq   = cfg.get("groq_api_key")      or os.environ.get("GROQ_API_KEY", "")
+    render = cfg.get("render_api_key")    or os.environ.get("RENDER_API_KEY", "")
     return {
         "anthropic_api_key_set": bool(anthro),
         "anthropic_api_key_preview": _mask(anthro),
+        "groq_api_key_set": bool(groq),
+        "groq_api_key_preview": _mask(groq),
         "render_api_key_set": bool(render),
         "render_api_key_preview": _mask(render),
     }
@@ -732,7 +736,7 @@ async def get_config():
 async def save_config(body: ConfigBody):
     import datetime
     cfg = _load_config()
-    for field, env_name in [("anthropic_api_key", "ANTHROPIC_API_KEY"), ("render_api_key", "RENDER_API_KEY")]:
+    for field, env_name in [("anthropic_api_key", "ANTHROPIC_API_KEY"), ("groq_api_key", "GROQ_API_KEY"), ("render_api_key", "RENDER_API_KEY")]:
         val = getattr(body, field)
         if val is not None:
             stripped = val.strip()

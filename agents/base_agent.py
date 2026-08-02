@@ -17,6 +17,8 @@ from typing import Any
 DATA_DIR = Path(__file__).parent.parent / "data"
 METHODOLOGY_DIR = Path(__file__).parent.parent / "methodology"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+GROQ_DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 _agent_write_lock = threading.Lock()  # shared across all agent instances
 
@@ -35,6 +37,20 @@ def _get_anthropic_key() -> str:
             pass
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     return key if key.startswith("sk-ant-") and len(key) > 20 else ""
+
+
+def _get_groq_key() -> str:
+    config_file = DATA_DIR / "config.json"
+    if config_file.exists():
+        try:
+            import json as _json
+            key = _json.loads(config_file.read_text(encoding="utf-8")).get("groq_api_key", "")
+            if key.startswith("gsk_") and len(key) > 20:
+                return key
+        except Exception:
+            pass
+    key = os.environ.get("GROQ_API_KEY", "")
+    return key if key.startswith("gsk_") and len(key) > 20 else ""
 
 
 def _get_ollama_model() -> str:
@@ -100,10 +116,14 @@ class BaseAgent:
 
     def __init__(self, api_key: str | None = None):
         self._api_key = api_key or _get_anthropic_key()
+        self._groq_key: str = ""
         self._ollama_model: str = ""
         self.conversation_history: list[dict] = []
 
         if not self._api_key:
+            self._groq_key = _get_groq_key()
+
+        if not self._api_key and not self._groq_key:
             self._ollama_model = _get_ollama_model()
 
         if self._api_key:
@@ -114,8 +134,11 @@ class BaseAgent:
 
     # ── Utility ──────────────────────────────────────────────────────────────
 
+    def _use_groq(self) -> bool:
+        return not self._api_key and bool(self._groq_key)
+
     def _use_ollama(self) -> bool:
-        return not self._api_key and bool(self._ollama_model)
+        return not self._api_key and not self._groq_key and bool(self._ollama_model)
 
     def _load_all_dashboard_data(self) -> str:
         """
@@ -238,12 +261,10 @@ class BaseAgent:
 
     def _ollama_run_direct(self, user_message: str) -> str:
         """
-        Fast Ollama path: inject all dashboard data into context and make a
-        single LLM call (no tool-calling loop). Used to avoid timeout issues
-        with large system prompts + multi-turn tool calling on local models.
+        Fast single-call path for Groq and Ollama: injects all dashboard data
+        into context and makes one LLM call (no tool-calling loop).
         """
         data_context = self._load_all_dashboard_data()
-
         base_prompt = (self.ollama_system_prompt or self.system_prompt).strip()
         system = (
             base_prompt
@@ -253,27 +274,31 @@ class BaseAgent:
             "\n\n## Current Dashboard Data\n"
             + data_context
         )
-
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user_message},
         ]
-        payload = {
-            "model": self._ollama_model,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "num_predict": 600,   # cap output tokens — keeps responses concise and fast
-                "temperature": 0.1,   # low temperature for factual, consistent answers
-            },
-        }
+
+        if self._use_groq():
+            url = f"{GROQ_BASE_URL}/chat/completions"
+            model = GROQ_DEFAULT_MODEL
+            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self._groq_key}"}
+            payload = {"model": model, "messages": messages, "stream": False}
+            timeout = 60
+        else:
+            url = f"{OLLAMA_URL}/v1/chat/completions"
+            model = self._ollama_model
+            headers = {"Content-Type": "application/json"}
+            payload = {
+                "model": model, "messages": messages, "stream": False,
+                "options": {"num_predict": 600, "temperature": 0.1},
+            }
+            timeout = 180
+
         req = urllib.request.Request(
-            f"{OLLAMA_URL}/v1/chat/completions",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
+            url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
         )
-        with urllib.request.urlopen(req, timeout=180) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             result = json.loads(resp.read())
         return result["choices"][0]["message"].get("content", "")
 
@@ -416,9 +441,10 @@ class BaseAgent:
 
         return oai
 
-    def _call_ollama(self) -> tuple[str, list[dict]]:
+    def _call_openai_compat(self, base_url: str, auth_header: str, model: str) -> tuple[str, list[dict]]:
+        """Shared OpenAI-compatible call used by both Groq and Ollama agentic paths."""
         payload: dict = {
-            "model": self._ollama_model,
+            "model": model,
             "messages": self._messages_to_openai(),
             "stream": False,
         }
@@ -426,12 +452,12 @@ class BaseAgent:
             payload["tools"] = self._tool_defs_to_openai()
 
         req = urllib.request.Request(
-            f"{OLLAMA_URL}/v1/chat/completions",
+            f"{base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "Authorization": auth_header},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=180) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:
             result = json.loads(resp.read())
 
         choice = result["choices"][0]
@@ -457,16 +483,34 @@ class BaseAgent:
 
         return "end_turn", [{"type": "text", "text": message.get("content", "")}]
 
+    def _call_groq(self) -> tuple[str, list[dict]]:
+        return self._call_openai_compat(
+            GROQ_BASE_URL, f"Bearer {self._groq_key}", GROQ_DEFAULT_MODEL
+        )
+
+    def _call_ollama(self) -> tuple[str, list[dict]]:
+        return self._call_openai_compat(
+            f"{OLLAMA_URL}/v1", "", self._ollama_model
+        )
+
     # ── Agentic loop ──────────────────────────────────────────────────────────
 
     def run(self, user_message: str, verbose: bool = True) -> str:
-        """Run the agent. Uses a fast single-call path for Ollama, full agentic loop for Anthropic."""
-        if not self._use_ollama() and not self._api_key:
+        """Run the agent. Priority: Anthropic → Groq → Ollama → rule-based message."""
+        if not self._api_key and not self._groq_key and not self._ollama_model:
             return (
-                "No AI backend available. "
-                "Install Ollama (ollama.ai) and run `ollama pull llama3.2`, "
-                "or set ANTHROPIC_API_KEY in the environment."
+                "No AI backend configured. Options:\n"
+                "• Anthropic API key — add in dashboard Settings (best quality)\n"
+                "• Groq API key — free tier at console.groq.com (fast, good quality)\n"
+                "• Ollama — free local models, install at ollama.com"
             )
+
+        # Groq and Ollama use a fast single-call path (no tool loop)
+        if self._use_groq():
+            try:
+                return self._ollama_run_direct(user_message)  # reuses same prompt builder
+            except Exception as exc:
+                return f"Groq call failed: {exc}"
 
         if self._use_ollama():
             try:
@@ -478,10 +522,7 @@ class BaseAgent:
 
         for _ in range(self.max_iterations):
             try:
-                if self._use_ollama():
-                    stop_reason, raw_content = self._call_ollama()
-                else:
-                    stop_reason, raw_content = self._call_anthropic()
+                stop_reason, raw_content = self._call_anthropic()
             except Exception as exc:
                 return f"LLM call failed: {exc}"
 
