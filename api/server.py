@@ -330,10 +330,28 @@ async def delete_initiative(init_id: str):
 
 
 @app.get("/api/consultants")
-async def get_consultants(focus_area: str = "all"):
+async def get_consultants(
+    focus_area: str = "all",
+    skill: str = "",
+    availability: str = "",
+    certification: str = "",
+    include_deprecated: bool = False,
+):
     data = _load("consultants.json") or []
+    if not include_deprecated:
+        data = [c for c in data if c.get("status", "active") != "deprecated"]
     if focus_area != "all":
         data = [c for c in data if c.get("focus_area") == focus_area]
+    if skill:
+        data = [c for c in data if any(
+            skill.lower() in s.get("name", "").lower() for s in c.get("skills", [])
+        ) or any(skill.lower() in m.lower() for m in c.get("modules", []))]
+    if availability:
+        data = [c for c in data if c.get("availability") == availability]
+    if certification:
+        data = [c for c in data if any(
+            certification.lower() in cert.lower() for cert in c.get("certifications", [])
+        )]
     return data
 
 
@@ -379,12 +397,24 @@ async def delete_consultant(consultant_id: str):
 
 
 @app.get("/api/assets")
-async def get_assets(focus_area: str = "all", status: str = "all"):
+async def get_assets(
+    focus_area: str = "all",
+    status: str = "all",
+    asset_kind: str = "all",
+    pillar: str = "all",
+    include_deprecated: bool = False,
+):
     data = _load("assets.json") or []
+    if not include_deprecated:
+        data = [a for a in data if a.get("status", "active") != "deprecated"]
     if focus_area != "all":
         data = [a for a in data if a.get("focus_area") == focus_area]
     if status != "all":
         data = [a for a in data if a.get("status") == status]
+    if asset_kind != "all":
+        data = [a for a in data if a.get("asset_kind") == asset_kind]
+    if pillar != "all":
+        data = [a for a in data if a.get("pillar") == pillar]
     return data
 
 
@@ -432,10 +462,21 @@ async def delete_asset(asset_id: str):
 
 
 @app.get("/api/ai-use-cases")
-async def get_ai_use_cases(status: str = "all"):
+async def get_ai_use_cases(
+    status: str = "all",
+    stage: str = "all",
+    focus_area: str = "all",
+    include_deprecated: bool = False,
+):
     data = _load("ai_use_cases.json") or []
+    if not include_deprecated:
+        data = [uc for uc in data if uc.get("status", "active") != "deprecated"]
     if status != "all":
         data = [uc for uc in data if uc.get("status") == status]
+    if stage != "all":
+        data = [uc for uc in data if uc.get("stage") == stage]
+    if focus_area != "all":
+        data = [uc for uc in data if uc.get("focus_area") == focus_area]
     return data
 
 
@@ -942,3 +983,213 @@ async def focus_areas():
             {"id": "extend", "label": "Workday Extend Solutions", "description": "App Design, Orchestrations, Custom BOs, AI-augmented Extend patterns"},
         ]
     }
+
+
+# ── Taxonomy ──────────────────────────────────────────────────────────────────
+
+@app.get("/api/taxonomy")
+async def get_taxonomy():
+    """Return the controlled vocabulary for all CoP object fields."""
+    tax_file = DATA_DIR / "taxonomy.json"
+    if not tax_file.exists():
+        raise HTTPException(404, "taxonomy.json not found — run data/init_data.py")
+    return json.loads(tax_file.read_text(encoding="utf-8"))
+
+
+# ── Governance ────────────────────────────────────────────────────────────────
+
+def _all_objects() -> list[dict]:
+    """Collect every content object from all data files into a flat list."""
+    objects: list[dict] = []
+    for fname, otype in [("assets.json", "asset"), ("consultants.json", "person"),
+                         ("initiatives.json", "initiative"), ("ai_use_cases.json", "aiUseCase")]:
+        records = _load(fname) or []
+        for r in records:
+            r.setdefault("object_type", otype)
+            objects.append(r)
+    goals_data = _load("goals.json") or {}
+    for g in goals_data.get("practice_goals", []):
+        g.setdefault("object_type", "goal")
+        objects.append(g)
+    for area, goals in goals_data.get("subagent_goals", {}).items():
+        for g in goals:
+            g.setdefault("object_type", "goal")
+            objects.append(g)
+    return objects
+
+
+@app.get("/api/governance/review-due")
+async def governance_review_due():
+    """Return all active objects whose reviewBy date has passed."""
+    import datetime
+    today = datetime.date.today().isoformat()
+    overdue = []
+    for obj in _all_objects():
+        if obj.get("status") == "deprecated":
+            continue
+        review_by = obj.get("reviewBy", "")
+        if review_by and review_by < today:
+            overdue.append({
+                "id": obj.get("id"),
+                "title": obj.get("title") or obj.get("name", ""),
+                "object_type": obj.get("object_type"),
+                "owner": obj.get("owner"),
+                "reviewBy": review_by,
+                "days_overdue": (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(review_by)).days,
+            })
+    overdue.sort(key=lambda x: x["days_overdue"], reverse=True)
+    return {"count": len(overdue), "items": overdue}
+
+
+@app.get("/api/governance/deprecated")
+async def governance_deprecated():
+    """Return all deprecated objects (excluded from default views)."""
+    items = [obj for obj in _all_objects() if obj.get("status") == "deprecated"]
+    return {"count": len(items), "items": items}
+
+
+class DeprecateBody(BaseModel):
+    reason: str = ""
+
+
+@app.post("/api/governance/deprecate/{object_type}/{object_id}")
+async def deprecate_object(object_type: str, object_id: str, body: DeprecateBody):
+    """Mark an object as deprecated. Removes it from default views and agent context."""
+    import datetime
+    file_map = {
+        "asset": "assets.json",
+        "person": "consultants.json",
+        "initiative": "initiatives.json",
+        "aiUseCase": "ai_use_cases.json",
+    }
+    fname = file_map.get(object_type)
+    if not fname:
+        raise HTTPException(400, f"Cannot deprecate object_type '{object_type}'. Valid: {list(file_map)}")
+    data = _load(fname) or []
+    for i, obj in enumerate(data):
+        if obj.get("id") == object_id:
+            data[i]["status"] = "deprecated"
+            data[i]["deprecatedAt"] = datetime.datetime.now().isoformat()
+            if body.reason:
+                data[i]["deprecationReason"] = body.reason
+            _save(fname, data)
+            return {"deprecated": True, "id": object_id, "object_type": object_type}
+    raise HTTPException(404, f"{object_type} '{object_id}' not found")
+
+
+@app.post("/api/governance/restore/{object_type}/{object_id}")
+async def restore_object(object_type: str, object_id: str):
+    """Restore a deprecated object back to active status."""
+    file_map = {
+        "asset": "assets.json",
+        "person": "consultants.json",
+        "initiative": "initiatives.json",
+        "aiUseCase": "ai_use_cases.json",
+    }
+    fname = file_map.get(object_type)
+    if not fname:
+        raise HTTPException(400, f"Cannot restore object_type '{object_type}'")
+    data = _load(fname) or []
+    for i, obj in enumerate(data):
+        if obj.get("id") == object_id:
+            data[i]["status"] = "active"
+            data[i].pop("deprecatedAt", None)
+            data[i].pop("deprecationReason", None)
+            _save(fname, data)
+            return {"restored": True, "id": object_id}
+    raise HTTPException(404, f"{object_type} '{object_id}' not found")
+
+
+# ── Content gaps (Agent "not found" log) ─────────────────────────────────────
+
+GAPS_FILE = DATA_DIR / "content_gaps.json"
+
+
+def _load_gaps() -> list:
+    if not GAPS_FILE.exists():
+        return []
+    try:
+        return json.loads(GAPS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+def _save_gap(query: str, closest_matches: list[str]) -> None:
+    import datetime
+    gaps = _load_gaps()
+    gaps.append({
+        "id": str(_uuid.uuid4()),
+        "query": query,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "closest_matches": closest_matches,
+        "resolved": False,
+    })
+    with _write_lock:
+        GAPS_FILE.write_text(json.dumps(gaps, indent=2), encoding="utf-8")
+
+
+@app.get("/api/governance/gaps")
+async def get_content_gaps(resolved: bool = False):
+    """Return logged content gaps from Agent queries that found no grounded answer."""
+    gaps = _load_gaps()
+    if not resolved:
+        gaps = [g for g in gaps if not g.get("resolved", False)]
+    return {"count": len(gaps), "items": gaps}
+
+
+@app.post("/api/governance/gaps/{gap_id}/resolve")
+async def resolve_gap(gap_id: str):
+    """Mark a content gap as resolved."""
+    gaps = _load_gaps()
+    for g in gaps:
+        if g.get("id") == gap_id:
+            g["resolved"] = True
+            with _write_lock:
+                GAPS_FILE.write_text(json.dumps(gaps, indent=2), encoding="utf-8")
+            return {"resolved": True}
+    raise HTTPException(404, "Gap not found")
+
+
+# ── SharePoint integration config ─────────────────────────────────────────────
+
+class SharePointConfigBody(BaseModel):
+    site_url: str | None = None
+    tenant_id: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
+
+
+@app.get("/api/sharepoint/status")
+async def sharepoint_status():
+    """Return SharePoint connection status."""
+    from api.integrations.sharepoint import is_configured, test_connection
+    configured = is_configured()
+    if not configured:
+        cfg = _load_config().get("sharepoint", {})
+        return {
+            "configured": False,
+            "site_url": cfg.get("site_url", ""),
+            "message": "Add SharePoint credentials in Settings to enable document sync.",
+        }
+    result = await asyncio.get_event_loop().run_in_executor(_PROC_POOL, test_connection)
+    return {"configured": True, **result}
+
+
+@app.post("/api/sharepoint/config")
+async def save_sharepoint_config(body: SharePointConfigBody):
+    """Save SharePoint connection settings (stored in config.json, gitignored)."""
+    import datetime
+    cfg = _load_config()
+    sp = cfg.get("sharepoint", {})
+    for field in ["site_url", "tenant_id", "client_id", "client_secret"]:
+        val = getattr(body, field)
+        if val is not None:
+            stripped = val.strip()
+            if stripped:
+                sp[field] = stripped
+            else:
+                sp.pop(field, None)
+    cfg["sharepoint"] = sp
+    cfg["updated_at"] = datetime.datetime.now().isoformat()
+    _save_config(cfg)
+    return {"saved": True, "configured": all(sp.get(k) for k in ("site_url", "tenant_id", "client_id", "client_secret"))}

@@ -8,6 +8,9 @@
 
 const API_BASE = '/api';
 
+// Resolve owner to a display string — handles both plain strings and {id,name} objects
+const _ownerName = (owner) => !owner ? '—' : (typeof owner === 'object' ? (owner.name || owner.id || '—') : owner);
+
 async function apiFetch(url, opts = {}) {
   opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   return fetch(url, opts);
@@ -82,7 +85,7 @@ function switchView(name) {
       state.chatHistory.forEach(m => appendChat(m.role, m.text));
     }
   }
-  if (name === 'settings') loadSettings();
+  if (name === 'settings') { loadSettings(); loadSharePointStatus(); }
 }
 
 // ── Overview ───────────────────────────────────────────────────────────────
@@ -145,7 +148,7 @@ function renderOverview() {
           <div class="goal-title">${g.title}</div>
           <div class="goal-pct">${pct}%</div>
         </div>
-        <div class="goal-meta">Due: ${g.due_date} · Owner: ${g.owner}</div>
+        <div class="goal-meta">Due: ${g.due_date} · Owner: ${_ownerName(g.owner)}</div>
         <div class="goal-bar"><div class="goal-fill ${cls}" style="width:${pct}%"></div></div>
       </div>`;
   }).join('');
@@ -159,7 +162,7 @@ function renderOverview() {
         <div class="init-title">${i.title}</div>
         <div class="init-pct">${i.progress_pct}%</div>
       </div>
-      <div class="init-meta">Owner: ${i.owner} · Due: ${i.target_completion}</div>
+      <div class="init-meta">Owner: ${_ownerName(i.owner)} · Due: ${i.target_completion}</div>
       <div class="init-bar"><div class="init-fill" style="width:${i.progress_pct}%"></div></div>
     </div>`).join('');
 }
@@ -252,7 +255,7 @@ function renderGoalCard(g) {
       </div>
       ${g.description ? `<div class="goal-card-desc">${g.description}</div>` : ''}
       <div class="goal-card-meta-row">
-        ${g.owner ? `<span class="goal-owner-chip">Owner: <b>${g.owner}</b></span>` : ''}
+        ${g.owner ? `<span class="goal-owner-chip">Owner: <b>${_ownerName(g.owner)}</b></span>` : ''}
       </div>
       <div class="goal-card-stats">
         <div class="stat">
@@ -325,7 +328,7 @@ function renderInitCard(i) {
       </div>
       <div class="init-card-meta">
         <span class="meta-chip">Priority: <b style="color:${priorityColor}">${i.priority}</b></span>
-        <span class="meta-chip">Owner: ${i.owner || '—'}</span>
+        <span class="meta-chip">Owner: ${_ownerName(i.owner)}</span>
         <span class="meta-chip">Due: ${i.target_completion || '—'}</span>
         <span class="meta-chip">Domains: ${areas.join(', ') || 'All'}</span>
       </div>
@@ -2632,4 +2635,61 @@ function showSettingsToast(msg, type) {
     animation:fadeIn .2s ease`;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
+}
+
+// ── SharePoint ──────────────────────────────────────────────────────────────
+
+async function loadSharePointStatus() {
+  const badge = document.getElementById('spStatusBadge');
+  if (!badge) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/sharepoint/status`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.configured && data.ok) {
+      badge.textContent = '✓ Connected';
+      badge.style.color = '#34c759';
+      badge.style.borderColor = 'rgba(52,199,89,.4)';
+    } else if (data.configured) {
+      badge.textContent = '⚠ Credentials saved — connection not yet active';
+      badge.style.color = '#ff9f0a';
+      badge.style.borderColor = 'rgba(255,159,10,.4)';
+      if (data.site_url) document.getElementById('inputSpSiteUrl').placeholder = data.site_url;
+    } else {
+      badge.textContent = '○ Not configured';
+    }
+  } catch (_) {}
+}
+
+async function saveSharePointConfig() {
+  const body = {
+    site_url:      document.getElementById('inputSpSiteUrl').value.trim()  || null,
+    tenant_id:     document.getElementById('inputSpTenantId').value.trim() || null,
+    client_id:     document.getElementById('inputSpClientId').value.trim() || null,
+    client_secret: document.getElementById('inputSpSecret').value.trim()   || null,
+  };
+  if (!body.site_url && !body.tenant_id && !body.client_id && !body.client_secret) {
+    showSettingsToast('Enter at least one field', 'warn'); return;
+  }
+  try {
+    const res = await apiFetch(`${API_BASE}/sharepoint/config`, { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    ['inputSpSiteUrl','inputSpTenantId','inputSpClientId','inputSpSecret'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    showSettingsToast(data.configured ? 'SharePoint credentials saved' : 'Fields saved (incomplete — fill all fields to connect)', data.configured ? 'success' : 'warn');
+    loadSharePointStatus();
+  } catch (e) { showSettingsToast('Save failed: ' + e.message, 'error'); }
+}
+
+async function testSharePointConnection() {
+  showSettingsToast('Testing connection…', 'warn');
+  try {
+    const res = await apiFetch(`${API_BASE}/sharepoint/status`);
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    if (data.ok) showSettingsToast('Connected: ' + (data.message || 'OK'), 'success');
+    else showSettingsToast(data.message || 'Not connected', 'warn');
+  } catch (e) { showSettingsToast('Test failed: ' + e.message, 'error'); }
 }

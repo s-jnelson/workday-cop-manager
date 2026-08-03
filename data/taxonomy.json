@@ -1,0 +1,97 @@
+{
+  "pillars": [
+    "Data & Conversion",
+    "Integrations",
+    "Reporting & Analytics",
+    "Extend",
+    "Technical Strategy & Architecture"
+  ],
+  "methodPhases": [
+    "Plan",
+    "Architect",
+    "Configure & Prototype",
+    "Test",
+    "Deploy"
+  ],
+  "assetKinds": [
+    "template",
+    "playbook",
+    "toolkit",
+    "accelerator",
+    "reference"
+  ],
+  "aiUseCaseStages": [
+    "idea",
+    "validated",
+    "piloting",
+    "adopted",
+    "parked"
+  ],
+  "objectTypes": [
+    "initiative",
+    "asset",
+    "methodology",
+    "person",
+    "aiUseCase",
+    "strategyDoc",
+    "goal"
+  ],
+  "visibilityLevels": [
+    "public",
+    "private",
+    "org"
+  ],
+  "statusValues": [
+    "draft",
+    "active",
+    "deprecated"
+  ],
+  "focusAreaToPillar": {
+    "integrations": "Integrations",
+    "conversion":   "Data & Conversion",
+    "reporting":    "Reporting & Analytics",
+    "extend":       "Extend"
+  },
+  "assetTypeToKind": {
+    "integration_template":  "template",
+    "document_template":     "template",
+    "conversion_template":   "template",
+    "tooling":               "toolkit",
+    "report_package":        "accelerator",
+    "standards_document":    "playbook",
+    "analytics_model":       "accelerator",
+    "extend_application":    "accelerator"
+  },
+  "commonTags": [
+    "gl",
+    "ap",
+    "ar",
+    "banking",
+    "fixed-assets",
+    "procurement",
+    "expenses",
+    "cash",
+    "prism",
+    "analytics",
+    "integration",
+    "studio",
+    "eib",
+    "core-connector",
+    "conversion",
+    "iload",
+    "reporting",
+    "extend",
+    "automation",
+    "ai",
+    "validation",
+    "standards",
+    "template",
+    "compliance",
+    "methodology",
+    "cutover",
+    "data-quality",
+    "dashboard",
+    "supplier",
+    "worktag"
+  ]
+}

@@ -9,9 +9,17 @@
       "current_value": 7,
       "unit": "percent",
       "due_date": "2026-12-31",
-      "owner": "CoP Manager",
+      "owner": {
+        "id": "person_cop_manager",
+        "name": "CoP Manager"
+      },
       "status": "in_progress",
-      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "sub_goals": [
+        "integrations",
+        "conversion",
+        "reporting",
+        "extend"
+      ],
       "success_criteria": [
         "Average Finance full-suite deployment drops from 26 to ≤20 weeks across new client engagements starting H2 2026",
         "At least 3 projects complete within the 20-week target before EOY 2026",
@@ -36,6 +44,17 @@
         "All 4 sub-agent areas must contribute reusable, deployment-ready assets",
         "Project managers must log actual deployment durations in the CoP delivery tracker",
         "Asset library must contain published assets for all major Finance deployment phases"
+      ],
+      "object_type": "goal",
+      "reviewBy": "2027-02-02",
+      "visibility": "org",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-08-02T00:00:00Z",
+      "sourceUrl": "",
+      "summary": "Through standardized methodology, reusable assets, and accelerators, reduce the average Workday Finance full-suite deployment from 26 weeks to 20 weeks by end of FY2026.",
+      "pillar": "Technical Strategy & Architecture",
+      "tags": [
+        "time_to_deploy_reduction"
       ]
     },
     {
@@ -47,9 +66,17 @@
       "current_value": 62,
       "unit": "percent",
       "due_date": "2026-09-30",
-      "owner": "CoP Manager",
+      "owner": {
+        "id": "person_cop_manager",
+        "name": "CoP Manager"
+      },
       "status": "in_progress",
-      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "sub_goals": [
+        "integrations",
+        "conversion",
+        "reporting",
+        "extend"
+      ],
       "success_criteria": [
         "90% of active Finance projects score ≥80% on the 20-point CoP methodology checklist",
         "Measurement taken at kickoff, mid-project, and go-live milestones for each engagement",
@@ -74,6 +101,17 @@
         "Methodology audit scorecard tool must be deployed and accessible to all project leads",
         "Leadership mandate for CoP compliance on all Finance projects",
         "CoP Manager must have visibility into all active Finance engagements"
+      ],
+      "object_type": "goal",
+      "reviewBy": "2027-02-02",
+      "visibility": "org",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-08-02T00:00:00Z",
+      "sourceUrl": "",
+      "summary": "Ensure 90% of all active Workday Finance projects follow the standard CoP deployment methodology by Q3 2026.",
+      "pillar": "Technical Strategy & Architecture",
+      "tags": [
+        "methodology_adoption"
       ]
     },
     {
@@ -85,7 +123,10 @@
       "current_value": 2,
       "unit": "count",
       "due_date": "2026-12-31",
-      "owner": "CoP Manager",
+      "owner": {
+        "id": "person_cop_manager",
+        "name": "CoP Manager"
+      },
       "status": "in_progress",
       "sub_goals": [],
       "success_criteria": [
@@ -116,6 +157,17 @@
         "Client data sharing agreements for solutions operating on client data",
         "Internal security review and validation of each use case before client deployment",
         "Client-ready packaging: deployment guide, data requirements, and support model defined"
+      ],
+      "object_type": "goal",
+      "reviewBy": "2027-02-02",
+      "visibility": "org",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-08-02T00:00:00Z",
+      "sourceUrl": "",
+      "summary": "Identify, build, and deploy at least 10 production AI use cases for Workday Financials across client base by end of FY2026.",
+      "pillar": "Technical Strategy & Architecture",
+      "tags": [
+        "ai_use_cases_deployed"
       ]
     },
     {
@@ -127,9 +179,14 @@
       "current_value": 87,
       "unit": "percent",
       "due_date": "2026-12-31",
-      "owner": "CoP Manager",
+      "owner": {
+        "id": "person_cop_manager",
+        "name": "CoP Manager"
+      },
       "status": "in_progress",
-      "sub_goals": ["conversion"],
+      "sub_goals": [
+        "conversion"
+      ],
       "success_criteria": [
         "Zero rollbacks within 72 hours of go-live on any Workday Finance deployment",
         "95% of cutovers complete within the planned maintenance window",
@@ -154,6 +211,17 @@
         "Automated Data Validation Framework must be deployed (linked to Conversion sub-goal)",
         "All cutover leads must be trained and signed off on the CoP rehearsal protocol",
         "Post-go-live retrospective must be completed and submitted within 2 weeks of go-live"
+      ],
+      "object_type": "goal",
+      "reviewBy": "2027-02-02",
+      "visibility": "org",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-08-02T00:00:00Z",
+      "sourceUrl": "",
+      "summary": "Zero rollbacks on go-live cutovers through improved pre-cutover testing frameworks and rehearsal protocols.",
+      "pillar": "Technical Strategy & Architecture",
+      "tags": [
+        "cutover_success_rate"
       ]
     },
     {
@@ -165,9 +233,17 @@
       "current_value": 45,
       "unit": "percent",
       "due_date": "2026-09-30",
-      "owner": "CoP Manager",
+      "owner": {
+        "id": "person_cop_manager",
+        "name": "CoP Manager"
+      },
       "status": "in_progress",
-      "sub_goals": ["integrations", "conversion", "reporting", "extend"],
+      "sub_goals": [
+        "integrations",
+        "conversion",
+        "reporting",
+        "extend"
+      ],
       "success_criteria": [
         "80% of billable delivery effort on Finance projects leverages a CoP-published asset",
         "Asset reuse tracked per project via the CoP delivery tracker",
@@ -192,6 +268,17 @@
         "Assets must be tagged, searchable, and include deployment guides or usage notes",
         "Project leads must log asset usage in the CoP delivery tracker",
         "Asset quality review process must be in place before assets are promoted to 'published'"
+      ],
+      "object_type": "goal",
+      "reviewBy": "2027-02-02",
+      "visibility": "org",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-08-02T00:00:00Z",
+      "sourceUrl": "",
+      "summary": "Build and catalog enough standardized assets that 80% of deployment work reuses existing CoP-approved templates and tools.",
+      "pillar": "Technical Strategy & Architecture",
+      "tags": [
+        "asset_reuse_rate"
       ]
     }
   ],
@@ -204,7 +291,10 @@
         "current_value": 18,
         "unit": "count",
         "due_date": "2026-12-31",
-        "owner": "Integrations Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "50 production-ready integration templates published in the CoP asset library",
@@ -228,6 +318,17 @@
           "Integration leads must dedicate time to template development (not 100% billable)",
           "Peer review process must be established before templates are promoted to the library",
           "Template testing on a Workday sandbox tenant is required before publishing"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Build Standard Integration Template Library (50 templates)",
+        "pillar": "Integrations",
+        "tags": [
+          "integrations"
         ]
       },
       {
@@ -237,7 +338,10 @@
         "current_value": 12,
         "unit": "percent",
         "due_date": "2026-12-31",
-        "owner": "Integrations Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "Average integration build time reduced by 30% vs. FY2025 baseline (measured in days per pattern)",
@@ -260,6 +364,17 @@
           "Integration template library must have ≥20 published templates before measurable reduction is achievable",
           "Build-time tracking must be implemented in the CoP delivery tracker",
           "AI Integration Error Diagnostics tool must be deployed and accessible to all integration consultants"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Reduce Integration Build Time by 30%",
+        "pillar": "Integrations",
+        "tags": [
+          "integrations"
         ]
       },
       {
@@ -269,7 +384,10 @@
         "current_value": 0,
         "unit": "delivery",
         "due_date": "2026-06-30",
-        "owner": "Integrations Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "planning",
         "success_criteria": [
           "AI Integration Error Diagnostics tool deployed and accessible to all integration consultants",
@@ -292,6 +410,17 @@
           "ANTHROPIC_API_KEY required for AI-enhanced diagnosis mode",
           "Integration consultant input to identify and document the most common error patterns",
           "Web hosting or internal tool deployment for non-technical consultant access"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Develop AI-powered Integration Error Diagnostics",
+        "pillar": "Integrations",
+        "tags": [
+          "integrations"
         ]
       }
     ],
@@ -303,7 +432,10 @@
         "current_value": 9,
         "unit": "objects_covered",
         "due_date": "2026-09-30",
-        "owner": "Conversion Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "V2 Conversion Methodology published covering all 14 Workday Financial data objects",
@@ -324,6 +456,17 @@
           "Conversion leads must allocate time to methodology documentation alongside client delivery",
           "Workday tenant access required for testing each iLoad template before publishing",
           "Peer review sign-off from at least 2 senior conversion consultants required"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Publish V2 Conversion Methodology (covering all 14 Financial objects)",
+        "pillar": "Data & Conversion",
+        "tags": [
+          "conversion"
         ]
       },
       {
@@ -333,7 +476,10 @@
         "current_value": 0,
         "unit": "delivery",
         "due_date": "2026-06-30",
-        "owner": "Conversion Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "Automated framework validates conversion data for all 14 Workday Financial objects",
@@ -356,6 +502,17 @@
           "Field-level validation rules must be documented for all 14 conversion objects",
           "Workday field mapping guides must be current and embedded in the validator logic",
           "Non-technical access required — must be a web-based tool, no Python or command-line"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Build Automated Data Validation Framework",
+        "pillar": "Data & Conversion",
+        "tags": [
+          "conversion"
         ]
       },
       {
@@ -365,7 +522,10 @@
         "current_value": 11,
         "unit": "percent",
         "due_date": "2026-12-31",
-        "owner": "Conversion Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "Data defect rate (errors found within T+5 business days of go-live) falls below 5%",
@@ -387,6 +547,17 @@
           "Automated Data Validation Framework must be deployed (linked sub-goal)",
           "Business users must be available for T+1 and T+3 post-go-live validation sign-off",
           "All conversion data must pass automated validation before any production load is authorized"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Achieve <5% Data Defect Rate on Go-Live",
+        "pillar": "Data & Conversion",
+        "tags": [
+          "conversion"
         ]
       }
     ],
@@ -398,7 +569,10 @@
         "current_value": 43,
         "unit": "count",
         "due_date": "2026-09-30",
-        "owner": "Reporting Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "100+ Workday Financial reports published in the CoP asset library",
@@ -423,6 +597,17 @@
           "Workday tenant access required for testing and exporting report definitions",
           "Each report must have a published usage guide and security group guidance",
           "Reporting lead must coordinate submissions across all active projects"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Build Standard Financial Report Package (100+ reports)",
+        "pillar": "Reporting & Analytics",
+        "tags": [
+          "reporting"
         ]
       },
       {
@@ -432,7 +617,10 @@
         "current_value": 1,
         "unit": "delivery",
         "due_date": "2026-03-31",
-        "owner": "Reporting Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "complete",
         "success_criteria": [
           "Report Design Standards Guide published and distributed to all reporting consultants",
@@ -456,6 +644,17 @@
           "Senior reporting consultant bandwidth for guide authorship (2–3 focused days of work)",
           "Leadership endorsement to drive adoption across all projects",
           "CoP knowledge hub or SharePoint site for hosting and versioning the guide"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Publish Report Design Standards Guide",
+        "pillar": "Reporting & Analytics",
+        "tags": [
+          "reporting"
         ]
       },
       {
@@ -465,7 +664,10 @@
         "current_value": 0,
         "unit": "clients",
         "due_date": "2026-12-31",
-        "owner": "Reporting Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "planning",
         "success_criteria": [
           "AI Financial Insights Dashboard deployed and in active use at 3 client sites",
@@ -489,6 +691,17 @@
           "Prism Analytics license on the client Workday tenant",
           "Client data privacy review and approval for AI model training on GL data",
           "Dedicated reporting consultant for configuration and client training (1–2 weeks per client)"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Deploy AI Financial Insights Dashboard to 3 clients",
+        "pillar": "Reporting & Analytics",
+        "tags": [
+          "reporting"
         ]
       }
     ],
@@ -500,7 +713,10 @@
         "current_value": 1,
         "unit": "count",
         "due_date": "2026-12-31",
-        "owner": "Extend Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "5 Workday Extend application templates published in the CoP asset library",
@@ -525,6 +741,17 @@
           "Extend development expertise from senior Extend consultants on the team",
           "SDD (Standard Design Document) completed for each app before build begins",
           "Approximately 3–5 days per template for build and documentation"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Build 5 Reusable Extend Application Templates",
+        "pillar": "Extend",
+        "tags": [
+          "extend"
         ]
       },
       {
@@ -534,7 +761,10 @@
         "current_value": 0,
         "unit": "delivery",
         "due_date": "2026-09-30",
-        "owner": "Extend Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "in_progress",
         "success_criteria": [
           "AI Invoice Processing Extend App deployed and operating in Workday Extend on at least 1 client tenant",
@@ -560,6 +790,17 @@
           "ISU (Integration System User) with appropriate AP domain security policies",
           "Client AP team availability for testing and exception classification validation",
           "SDD reviewed and approved by the client Workday team before production deployment"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Develop AI Invoice Processing Extend App",
+        "pillar": "Extend",
+        "tags": [
+          "extend"
         ]
       },
       {
@@ -569,7 +810,10 @@
         "current_value": 1,
         "unit": "delivery",
         "due_date": "2026-03-31",
-        "owner": "Extend Lead",
+        "owner": {
+          "id": "person_cop_manager",
+          "name": "CoP Manager"
+        },
         "status": "complete",
         "success_criteria": [
           "Extend Development Standards published and in active use on all Extend builds",
@@ -589,6 +833,17 @@
         "requirements": [
           "Quarterly review cycle to keep standards current with Workday Extend releases",
           "Extend lead responsible for communicating standards updates to all Extend team members"
+        ],
+        "object_type": "goal",
+        "reviewBy": "2027-02-02",
+        "visibility": "org",
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "sourceUrl": "",
+        "summary": "Publish Extend Development Standards",
+        "pillar": "Extend",
+        "tags": [
+          "extend"
         ]
       }
     ]

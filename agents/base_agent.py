@@ -147,10 +147,12 @@ class BaseAgent:
         """
         metrics = self._load_json("metrics.json")
         goals = self._load_json("goals.json")
-        initiatives = self._load_json("initiatives.json")
-        consultants = self._load_json("consultants.json")
-        assets = self._load_json("assets.json")
-        ai_cases = self._load_json("ai_use_cases.json")
+        # Filter deprecated items from agent context — deprecated content is
+        # excluded from all answers per governance rules (spec Section 5.1)
+        initiatives = [i for i in (self._load_json("initiatives.json") or []) if i.get("status") != "deprecated"]
+        consultants = [c for c in (self._load_json("consultants.json") or []) if c.get("status") != "deprecated"]
+        assets = [a for a in (self._load_json("assets.json") or []) if a.get("status") != "deprecated"]
+        ai_cases = [u for u in (self._load_json("ai_use_cases.json") or []) if u.get("status") != "deprecated"]
 
         lines: list[str] = []
 

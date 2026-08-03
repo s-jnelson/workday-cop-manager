@@ -4,7 +4,7 @@
     "title": "AI Invoice Processing & Exception Routing",
     "description": "Use Claude AI via Workday Extend to automatically classify invoice exceptions, determine the right resolver based on exception type and amount, and generate a natural-language explanation for the approver.",
     "focus_area": "extend",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": true,
     "clients": [
       "Client A",
@@ -22,14 +22,32 @@
     "sample_data_path": "assets/files/ai/sample_data/sample_invoice_exceptions.csv",
     "readiness_rating": 4,
     "readiness_notes": "Production-tested standalone classifier. Extend integration requires SDD completion and tenant ISU setup before client deployment.",
-    "responsible_agent": "extend"
+    "responsible_agent": "extend",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Use Claude AI via Workday Extend to automatically classify invoice exceptions, determine the right resolver based on exception type and amount, and generate a natural-language explanation for the appr",
+    "pillar": "Extend",
+    "tags": [
+      "extend"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "40% reduction in invoice processing time, 60% fewer escalations"
   },
   {
     "id": "e0f1838e-ab89-45ee-b7d8-da73db81b8d1",
     "title": "AI Financial Anomaly Detection",
     "description": "Machine learning model running on Workday Prism Analytics data that identifies statistically unusual transactions, posting patterns, or budget variances and alerts the accounting team.",
     "focus_area": "reporting",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": true,
     "clients": [
       "Client C"
@@ -46,14 +64,32 @@
     "sample_data_path": "assets/files/ai/sample_data/sample_gl_transactions.csv",
     "readiness_rating": 5,
     "readiness_notes": "No API key required. Runs on any GL transaction export. Tune z-score threshold per client data volume. Prism pipeline optional enhancement.",
-    "responsible_agent": "reporting"
+    "responsible_agent": "reporting",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Machine learning model running on Workday Prism Analytics data that identifies statistically unusual transactions, posting patterns, or budget variances and alerts the accounting team.",
+    "pillar": "Reporting & Analytics",
+    "tags": [
+      "reporting"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "Catch 90% of material errors before period close"
   },
   {
     "id": "44ad0db7-11f6-4f97-a81e-85131a9c9b0e",
     "title": "AI Integration Error Diagnostics",
     "description": "LLM-powered tool that analyzes Workday integration error logs, identifies root cause, and provides plain-English resolution steps for functional consultants without Studio expertise.",
     "focus_area": "integrations",
-    "status": "in_development",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "70% reduction in integration support tickets, 4hr MTTR reduction",
@@ -68,14 +104,32 @@
     "sample_data_path": null,
     "readiness_rating": 4,
     "readiness_notes": "Strong rule-based pattern library for 11 common Workday error types. Requires ANTHROPIC_API_KEY for enhanced diagnosis. Validated against real Studio error logs.",
-    "responsible_agent": "integrations"
+    "responsible_agent": "integrations",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "LLM-powered tool that analyzes Workday integration error logs, identifies root cause, and provides plain-English resolution steps for functional consultants without Studio expertise.",
+    "pillar": "Integrations",
+    "tags": [
+      "integrations"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "piloting",
+    "dataReadiness": "green",
+    "expectedValue": "70% reduction in integration support tickets, 4hr MTTR reduction"
   },
   {
     "id": "3bc7eafa-b8c2-4fe6-9b20-04a62ef1bb02",
     "title": "Natural Language Financial Query (Ask Workday)",
     "description": "Allow finance users to ask questions in plain English ('What were our top 10 vendors by spend last quarter in North America?') and get instant answers sourced from Workday data via RaaS APIs.",
     "focus_area": "reporting",
-    "status": "in_development",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "Self-service analytics for 80% of ad-hoc reporting requests",
@@ -91,14 +145,32 @@
     "sample_data_path": null,
     "readiness_rating": 3,
     "readiness_notes": "Demo-ready with 7 RaaS report templates and sample data. Live Workday connection requires client RaaS credentials and report URL configuration. Production readiness: 3-4 weeks.",
-    "responsible_agent": "reporting"
+    "responsible_agent": "reporting",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Allow finance users to ask questions in plain English ('What were our top 10 vendors by spend last quarter in North America?') and get instant answers sourced from Workday data via RaaS APIs.",
+    "pillar": "Reporting & Analytics",
+    "tags": [
+      "reporting"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "piloting",
+    "dataReadiness": "amber",
+    "expectedValue": "Self-service analytics for 80% of ad-hoc reporting requests"
   },
   {
     "id": "afcff157-4cad-489f-ae81-24bbae06e603",
     "title": "AI Supplier Risk Scoring",
     "description": "Automated risk scoring of suppliers based on payment history, invoice patterns, external data signals, and Workday supplier master data. Surfaces high-risk suppliers for AP team review.",
     "focus_area": "integrations",
-    "status": "planning",
+    "status": "draft",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "30% reduction in fraudulent/erroneous payments",
@@ -113,14 +185,32 @@
     "sample_data_path": "assets/files/ai/sample_data/sample_suppliers_for_risk.csv",
     "readiness_rating": 4,
     "readiness_notes": "Four-dimension rule-based risk model ready for immediate use. Country risk list and scoring weights fully configurable. Claude narrative generation for HIGH/CRITICAL suppliers included.",
-    "responsible_agent": "integrations"
+    "responsible_agent": "integrations",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Automated risk scoring of suppliers based on payment history, invoice patterns, external data signals, and Workday supplier master data. Surfaces high-risk suppliers for AP team review.",
+    "pillar": "Integrations",
+    "tags": [
+      "integrations"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "validated",
+    "dataReadiness": "green",
+    "expectedValue": "30% reduction in fraudulent/erroneous payments"
   },
   {
     "id": "fc341b1c-249f-4caf-934d-9f6ea3b5e7ee",
     "title": "AI Conversion Data Mapping Assistant",
     "description": "LLM-powered assistant that analyzes legacy ERP data extracts, automatically suggests Workday field mappings, identifies data quality issues, and generates transformation logic.",
     "focus_area": "conversion",
-    "status": "planning",
+    "status": "draft",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "50% reduction in data mapping analysis time",
@@ -135,14 +225,32 @@
     "sample_data_path": "assets/files/ai/sample_data/sample_legacy_erp_extract.csv",
     "readiness_rating": 4,
     "readiness_notes": "Supports 6 financial conversion objects with embedded Workday field definitions. Claude mapping accuracy ~85% in testing. Requires ANTHROPIC_API_KEY. Human review of suggestions always required before load.",
-    "responsible_agent": "conversion"
+    "responsible_agent": "conversion",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "LLM-powered assistant that analyzes legacy ERP data extracts, automatically suggests Workday field mappings, identifies data quality issues, and generates transformation logic.",
+    "pillar": "Data & Conversion",
+    "tags": [
+      "conversion"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "validated",
+    "dataReadiness": "green",
+    "expectedValue": "50% reduction in data mapping analysis time"
   },
   {
     "id": "b2c7f4a1-3d8e-4f92-a1b5-9c0e2f3d8a7b",
     "title": "Workday Address & Banking Data Validator",
     "description": "Client-facing web tool that validates address and banking data against official Workday field-mapping rules for 40+ countries. Upload a CSV or Excel file, get instant per-row feedback on missing/invalid fields, and download a load-ready corrected Excel file. No Workday tenant access required.",
     "focus_area": "conversion",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": true,
     "clients": [],
     "estimated_roi": "80% reduction in address/banking load errors, same-day data correction vs. 3-5 day manual review",
@@ -160,14 +268,32 @@
     "sample_data_path": null,
     "readiness_rating": 5,
     "readiness_notes": "Rules embedded from official Workday Address Field Mapping and Banking & Address Formatting guides. Covers 40+ countries for addresses and 35+ for banking. Runs standalone on port 8090. No API key required.",
-    "responsible_agent": "conversion"
+    "responsible_agent": "conversion",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Client-facing web tool that validates address and banking data against official Workday field-mapping rules for 40+ countries. Upload a CSV or Excel file, get instant per-row feedback on missing/inval",
+    "pillar": "Data & Conversion",
+    "tags": [
+      "conversion"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "80% reduction in address/banking load errors, same-day data correction vs. 3-5 day manual review"
   },
   {
     "id": "e4d395ec-f1bf-4f9c-a3e4-bc0d3ea8411b",
     "title": "Expense Policy AI Compliance Reviewer",
     "description": "AI layer on top of Workday Expenses that reviews submitted expense reports against policy in real-time, flags violations with specific policy references, and auto-rejects clear violations.",
     "focus_area": "extend",
-    "status": "in_development",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "90% auto-resolution of policy violations, 3-day faster reimbursement",
@@ -182,18 +308,42 @@
     "sample_data_path": "assets/files/ai/sample_data/sample_expense_report.csv",
     "readiness_rating": 4,
     "readiness_notes": "9-rule policy engine operational. Policy fully configurable via JSON. Claude provides nuanced review for complex cases. Workday Extend integration SDD required for production deployment.",
-    "responsible_agent": "extend"
+    "responsible_agent": "extend",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "AI layer on top of Workday Expenses that reviews submitted expense reports against policy in real-time, flags violations with specific policy references, and auto-rejects clear violations.",
+    "pillar": "Extend",
+    "tags": [
+      "extend"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "piloting",
+    "dataReadiness": "green",
+    "expectedValue": "90% auto-resolution of policy violations, 3-day faster reimbursement"
   },
   {
     "id": "wf-tool-dc-001",
     "title": "Data Conversion Workstream Tracker",
     "description": "Interactive project management tool for the Workday Finance data conversion workstream. Full task hierarchy across all 5 deployment phases (Plan→Architect→Configure→Test→Deploy) covering all 14 standard Workday Financial conversion objects. Features: Gantt timeline with drag-and-drop rescheduling, dependency visualization, Excel import/export, phase-based filtering, owner role tracking, and undo history.",
     "focus_area": "conversion",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "Reduces conversion workstream management overhead by 60%; single source of truth for data migration status across all stakeholders",
-    "technology": ["HTML5", "JavaScript", "XLSX.js", "Gantt Chart", "Drag-and-Drop"],
+    "technology": [
+      "HTML5",
+      "JavaScript",
+      "XLSX.js",
+      "Gantt Chart",
+      "Drag-and-Drop"
+    ],
     "internal_use": true,
     "app_url": "/tools/08_data_conversion_tracker.html",
     "file_path": "assets/files/ai/solutions/08_data_conversion_tracker.html",
@@ -201,18 +351,42 @@
     "sample_data_path": null,
     "readiness_rating": 5,
     "readiness_notes": "Fully operational. Pre-loaded with 50+ tasks across 5 phases covering all 14 conversion objects. Persistent state via localStorage. Excel import/export ready.",
-    "responsible_agent": "conversion"
+    "responsible_agent": "conversion",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Interactive project management tool for the Workday Finance data conversion workstream. Full task hierarchy across all 5 deployment phases (Plan→Architect→Configure→Test→Deploy) covering all 14 standa",
+    "pillar": "Data & Conversion",
+    "tags": [
+      "conversion"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "Reduces conversion workstream management overhead by 60%; single source of truth for data migration status across all stakeholders"
   },
   {
     "id": "wf-tool-int-001",
     "title": "Integration Workstream Tracker",
     "description": "Interactive project management tool for the Workday Finance integration workstream. Covers 15 standard Workday Financial integrations (GL outbound, Bank inbound, Payment outbound, Supplier Invoice, Budget, Fixed Asset, Intercompany, Tax, Expense, Customer Invoice, Cash Position, AR Cash Application, PO Outbound, AP Aging, FP&A API) across all 5 deployment phases. Features: Gantt timeline, ISU security task tracking, dependency arrows, cross-workstream dependency visibility, and Excel import/export.",
     "focus_area": "integrations",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "Eliminates status tracking spreadsheets; real-time visibility on 15 integration build/test status; dependency management prevents missed handoffs",
-    "technology": ["HTML5", "JavaScript", "XLSX.js", "Gantt Chart", "Drag-and-Drop"],
+    "technology": [
+      "HTML5",
+      "JavaScript",
+      "XLSX.js",
+      "Gantt Chart",
+      "Drag-and-Drop"
+    ],
     "internal_use": true,
     "app_url": "/tools/09_integration_tracker.html",
     "file_path": "assets/files/ai/solutions/09_integration_tracker.html",
@@ -220,18 +394,42 @@
     "sample_data_path": null,
     "readiness_rating": 5,
     "readiness_notes": "Fully operational. Pre-loaded with tasks for all 15 integrations including ISU setup, Studio build, SIT, UAT, and production deployment steps.",
-    "responsible_agent": "integrations"
+    "responsible_agent": "integrations",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Interactive project management tool for the Workday Finance integration workstream. Covers 15 standard Workday Financial integrations (GL outbound, Bank inbound, Payment outbound, Supplier Invoice, Bu",
+    "pillar": "Integrations",
+    "tags": [
+      "integrations"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "Eliminates status tracking spreadsheets; real-time visibility on 15 integration build/test status; dependency management prevents missed handoffs"
   },
   {
     "id": "wf-tool-rpt-001",
     "title": "Report Build Workstream Tracker",
     "description": "Interactive project management tool for the Workday Finance report build workstream. Covers 20 standard financial reports (Income Statement, Balance Sheet, Cash Flow, AP/AR Aging, Budget vs Actual, Fixed Asset Register, 1099, Audit Trail, etc.) plus 4 executive dashboards (CFO Finance, AP Manager, AR Manager, FP&A) across all 5 deployment phases. Features: Gantt timeline, security group tracking per report, UAT sign-off workflow, and Excel import/export.",
     "focus_area": "reporting",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "Complete visibility into report build status; dependency tracking prevents deploying reports before conversion data is ready; UAT sign-off tracking in one place",
-    "technology": ["HTML5", "JavaScript", "XLSX.js", "Gantt Chart", "Drag-and-Drop"],
+    "technology": [
+      "HTML5",
+      "JavaScript",
+      "XLSX.js",
+      "Gantt Chart",
+      "Drag-and-Drop"
+    ],
     "internal_use": true,
     "app_url": "/tools/10_report_build_tracker.html",
     "file_path": "assets/files/ai/solutions/10_report_build_tracker.html",
@@ -239,18 +437,44 @@
     "sample_data_path": null,
     "readiness_rating": 5,
     "readiness_notes": "Fully operational. Pre-loaded with tasks for 20 reports and 4 dashboards including BRD, build, security assignment, SIT, UAT, and production publish steps.",
-    "responsible_agent": "reporting"
+    "responsible_agent": "reporting",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "Interactive project management tool for the Workday Finance report build workstream. Covers 20 standard financial reports (Income Statement, Balance Sheet, Cash Flow, AP/AR Aging, Budget vs Actual, Fi",
+    "pillar": "Reporting & Analytics",
+    "tags": [
+      "reporting"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "Complete visibility into report build status; dependency tracking prevents deploying reports before conversion data is ready; UAT sign-off tracking in one place"
   },
   {
     "id": "kb-tool-001",
     "title": "CoP Knowledge Hub",
     "description": "AI-powered knowledge management tool that ingests transcripts, documents, design docs, notes, articles, PDFs, DOCX, and spreadsheets into a centralized, searchable knowledge base. Uses Claude to auto-generate summaries and key points on ingest, answer questions against the full knowledge base, and produce 12 types of ready-to-use templates: Best Practice Guides, Solution Design Documents, Data Gathering Worksheets, Project Strategy Documents, Integration Design Patterns, Conversion Mapping Templates, Report Specifications, Risk Registers, Test Plans, Architecture Guides, Training Guides, and Go-Live Checklists.",
     "focus_area": "extend",
-    "status": "deployed",
+    "status": "active",
     "client_deployed": false,
     "clients": [],
     "estimated_roi": "Eliminate knowledge silos across engagements; generate project templates in minutes instead of hours; surface best practices and lessons learned instantly",
-    "technology": ["HTML5", "JavaScript", "Claude API", "claude-opus-4-8", "PDF.js", "Mammoth.js", "XLSX.js"],
+    "technology": [
+      "HTML5",
+      "JavaScript",
+      "Claude API",
+      "claude-opus-4-8",
+      "PDF.js",
+      "Mammoth.js",
+      "XLSX.js"
+    ],
     "internal_use": true,
     "app_url": "/tools/11_knowledge_hub.html",
     "file_path": "assets/files/ai/solutions/11_knowledge_hub.html",
@@ -258,6 +482,24 @@
     "sample_data_path": null,
     "readiness_rating": 5,
     "readiness_notes": "Fully operational. Requires ANTHROPIC_API_KEY entered in the tool UI for AI features (auto-summarization, Q&A, template generation). All knowledge persisted in browser localStorage. Supports PDF, DOCX, TXT, MD, CSV, XLSX file ingestion. 12 template types available.",
-    "responsible_agent": "extend"
+    "responsible_agent": "extend",
+    "object_type": "aiUseCase",
+    "reviewBy": "2027-02-02",
+    "visibility": "org",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-08-02T00:00:00Z",
+    "sourceUrl": "",
+    "summary": "AI-powered knowledge management tool that ingests transcripts, documents, design docs, notes, articles, PDFs, DOCX, and spreadsheets into a centralized, searchable knowledge base. Uses Claude to auto-",
+    "pillar": "Extend",
+    "tags": [
+      "extend"
+    ],
+    "owner": {
+      "id": "person_cop_manager",
+      "name": "CoP Manager"
+    },
+    "stage": "adopted",
+    "dataReadiness": "green",
+    "expectedValue": "Eliminate knowledge silos across engagements; generate project templates in minutes instead of hours; surface best practices and lessons learned instantly"
   }
 ]
