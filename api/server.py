@@ -448,6 +448,8 @@ class AssetBody(BaseModel):
     relatedMethodologyIds: list[str] = []   # phase keys: plan|build|test|deploy|stabilize
     relatedInitiativeIds: list[str] = []
     reuseCount: int = 0
+    contributed_by: str = ""          # contributor name/email for contribution flow
+    needs_review: bool = False        # True = submitted via contribution flow, not yet reviewed
 
 
 @app.post("/api/assets")
@@ -1150,6 +1152,7 @@ GAPS_FILE = DATA_DIR / "content_gaps.json"
 FEEDBACK_FILE = DATA_DIR / "agent_feedback.json"
 STRATEGY_DOCS_FILE = DATA_DIR / "strategy_docs.json"
 REUSE_FILE = DATA_DIR / "asset_reuse_events.json"
+MEMORY_FILE = DATA_DIR / "agent_memory.json"
 METHODOLOGY_FILE = Path(__file__).parent.parent / "methodology" / "deployment_methodology.json"
 
 
@@ -1289,6 +1292,51 @@ async def get_feedback():
     up = sum(1 for f in feedback if f.get("rating") == "up")
     down = sum(1 for f in feedback if f.get("rating") == "down")
     return {"count": len(feedback), "up": up, "down": down, "items": feedback[-50:]}
+
+
+# ── Agent memory (cross-session Q&A history) ──────────────────────────────────
+
+class MemoryBody(BaseModel):
+    query_id: str
+    query: str
+    answer: str
+    citations: list[dict] = []
+
+
+def _load_memory() -> list:
+    if not MEMORY_FILE.exists():
+        return []
+    try:
+        return json.loads(MEMORY_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+@app.get("/api/agent/memory")
+async def get_memory(limit: int = 20):
+    """Return recent agent Q&A pairs for context injection."""
+    entries = _load_memory()
+    return {"count": len(entries), "items": entries[-limit:]}
+
+
+@app.post("/api/agent/memory")
+async def save_memory(body: MemoryBody):
+    """Persist a Q&A exchange so the agent can reference it in future sessions."""
+    import datetime
+    entries = _load_memory()
+    entries.append({
+        "id": str(_uuid.uuid4()),
+        "query_id": body.query_id,
+        "query": body.query,
+        "answer": body.answer[:800],
+        "citations": body.citations[:5],
+        "timestamp": datetime.datetime.now().isoformat(),
+    })
+    # Rolling window — keep last 50 entries
+    entries = entries[-50:]
+    with _write_lock:
+        MEMORY_FILE.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+    return {"saved": True, "total": len(entries)}
 
 
 # ── Strategy documents ────────────────────────────────────────────────────────
@@ -1467,3 +1515,48 @@ async def get_methodology_phases():
         ]
 
     return method_data
+
+
+# ── SharePoint document sync ──────────────────────────────────────────────────
+
+@app.get("/api/sharepoint/documents")
+async def list_sharepoint_documents():
+    """List documents from the configured SharePoint library via MS Graph."""
+    from api.integrations.sharepoint import is_configured, list_documents
+    if not is_configured():
+        raise HTTPException(400, "SharePoint not configured — add credentials in Settings.")
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(_PROC_POOL, list_documents)
+    return result
+
+
+@app.post("/api/sharepoint/sync")
+async def sync_sharepoint():
+    """
+    Pull documents from SharePoint and match them against CoP assets.
+    Updates sourceUrl on matched assets and returns a summary.
+    """
+    from api.integrations.sharepoint import is_configured, list_documents
+    if not is_configured():
+        raise HTTPException(400, "SharePoint not configured.")
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(_PROC_POOL, list_documents)
+    if not result.get("ok"):
+        raise HTTPException(502, result.get("message", "SharePoint error"))
+
+    docs = result.get("documents", [])
+    assets = _load("assets.json") or []
+    matched = 0
+    for doc in docs:
+        doc_name_lower = doc.get("name", "").lower().rsplit(".", 1)[0]
+        for asset in assets:
+            if asset.get("sourceUrl"):
+                continue  # already linked — don't overwrite
+            asset_name_lower = asset.get("name", "").lower()
+            if doc_name_lower and (doc_name_lower in asset_name_lower or asset_name_lower in doc_name_lower):
+                asset["sourceUrl"] = doc.get("webUrl", "")
+                matched += 1
+                break
+    if matched:
+        _save("assets.json", assets)
+    return {"ok": True, "documents_found": len(docs), "assets_linked": matched}

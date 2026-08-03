@@ -1365,3 +1365,66 @@ body::before {
 .phase-asset-name { font-size: 11px; color: var(--text-muted); flex: 1; }
 .phase-asset-uses { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
 
+/* ─── Phase 4: Agent tab row (Chat / Knowledge Gaps) ────────────────────── */
+.agent-tab-row {
+  display: flex; gap: 0; border-bottom: 1px solid rgba(161,0,255,0.18);
+  background: rgba(50,8,110,0.20); flex-shrink: 0; margin-bottom: 0;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.25);
+}
+.agent-tab-btn {
+  padding: 10px 20px; border: none; background: transparent;
+  color: var(--text-muted); font-size: 13px; font-weight: 600;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  white-space: nowrap; transition: all 0.14s; margin-bottom: -1px;
+  display: flex; align-items: center; gap: 7px;
+}
+.agent-tab-btn:hover { color: var(--text); }
+.agent-tab-btn.active { color: #e0b8ff; border-bottom-color: var(--blue); }
+.gap-count-badge {
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 99px;
+  background: rgba(251,191,36,0.22); color: var(--amber);
+  border: 1px solid rgba(251,191,36,0.35);
+}
+
+/* ─── Phase 4: Knowledge gap cards ──────────────────────────────────────── */
+.gap-card {
+  background: var(--bg-panel); border: 1px solid rgba(161,0,255,0.16);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px;
+  box-shadow: var(--metal-shadow);
+}
+.gap-card.gap-resolved { opacity: 0.55; }
+.gap-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gap-query { font-size: 13px; color: var(--text); font-style: italic; line-height: 1.45; flex: 1; }
+.gap-resolve-btn {
+  font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 4px; cursor: pointer;
+  background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.30); color: var(--green);
+  white-space: nowrap; transition: all 0.12s; flex-shrink: 0;
+}
+.gap-resolve-btn:hover { background: rgba(74,222,128,0.25); }
+.gap-resolved-badge { font-size: 10px; font-weight: 700; color: var(--green); flex-shrink: 0; }
+.gap-matches { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; align-items: center; }
+.gap-match-chip {
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--bg-hover); border: 1px solid rgba(161,0,255,0.20); color: var(--text-muted);
+}
+
+/* ─── Phase 4: Contribution modal ───────────────────────────────────────── */
+.contrib-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+  z-index: 910; align-items: center; justify-content: center; padding: 20px;
+}
+.contrib-modal {
+  width: min(560px, 96vw); max-height: 90vh; overflow-y: auto;
+  background-color: rgba(8,2,21,0.92);
+  background-image: linear-gradient(160deg, rgba(161,0,255,0.14) 0%, rgba(255,255,255,0.04) 18%, rgba(0,0,0,0.10) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(161,0,255,0.38); border-radius: var(--radius);
+  box-shadow: 0 24px 72px rgba(0,0,0,0.85), 0 0 32px rgba(161,0,255,0.18);
+}
+.contrib-modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 20px 24px 16px; border-bottom: 1px solid rgba(161,0,255,0.18);
+  background: rgba(50,8,110,0.30);
+}
+.contrib-form-body { padding: 20px 24px 24px; }
+

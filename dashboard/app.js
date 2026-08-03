@@ -90,7 +90,8 @@ function switchView(name) {
     }
   }
   if (name === 'settings') { loadSettings(); loadSharePointStatus(); }
-  if (name === 'methodology') { loadStrategyDocs(); }
+  if (name === 'methodology') { loadStrategyDocs(); renderMethodology(); }
+  if (name === 'agent') { _refreshGapBadge(); }
 }
 
 // ── Overview ───────────────────────────────────────────────────────────────
@@ -1826,6 +1827,11 @@ window.sendAgentQuery = async function() {
 
     if (queryId) {
       _feedbackStore.set(queryId, { query, answer });
+      // Auto-save to persistent memory for cross-session context
+      apiFetch(`${API_BASE}/agent/memory`, {
+        method: 'POST',
+        body: JSON.stringify({ query_id: queryId, query, answer, citations }),
+      }).catch(() => {});
     }
 
     appendChat('assistant', prefix + answer, { citations, unanswered, queryId });
@@ -3027,7 +3033,260 @@ async function testSharePointConnection() {
     const res = await apiFetch(`${API_BASE}/sharepoint/status`);
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    if (data.ok) showSettingsToast('Connected: ' + (data.message || 'OK'), 'success');
-    else showSettingsToast(data.message || 'Not connected', 'warn');
+    if (data.ok) {
+      showSettingsToast('Connected: ' + (data.message || 'OK'), 'success');
+      const syncBtn = document.getElementById('btnSpSync');
+      if (syncBtn) syncBtn.style.display = '';
+    } else {
+      showSettingsToast(data.message || 'Not connected', 'warn');
+    }
+    loadSharePointStatus();
   } catch (e) { showSettingsToast('Test failed: ' + e.message, 'error'); }
 }
+
+// ── SharePoint document sync ──────────────────────────────────────────────────
+window.syncSharePoint = async function() {
+  const btn = document.getElementById('btnSpSync');
+  const results = document.getElementById('spSyncResults');
+  if (btn) { btn.disabled = true; btn.textContent = '↺ Syncing…'; }
+  if (results) { results.style.display = ''; results.textContent = 'Contacting SharePoint…'; }
+  try {
+    const res = await apiFetch(`${API_BASE}/sharepoint/sync`, { method: 'POST', body: '{}' });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      const msg = `Sync complete — ${data.documents_found} document(s) found, ${data.assets_linked} asset(s) linked.`;
+      if (results) results.innerHTML = `<span style="color:var(--green)">✓ ${msg}</span>`;
+      showSettingsToast(msg, 'success');
+    } else {
+      const msg = data.detail || data.message || 'Sync failed';
+      if (results) results.innerHTML = `<span style="color:var(--red)">✕ ${msg}</span>`;
+      showSettingsToast(msg, 'error');
+    }
+  } catch(e) {
+    if (results) results.innerHTML = `<span style="color:var(--red)">✕ ${e.message}</span>`;
+    showSettingsToast('Sync failed: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↺ Sync Documents'; }
+  }
+};
+
+// ── Agent tabs (Chat / Knowledge Gaps) ───────────────────────────────────────
+window.switchAgentTab = function(tab) {
+  ['chat','gaps'].forEach(t => {
+    const panel = document.getElementById(`agentPanel-${t}`);
+    const btn   = document.getElementById(`agentTab-${t}`);
+    if (panel) panel.style.display = t === tab ? '' : 'none';
+    if (btn)   btn.classList.toggle('active', t === tab);
+  });
+  if (tab === 'gaps') loadGaps('open');
+};
+
+async function _refreshGapBadge() {
+  try {
+    const res = await apiFetch(`${API_BASE}/governance/gaps`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const badge = document.getElementById('gapCountBadge');
+    if (badge) {
+      if (data.count > 0) {
+        badge.textContent = data.count;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch(_) {}
+}
+
+window.loadGaps = async function(mode = 'open') {
+  // Sync filter button states
+  ['open','all','resolved'].forEach(m => {
+    const btn = document.getElementById(`gapFilter-${m}`);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const el = document.getElementById('gapsList');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0">Loading…</div>';
+  try {
+    const resolved = mode === 'resolved' ? true : (mode === 'all' ? undefined : false);
+    const url = resolved === undefined
+      ? `${API_BASE}/governance/gaps?resolved=false&resolved=true`  // all
+      : `${API_BASE}/governance/gaps?resolved=${resolved}`;
+    // Use all=true via omitting filter for 'all' mode
+    const fetchUrl = mode === 'all'
+      ? `${API_BASE}/governance/gaps?resolved=false`   // open only — server doesn't have an 'all' param shortcut
+      : `${API_BASE}/governance/gaps?resolved=${resolved}`;
+    // Re-fetch both if 'all'
+    let items = [];
+    if (mode === 'all') {
+      const [rOpen, rResolved] = await Promise.all([
+        apiFetch(`${API_BASE}/governance/gaps?resolved=false`),
+        apiFetch(`${API_BASE}/governance/gaps?resolved=true`),
+      ]);
+      const dOpen = rOpen.ok ? await rOpen.json() : { items: [] };
+      const dResolved = rResolved.ok ? await rResolved.json() : { items: [] };
+      items = [...(dOpen.items || []), ...(dResolved.items || [])];
+      items.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+    } else {
+      const res = await apiFetch(`${API_BASE}/governance/gaps?resolved=${resolved}`);
+      const data = res.ok ? await res.json() : { items: [] };
+      items = data.items || [];
+    }
+    if (!items.length) {
+      el.innerHTML = `<div class="empty-state">${mode === 'resolved' ? 'No resolved gaps yet.' : mode === 'all' ? 'No gaps logged.' : '✓ No open knowledge gaps — great coverage!'}</div>`;
+      return;
+    }
+    el.innerHTML = items.map(g => {
+      const ts = g.timestamp ? new Date(g.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      const matches = (g.closest_matches || []).slice(0,3);
+      const isResolved = g.resolved;
+      return `<div class="gap-card ${isResolved ? 'gap-resolved' : ''}">
+        <div class="gap-card-header">
+          <div class="gap-query">"${g.query}"</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span style="font-size:10px;color:var(--text-dim)">${ts}</span>
+            ${!isResolved
+              ? `<button class="gap-resolve-btn" onclick="resolveGap('${g.id}')">Mark Resolved</button>`
+              : `<span class="gap-resolved-badge">✓ Resolved</span>`}
+          </div>
+        </div>
+        ${matches.length ? `<div class="gap-matches">Closest: ${matches.map(m => `<span class="gap-match-chip">${m}</span>`).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state">Could not load gaps — API server not running.</div>`;
+  }
+};
+
+window.resolveGap = async function(id) {
+  try {
+    await apiFetch(`${API_BASE}/governance/gaps/${id}/resolve`, { method: 'POST', body: '{}' });
+    loadGaps(document.querySelector('#gapFilter-open.active') ? 'open' :
+              document.querySelector('#gapFilter-resolved.active') ? 'resolved' : 'all');
+    _refreshGapBadge();
+  } catch(_) {}
+};
+
+// ── Contribution flow ─────────────────────────────────────────────────────────
+window.openContribModal = function() {
+  const modal = document.getElementById('contribModal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeContribModal = function() {
+  const modal = document.getElementById('contribModal');
+  if (modal) modal.style.display = 'none';
+  // Reset form
+  ['cfName','cfDesc','cfSourceUrl','cfTags','cfContributor'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  // Restore form body if it showed success
+  const body = document.getElementById('contribFormBody');
+  if (body && body.dataset.success) {
+    body.dataset.success = '';
+    body.innerHTML = body.dataset.originalHtml || '';
+  }
+};
+
+window.submitContribution = async function() {
+  const name = document.getElementById('cfName')?.value?.trim();
+  if (!name) { alert('Please enter the asset name.'); return; }
+  const body = {
+    name,
+    description:    document.getElementById('cfDesc')?.value?.trim() || '',
+    focus_area:     document.getElementById('cfArea')?.value || 'integrations',
+    type:           document.getElementById('cfType')?.value || 'document_template',
+    sourceUrl:      document.getElementById('cfSourceUrl')?.value?.trim() || '',
+    tags:           (document.getElementById('cfTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean),
+    contributed_by: document.getElementById('cfContributor')?.value?.trim() || '',
+    status:         'draft',
+    needs_review:   true,
+    format:         '',
+    asset_kind:     'contribution',
+  };
+  try {
+    const res = await apiFetch(`${API_BASE}/assets`, { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(await res.text());
+    const saved = await res.json();
+    if (state.assets) state.assets.push(saved);
+    // Show success state in modal
+    const formBody = document.getElementById('contribFormBody');
+    if (formBody) {
+      formBody.dataset.success = '1';
+      formBody.innerHTML = `
+        <div style="text-align:center;padding:32px 20px">
+          <div style="font-size:36px;margin-bottom:16px">✓</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);margin-bottom:8px">Contribution submitted!</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px">
+            "<strong>${name}</strong>" is now in the Asset Library with status <em>Draft</em>.<br>
+            The CoP lead will review and publish it within 48 hours.
+          </div>
+          <button class="pm-save-btn" onclick="closeContribModal()">Done</button>
+        </div>`;
+    }
+    filterAssets(null, null); // refresh asset grid
+  } catch(e) {
+    alert('Could not submit: ' + e.message);
+  }
+};
+
+// ── Reporting & CSV exports ───────────────────────────────────────────────────
+function _downloadCsv(filename, rows) {
+  const csv = rows.map(row =>
+    row.map(cell => {
+      const s = String(cell ?? '').replace(/"/g, '""');
+      return /[,"\n]/.test(s) ? `"${s}"` : s;
+    }).join(',')
+  ).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+window.exportSkillMatrix = function() {
+  const consultants = state.consultants || [];
+  if (!consultants.length) { alert('No consultant data loaded yet.'); return; }
+  // Collect all unique skill names across all consultants
+  const allSkills = [...new Set(
+    consultants.flatMap(c => (c.skills || []).map(s => s.name))
+  )].sort();
+  const header = ['Name','Level','Focus Area','Availability','Industries', ...allSkills];
+  const rows = [header];
+  for (const c of consultants) {
+    const skillMap = Object.fromEntries((c.skills || []).map(s => [s.name, s.level]));
+    rows.push([
+      c.name, c.level, c.focus_area, c.availability || '',
+      (c.industries || []).join('; '),
+      ...allSkills.map(s => skillMap[s] ?? ''),
+    ]);
+  }
+  _downloadCsv(`skill-matrix-${new Date().toISOString().slice(0,10)}.csv`, rows);
+};
+
+window.exportAssetUtilization = function() {
+  const assets = state.assets || [];
+  if (!assets.length) { alert('No asset data loaded yet.'); return; }
+  const header = ['Name','Type','Kind','Focus Area','Status','Uses','Version','Source URL','Tags'];
+  const rows = [header, ...assets.map(a => [
+    a.name, a.type, a.asset_kind || '', a.focus_area, a.status,
+    a.reuseCount || a.deployments || 0,
+    a.version || '', a.sourceUrl || '',
+    (a.tags || []).join('; '),
+  ])];
+  _downloadCsv(`asset-utilization-${new Date().toISOString().slice(0,10)}.csv`, rows);
+};
+
+window.exportInitiativeStatus = function() {
+  const inits = state.initiatives || [];
+  if (!inits.length) { alert('No initiative data loaded yet.'); return; }
+  const header = ['Title','Status','Priority','Progress %','Owner','Start Date','End Date','Description'];
+  const rows = [header, ...inits.map(i => [
+    i.title, i.status, i.priority, i.progress_pct || 0,
+    i.owner || '', i.start_date || '', i.end_date || '',
+    i.description || '',
+  ])];
+  _downloadCsv(`initiatives-${new Date().toISOString().slice(0,10)}.csv`, rows);
+};

@@ -213,7 +213,10 @@
         <h1>Skills Directory</h1>
         <div class="view-sub">Find consultants by skill, availability, and industry — updated in real time</div>
       </div>
-      <button class="pm-trigger-btn" onclick="openConsultantManager()">◉ Manage Consultants</button>
+      <div style="display:flex;gap:8px">
+        <button class="pm-trigger-btn" onclick="exportSkillMatrix()" title="Download skill matrix as CSV">↓ Skill Matrix</button>
+        <button class="pm-trigger-btn" onclick="openConsultantManager()">◉ Manage Consultants</button>
+      </div>
     </div>
     <div class="tab-row">
       <button class="tab-btn active" onclick="switchConsultantTab('all')">All</button>
@@ -241,7 +244,11 @@
         <h1>Asset Library</h1>
         <div class="view-sub">CoP-approved templates, tools, and reusable components</div>
       </div>
-      <button class="pm-trigger-btn" onclick="openAssetManager()">▣ Manage Assets</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="pm-trigger-btn" style="background:rgba(20,184,166,0.18);border-color:rgba(20,184,166,0.40);color:var(--teal)" onclick="openContribModal()">＋ Contribute Asset</button>
+        <button class="pm-trigger-btn" onclick="exportAssetUtilization()" title="Download asset utilization report as CSV">↓ Export</button>
+        <button class="pm-trigger-btn" onclick="openAssetManager()">▣ Manage Assets</button>
+      </div>
     </div>
     <div class="filter-row" style="margin-bottom:4px">
       <button class="filter-btn active" onclick="filterAssets('all','all')">All</button>
@@ -301,7 +308,12 @@
       <h1>CoP Agent Console</h1>
       <div class="view-sub">Interact with the main CoP Manager agent or any sub-agent directly</div>
     </div>
-    <div class="agent-console">
+    <div class="agent-tab-row">
+      <button class="agent-tab-btn active" id="agentTab-chat" onclick="switchAgentTab('chat')">Chat</button>
+      <button class="agent-tab-btn" id="agentTab-gaps" onclick="switchAgentTab('gaps')">Knowledge Gaps <span class="gap-count-badge" id="gapCountBadge" style="display:none"></span></button>
+    </div>
+    <!-- Chat panel -->
+    <div id="agentPanel-chat" class="agent-console">
       <div class="agent-select-row">
         <label>Agent:</label>
         <select id="agentSelector">
@@ -332,6 +344,21 @@
         <button class="qp-btn" onclick="quickPrompt('Recommend an AI use case for accounts payable that we could build with Workday Extend')">AI use case idea</button>
         <button class="qp-btn" onclick="quickPrompt('Assess the Conversion sub-agent status and recommend priority actions')">Conversion status</button>
       </div>
+    </div>
+    <!-- Knowledge Gaps panel -->
+    <div id="agentPanel-gaps" style="display:none;padding:0 4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Knowledge Gap Triage</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Questions the agent couldn't fully answer — review and resolve to improve coverage</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="filter-btn active" id="gapFilter-open" onclick="loadGaps('open')">Open</button>
+          <button class="filter-btn" id="gapFilter-all" onclick="loadGaps('all')">All</button>
+          <button class="filter-btn" id="gapFilter-resolved" onclick="loadGaps('resolved')">Resolved</button>
+        </div>
+      </div>
+      <div id="gapsList"></div>
     </div>
   </div>
 
@@ -468,7 +495,6 @@
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
           <div style="flex:1">
             <div style="font-size:15px;font-weight:600;margin-bottom:2px">Microsoft SharePoint</div>
-            <div style="font-size:11px;padding:3px 8px;border-radius:12px;display:inline-block;margin-bottom:6px;background:rgba(255,159,10,.15);color:#ff9f0a;border:1px solid rgba(255,159,10,.3)">Coming soon</div>
             <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Connect a SharePoint site to sync assets, strategy documents, and methodology files. All <code style="font-size:12px">sourceUrl</code> fields will resolve to your SharePoint document library.</div>
             <div id="spStatusBadge" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);padding:5px 10px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border)">
               ○ Not configured
@@ -507,7 +533,7 @@
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
           <button onclick="saveSharePointConfig()"
             style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">
             Save Connection
@@ -516,7 +542,11 @@
             style="padding:8px 18px;border-radius:8px;background:none;border:1px solid var(--border);color:var(--text);font-size:13px;cursor:pointer">
             Test Connection
           </button>
+          <button id="btnSpSync" onclick="syncSharePoint()" style="display:none;padding:8px 18px;border-radius:8px;background:none;border:1px solid rgba(20,184,166,0.45);color:var(--teal);font-size:13px;font-weight:600;cursor:pointer">
+            ↺ Sync Documents
+          </button>
         </div>
+        <div id="spSyncResults" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;color:var(--text-muted)"></div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:10px">
           Register an Azure app with <code style="font-size:11px">Sites.ReadWrite.All</code> permission to get the Client ID and Secret.
           <a href="https://learn.microsoft.com/en-us/graph/auth-register-app-v2" target="_blank" style="color:var(--accent)">Setup guide →</a>
@@ -674,5 +704,70 @@
 </div>
 
 <script src="app.js?v=8"></script>
+
+<!-- ── Contribute Asset Modal ────────────────────────────────────────── -->
+<div id="contribModal" class="contrib-overlay" onclick="if(event.target===this)closeContribModal()">
+  <div class="contrib-modal">
+    <div class="contrib-modal-header">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">＋ Contribute an Asset</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px">Share a template, runbook, or tool — the CoP lead will review and publish within 48 hours</div>
+      </div>
+      <button class="pm-close-btn" onclick="closeContribModal()">✕</button>
+    </div>
+    <div id="contribFormBody" class="contrib-form-body">
+      <div style="display:grid;gap:14px">
+        <div class="pm-field">
+          <label class="pm-field-label">Asset Name *</label>
+          <input class="pm-input" id="cfName" type="text" placeholder="e.g. GL Journal Integration Template">
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Description</label>
+          <textarea class="pm-textarea" id="cfDesc" rows="3" placeholder="What this asset is and how you used it on an engagement"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="pm-field">
+            <label class="pm-field-label">Focus Area</label>
+            <select class="pm-select" id="cfArea">
+              <option value="integrations">Integrations</option>
+              <option value="conversion">Conversion</option>
+              <option value="reporting">Reporting</option>
+              <option value="extend">Extend</option>
+            </select>
+          </div>
+          <div class="pm-field">
+            <label class="pm-field-label">Type</label>
+            <select class="pm-select" id="cfType">
+              <option value="integration_template">Integration Template</option>
+              <option value="conversion_template">Conversion Template</option>
+              <option value="document_template">Document Template</option>
+              <option value="report_package">Report Package</option>
+              <option value="standards_document">Standards Document</option>
+              <option value="tooling">Tooling</option>
+              <option value="extend_application">Extend Application</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Source URL <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none">(SharePoint, Teams, OneDrive, or any link)</span></label>
+          <input class="pm-input" id="cfSourceUrl" type="url" placeholder="https://…">
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Tags <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none">— comma-separated</span></label>
+          <input class="pm-input" id="cfTags" type="text" placeholder="GL, journal entry, outbound">
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Your Name</label>
+          <input class="pm-input" id="cfContributor" type="text" placeholder="First Last">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(161,0,255,0.14)">
+        <button class="pm-cancel-btn" onclick="closeContribModal()">Cancel</button>
+        <button class="pm-save-btn" onclick="submitContribution()">Submit Contribution</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

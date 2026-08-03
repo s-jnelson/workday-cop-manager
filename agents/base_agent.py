@@ -289,6 +289,18 @@ class BaseAgent:
                     + (f" — {d.get('summary','')[:100]}" if d.get("summary") else "")
                 )
 
+        # Recent Q&A memory — last 10 exchanges for cross-session context
+        memory = self._load_json("agent_memory.json") or []
+        if memory:
+            recent = memory[-10:]
+            lines.append(f"\nRECENT Q&A MEMORY (last {len(recent)} exchanges — use for context continuity):")
+            for m in recent:
+                ts = m.get("timestamp", "")[:10]
+                q = m.get("query", "")[:120]
+                a = m.get("answer", "")[:200]
+                lines.append(f"  [{ts}] Q: {q}")
+                lines.append(f"         A: {a}")
+
         return "\n".join(lines)
 
     def _ollama_run_direct(self, user_message: str) -> str:
