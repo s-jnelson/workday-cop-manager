@@ -365,6 +365,14 @@ class ConsultantBody(BaseModel):
     active_projects: int = 0
     modules: list[str] = []
     certifications: list[str] = []
+    skills: list[dict] = []          # [{name, level}] — level 1-5
+    industries: list[str] = []
+    availability: str = "staffed"    # "available" | "rolling-off" | "staffed"
+    email: str = ""
+    enterprise_id: str = ""
+    project_assignments: list[dict] = []
+    ai_use_case_ids: list[str] = []
+    initiative_ids: list[str] = []
 
 
 @app.post("/api/consultants")
@@ -378,10 +386,15 @@ async def create_consultant(body: ConsultantBody):
 
 @app.put("/api/consultants/{consultant_id}")
 async def update_consultant(consultant_id: str, body: ConsultantBody):
+    import datetime
     data = _load("consultants.json") or []
     for i, c in enumerate(data):
         if c.get("id") == consultant_id or c.get("name") == consultant_id:
-            data[i] = {"id": c.get("id", consultant_id), "updated_by": "", **body.model_dump()}
+            # Merge: preserve governance fields not in ConsultantBody
+            merged = {k: v for k, v in c.items() if k not in body.model_dump()}
+            merged.update({"id": c.get("id", consultant_id), "updatedAt": datetime.datetime.now().isoformat()})
+            merged.update(body.model_dump())
+            data[i] = merged
             _save("consultants.json", data)
             return data[i]
     raise HTTPException(404, "Consultant not found")
@@ -430,6 +443,11 @@ class AssetBody(BaseModel):
     file_path: str | None = None
     file_note: str = ""
     tags: list[str] = []
+    asset_kind: str = "template"      # template | playbook | toolkit | accelerator | reference
+    sourceUrl: str = ""               # canonical location (link, don't copy)
+    relatedMethodologyIds: list[str] = []   # phase keys: plan|build|test|deploy|stabilize
+    relatedInitiativeIds: list[str] = []
+    reuseCount: int = 0
 
 
 @app.post("/api/assets")
@@ -443,10 +461,15 @@ async def create_asset(body: AssetBody):
 
 @app.put("/api/assets/{asset_id}")
 async def update_asset(asset_id: str, body: AssetBody):
+    import datetime
     data = _load("assets.json") or []
     for i, a in enumerate(data):
         if a.get("id") == asset_id or a.get("name") == asset_id:
-            data[i] = {"id": a.get("id", asset_id), "updated_by": "", **body.model_dump()}
+            # Merge: preserve governance fields not in AssetBody
+            merged = {k: v for k, v in a.items() if k not in body.model_dump()}
+            merged.update({"id": a.get("id", asset_id), "updatedAt": datetime.datetime.now().isoformat()})
+            merged.update(body.model_dump())
+            data[i] = merged
             _save("assets.json", data)
             return data[i]
     raise HTTPException(404, "Asset not found")
@@ -1126,6 +1149,8 @@ async def restore_object(object_type: str, object_id: str):
 GAPS_FILE = DATA_DIR / "content_gaps.json"
 FEEDBACK_FILE = DATA_DIR / "agent_feedback.json"
 STRATEGY_DOCS_FILE = DATA_DIR / "strategy_docs.json"
+REUSE_FILE = DATA_DIR / "asset_reuse_events.json"
+METHODOLOGY_FILE = Path(__file__).parent.parent / "methodology" / "deployment_methodology.json"
 
 
 def _load_gaps() -> list:
@@ -1340,3 +1365,105 @@ async def delete_strategy_doc(doc_id: str):
     with _write_lock:
         STRATEGY_DOCS_FILE.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
     return {"deleted": doc_id}
+
+
+# ── Asset reuse tracking ──────────────────────────────────────────────────────
+
+class ReuseBody(BaseModel):
+    engagement_ref: str = ""
+
+
+@app.post("/api/assets/{asset_id}/reuse")
+async def record_asset_reuse(asset_id: str, body: ReuseBody = ReuseBody()):
+    """Increment reuseCount on an asset and log the usage event."""
+    import datetime
+    data = _load("assets.json") or []
+    updated_asset = None
+    for i, a in enumerate(data):
+        if a.get("id") == asset_id:
+            data[i]["reuseCount"] = data[i].get("reuseCount", 0) + 1
+            data[i]["deployments"] = data[i]["reuseCount"]
+            data[i]["updatedAt"] = datetime.datetime.now().isoformat()
+            updated_asset = data[i]
+            break
+    if not updated_asset:
+        raise HTTPException(404, f"Asset {asset_id} not found")
+    _save("assets.json", data)
+
+    events: list = []
+    if REUSE_FILE.exists():
+        try:
+            events = json.loads(REUSE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            events = []
+    events.append({
+        "id": str(_uuid.uuid4()),
+        "assetId": asset_id,
+        "assetName": updated_asset.get("name", ""),
+        "engagementRef": body.engagement_ref,
+        "timestamp": datetime.datetime.now().isoformat(),
+    })
+    with _write_lock:
+        REUSE_FILE.write_text(json.dumps(events, indent=2), encoding="utf-8")
+
+    return {"recorded": True, "asset_id": asset_id, "reuse_count": updated_asset["reuseCount"]}
+
+
+@app.get("/api/assets/{asset_id}/reuse")
+async def get_asset_reuse(asset_id: str):
+    """Return reuse events for a specific asset."""
+    events: list = []
+    if REUSE_FILE.exists():
+        try:
+            events = json.loads(REUSE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"asset_id": asset_id, "events": [e for e in events if e.get("assetId") == asset_id]}
+
+
+# ── Methodology phases ────────────────────────────────────────────────────────
+
+@app.get("/api/methodology/phases")
+async def get_methodology_phases():
+    """Return methodology phases from JSON, dynamically linking matching assets."""
+    if not METHODOLOGY_FILE.exists():
+        raise HTTPException(404, "methodology/deployment_methodology.json not found")
+    try:
+        method_data = json.loads(METHODOLOGY_FILE.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(500, f"Could not read methodology file: {exc}")
+
+    assets = [a for a in (_load("assets.json") or []) if a.get("status") != "deprecated"]
+
+    # Default phase→asset-type mapping for assets with no explicit relatedMethodologyIds
+    _default_phase_types: dict[str, list[str]] = {
+        "plan":      ["standards_document", "document_template"],
+        "build":     ["integration_template", "conversion_template", "report_package",
+                      "extend_application", "tooling", "analytics_model"],
+        "test":      [],
+        "deploy":    [],
+        "stabilize": [],
+    }
+
+    phases = method_data.get("phases", [])
+    for phase in phases:
+        key = phase.get("key", "")
+        # Explicit links take priority
+        explicit = [a for a in assets if key in (a.get("relatedMethodologyIds") or [])]
+        # Fallback: match by default type mapping if no explicit links for this phase
+        default_types = _default_phase_types.get(key, [])
+        fallback = [a for a in assets if a.get("type") in default_types and key not in (a.get("relatedMethodologyIds") or []) and a not in explicit]
+        linked = explicit + fallback[:6]  # cap fallback at 6 to avoid noise
+        phase["linked_assets"] = [
+            {
+                "id": a.get("id"),
+                "name": a.get("name"),
+                "asset_kind": a.get("asset_kind", a.get("type", "")),
+                "focus_area": a.get("focus_area"),
+                "status": a.get("status"),
+                "sourceUrl": a.get("sourceUrl", ""),
+            }
+            for a in linked
+        ]
+
+    return method_data

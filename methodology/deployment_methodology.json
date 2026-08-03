@@ -1,9 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-07-08",
+  "last_updated": "2026-08-03",
   "phases": [
     {
       "phase": 1,
+      "key": "plan",
       "name": "Discovery & Design",
       "standard_weeks": 4,
       "activities": [
@@ -30,6 +31,7 @@
     },
     {
       "phase": 2,
+      "key": "build",
       "name": "Build & Configure",
       "standard_weeks": 10,
       "activities": [
@@ -48,13 +50,14 @@
         "Unit Test Evidence Log"
       ],
       "gates": [
-        "Unit test pass rate \u226595%",
+        "Unit test pass rate ≥95%",
         "First mock conversion defect rate <15%",
         "Report peer review complete"
       ]
     },
     {
       "phase": 3,
+      "key": "test",
       "name": "Testing",
       "standard_weeks": 6,
       "activities": [
@@ -68,20 +71,21 @@
       ],
       "deliverables": [
         "SIT/UAT sign-off document",
-        "Mock conversion results (defect rate \u22645%)",
+        "Mock conversion results (defect rate ≤5%)",
         "Integration test evidence",
         "Cutover rehearsal results",
         "Performance test results"
       ],
       "gates": [
         "UAT sign-off achieved",
-        "Mock conversion defect rate \u22645%",
+        "Mock conversion defect rate ≤5%",
         "Cutover rehearsal completed within window",
         "Zero P1 open defects"
       ]
     },
     {
       "phase": 4,
+      "key": "deploy",
       "name": "Cutover & Go-Live",
       "standard_weeks": 2,
       "activities": [
@@ -107,6 +111,7 @@
     },
     {
       "phase": 5,
+      "key": "stabilize",
       "name": "Stabilization & Optimization",
       "standard_weeks": 4,
       "activities": [

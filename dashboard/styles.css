@@ -1306,3 +1306,62 @@ body::before {
 /* Form scroll container */
 .pm-form-scroll { display: flex; flex-direction: column; min-height: 100%; }
 
+/* ─── Phase 3: Availability badges ──────────────────────────────────────── */
+.avail-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px;
+  letter-spacing: 0.3px;
+}
+.avail-available { background: rgba(74,222,128,0.16); color: var(--green); border: 1px solid rgba(74,222,128,0.35); }
+.avail-rolling   { background: rgba(251,191,36,0.14); color: var(--amber); border: 1px solid rgba(251,191,36,0.32); }
+.avail-staffed   { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.14); }
+
+/* ─── Phase 3: Skills list on consultant cards ───────────────────────────── */
+.cc-skills-list   { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.cc-skill-row     { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.cc-skill-name    { font-size: 11px; color: var(--text-muted); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-dots       { font-size: 10px; letter-spacing: 1px; color: var(--blue); flex-shrink: 0; }
+.cc-industries    { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.industry-chip    { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(161,0,255,0.12);
+                    border: 1px solid rgba(161,0,255,0.22); color: var(--purple); }
+
+/* ─── Phase 3: Asset kind badge ─────────────────────────────────────────── */
+.asset-kind-badge {
+  font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.3px;
+  background: rgba(20,184,166,0.16); color: var(--teal); border: 1px solid rgba(20,184,166,0.28);
+  white-space: nowrap;
+}
+
+/* ─── Phase 3: Log Usage button ─────────────────────────────────────────── */
+.log-usage-btn {
+  font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+  background: rgba(20,184,166,0.14); border: 1px solid rgba(20,184,166,0.30); color: var(--teal);
+  transition: all 0.12s; white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.40), inset 0 1px 0 rgba(20,184,166,0.16);
+}
+.log-usage-btn:hover { background: rgba(20,184,166,0.28); border-color: rgba(20,184,166,0.60); }
+
+/* ─── Phase 3: Asset method-phase chips ─────────────────────────────────── */
+.asset-method-links { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.method-phase-chip {
+  font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  background: rgba(161,0,255,0.12); border: 1px solid rgba(161,0,255,0.24); color: var(--purple);
+  cursor: pointer; letter-spacing: 0.2px; transition: background 0.12s;
+}
+.method-phase-chip:hover { background: rgba(161,0,255,0.24); }
+
+.asset-src-link { color: var(--blue); font-size: 12px; text-decoration: none; opacity: 0.7; margin-left: 4px; }
+.asset-src-link:hover { opacity: 1; }
+
+/* ─── Phase 3: Methodology linked-assets rows ───────────────────────────── */
+.phase-asset-row {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px; margin-bottom: 2px;
+  border-radius: var(--radius-sm); cursor: pointer; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(161,0,255,0.12); transition: background 0.12s;
+}
+.phase-asset-row:hover { background: rgba(161,0,255,0.10); border-color: rgba(161,0,255,0.28); }
+.phase-asset-kind { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+                    background: rgba(20,184,166,0.16); color: var(--teal); flex-shrink: 0; }
+.phase-asset-name { font-size: 11px; color: var(--text-muted); flex: 1; }
+.phase-asset-uses { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+

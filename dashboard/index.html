@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workday Finance Tech CoP Manager</title>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
 
@@ -210,8 +210,8 @@
   <div id="view-consultants" class="view">
     <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
-        <h1>Consultant Roster</h1>
-        <div class="view-sub">Team by focus area — utilization, certifications, active projects</div>
+        <h1>Skills Directory</h1>
+        <div class="view-sub">Find consultants by skill, availability, and industry — updated in real time</div>
       </div>
       <button class="pm-trigger-btn" onclick="openConsultantManager()">◉ Manage Consultants</button>
     </div>
@@ -221,6 +221,15 @@
       <button class="tab-btn" onclick="switchConsultantTab('conversion')">Conversion</button>
       <button class="tab-btn" onclick="switchConsultantTab('reporting')">Reporting</button>
       <button class="tab-btn" onclick="switchConsultantTab('extend')">Extend</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <input type="search" id="consultantSearchInput" class="pm-input" style="width:240px;margin-bottom:0" placeholder="Search by name, skill, industry…" oninput="searchConsultants(this.value)">
+      <div class="filter-row" style="margin-bottom:0">
+        <button class="filter-btn active" id="avail-btn-all" onclick="filterConsultantAvailability('all')">All</button>
+        <button class="filter-btn" id="avail-btn-available" onclick="filterConsultantAvailability('available')">● Available</button>
+        <button class="filter-btn" id="avail-btn-rolling" onclick="filterConsultantAvailability('rolling')">◐ Rolling Off</button>
+        <button class="filter-btn" id="avail-btn-staffed" onclick="filterConsultantAvailability('staffed')">○ Staffed</button>
+      </div>
     </div>
     <div id="consultantGrid" class="consultant-grid"></div>
   </div>
@@ -241,9 +250,12 @@
       <button class="filter-btn" onclick="filterAssets('reporting','all')">Reporting</button>
       <button class="filter-btn" onclick="filterAssets('extend','all')">Extend</button>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <input type="search" id="assetSearch" class="pm-input" style="width:240px;margin-bottom:0" placeholder="Search assets…" oninput="filterAssets(null,null)">
+    </div>
     <div class="filter-row" id="assetStatusRow">
       <button class="filter-btn active" onclick="filterAssets(null,'all')" id="asf-all">All Statuses</button>
-      <button class="filter-btn" onclick="filterAssets(null,'published')" id="asf-pub">Published</button>
+      <button class="filter-btn" onclick="filterAssets(null,'active')" id="asf-pub">Active</button>
       <button class="filter-btn" onclick="filterAssets(null,'in_progress')" id="asf-inprog">In Progress</button>
       <button class="filter-btn" onclick="filterAssets(null,'draft')" id="asf-draft">Draft</button>
     </div>

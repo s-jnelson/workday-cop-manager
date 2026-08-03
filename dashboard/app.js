@@ -703,12 +703,50 @@ function renderConsultants() { switchConsultantTab(state.currentConsultantTab); 
 
 window.switchConsultantTab = function(tab) {
   state.currentConsultantTab = tab;
+  if (!state.consultantFilters) state.consultantFilters = { tab: 'all', search: '', availability: 'all' };
+  state.consultantFilters.tab = tab;
   document.querySelectorAll('#view-consultants .tab-btn').forEach(b => {
     b.classList.toggle('active', b.textContent.toLowerCase() === tab || (tab === 'all' && b.textContent === 'All'));
   });
-  const cs = tab === 'all'
-    ? (state.consultants || [])
-    : (state.consultants || []).filter(c => c.focus_area === tab);
+  _renderConsultantGrid();
+};
+
+window.searchConsultants = function(q) {
+  if (!state.consultantFilters) state.consultantFilters = { tab: 'all', search: '', availability: 'all' };
+  state.consultantFilters.search = (q || '').toLowerCase().trim();
+  _renderConsultantGrid();
+};
+
+window.filterConsultantAvailability = function(v) {
+  if (!state.consultantFilters) state.consultantFilters = { tab: 'all', search: '', availability: 'all' };
+  state.consultantFilters.availability = v;
+  ['all','available','rolling','staffed'].forEach(val => {
+    const btn = document.getElementById(`avail-btn-${val}`);
+    if (btn) btn.classList.toggle('active', val === v);
+  });
+  _renderConsultantGrid();
+};
+
+function _renderConsultantGrid() {
+  const f = state.consultantFilters || { tab: 'all', search: '', availability: 'all' };
+  let cs = state.consultants || [];
+
+  if (f.tab !== 'all') cs = cs.filter(c => c.focus_area === f.tab);
+  if (f.availability !== 'all') cs = cs.filter(c => c.availability === f.availability);
+  if (f.search) {
+    cs = cs.filter(c => {
+      const fields = [
+        c.name || '',
+        (c.skills || []).map(s => s.name).join(' '),
+        (c.modules || []).join(' '),
+        (c.certifications || []).join(' '),
+        (c.industries || []).join(' '),
+        c.level || '',
+      ].join(' ').toLowerCase();
+      return fields.includes(f.search);
+    });
+  }
+
   const el = document.getElementById('consultantGrid');
   if (!el) return;
   el.innerHTML = cs.map(c => {
@@ -718,7 +756,26 @@ window.switchConsultantTab = function(tab) {
     const certChips = (c.certifications || []).map(cert => `<span class="cert-chip">${cert}</span>`).join('');
     const moduleChips = (c.modules || []).map(m => `<div class="skill-chip">${m}</div>`).join('');
 
-    // Initiative assignments via initiative_ids (or fallback to related_consultants)
+    // Skills with level dots (●●●○○ style)
+    const skillRows = (c.skills || []).map(s => {
+      const lvl = Math.min(Math.max(s.level || 1, 1), 5);
+      const dots = '●'.repeat(lvl) + '○'.repeat(5 - lvl);
+      return `<div class="cc-skill-row"><span class="cc-skill-name">${s.name}</span><span class="skill-dots" title="Level ${lvl}/5">${dots}</span></div>`;
+    }).join('');
+
+    // Availability badge
+    const availMeta = {
+      'available': { cls: 'avail-available', label: '● Available' },
+      'rolling':   { cls: 'avail-rolling',   label: '◐ Rolling Off' },
+      'staffed':   { cls: 'avail-staffed',   label: '○ Staffed' },
+    };
+    const avail = availMeta[c.availability] || null;
+    const availBadge = avail ? `<span class="avail-badge ${avail.cls}">${avail.label}</span>` : '';
+
+    // Industries
+    const industryChips = (c.industries || []).map(i => `<span class="industry-chip">${i}</span>`).join('');
+
+    // Initiative assignments
     const allInits = state.initiatives || [];
     const assignedInits = (c.initiative_ids||[]).length
       ? (c.initiative_ids||[]).map(id => allInits.find(i => i.id === id)).filter(Boolean)
@@ -748,7 +805,6 @@ window.switchConsultantTab = function(tab) {
       </div>`;
     }).join('');
 
-    // Accenture profile button
     const profileBtn = c.enterprise_id
       ? `<a class="cc-profile-btn" href="https://people.accenture.com/People/user/${encodeURIComponent(c.enterprise_id)}" target="_blank" title="Accenture Profile: ${c.name}">Ac</a>`
       : '';
@@ -763,7 +819,10 @@ window.switchConsultantTab = function(tab) {
           <div style="flex:1;min-width:0">
             <div class="cc-name">${c.name}</div>
             <div class="cc-level">${c.level}</div>
-            <div class="cc-area area-${c.focus_area}">${c.focus_area.charAt(0).toUpperCase() + c.focus_area.slice(1)}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px">
+              <div class="cc-area area-${c.focus_area}">${c.focus_area.charAt(0).toUpperCase() + c.focus_area.slice(1)}</div>
+              ${availBadge}
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
             <button class="cc-edit-btn" onclick="openConsultantManager();cmOpenEditByName('${c.name.replace(/'/g, "\\'")}')" title="Edit consultant">✎</button>
@@ -780,15 +839,15 @@ window.switchConsultantTab = function(tab) {
           <span>${c.location}</span>
           ${emailLink}
         </div>
-        ${projRows ? `<div class="cc-section-label">Project Assignments</div><div class="cc-projs">${projRows}</div>` : ''}
+        ${industryChips ? `<div class="cc-industries">${industryChips}</div>` : ''}
+        ${projRows ? `<div class="cc-section-label">Projects</div><div class="cc-projs">${projRows}</div>` : ''}
         ${aiChips ? `<div class="cc-section-label">AI Assignments</div><div class="cc-ais">${aiChips}</div>` : ''}
         ${initChips ? `<div class="cc-section-label">Initiatives</div><div class="cc-inits">${initChips}</div>` : ''}
         ${certChips ? `<div class="cc-section-label">Certifications</div><div class="cc-certs">${certChips}</div>` : ''}
-        <div class="cc-section-label">Modules</div>
-        <div class="cc-skills">${moduleChips}</div>
+        ${skillRows ? `<div class="cc-section-label">Skills</div><div class="cc-skills-list">${skillRows}</div>` : moduleChips ? `<div class="cc-section-label">Modules</div><div class="cc-skills">${moduleChips}</div>` : ''}
       </div>`;
-  }).join('') || '<div class="empty-state">No consultants found.</div>';
-};
+  }).join('') || '<div class="empty-state">No consultants match this filter.</div>';
+}
 
 // ── Consultant Manager ───────────────────────────────────────────────────────
 let _cmData = [];
@@ -1015,6 +1074,26 @@ function cmRenderForm(c) {
         <textarea class="pm-textarea" id="cmCerts" rows="3" placeholder="One certification per line">${(v('certifications',[])).join('\n')}</textarea>
       </div>
 
+      <div class="pm-section">
+        <div class="pm-section-label">Skills Directory</div>
+        <div class="pm-field">
+          <label class="pm-field-label">Availability</label>
+          <select class="pm-select" id="cmAvailability">
+            <option value="available"${v('availability','staffed')==='available'?' selected':''}>Available now</option>
+            <option value="rolling"${v('availability','staffed')==='rolling'?' selected':''}>Rolling off (30–60 days)</option>
+            <option value="staffed"${v('availability','staffed')==='staffed'?' selected':''}>Staffed</option>
+          </select>
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Skills <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">— one per line, e.g. "Studio Integration 4"</span></label>
+          <textarea class="pm-textarea" id="cmSkills" rows="4" placeholder="Studio Integration 4&#10;Workday Extend 3&#10;Data Conversion 5">${(v('skills',[])).map(s=>`${s.name} ${s.level}`).join('\n')}</textarea>
+        </div>
+        <div class="pm-field">
+          <label class="pm-field-label">Industries <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">— one per line</span></label>
+          <textarea class="pm-textarea" id="cmIndustries" rows="3" placeholder="Healthcare&#10;Financial Services">${(v('industries',[])).join('\n')}</textarea>
+        </div>
+      </div>
+
       <div class="pm-form-footer" id="cmFormFooter">
         <button class="pm-cancel-btn" onclick="cmCancel()">Cancel</button>
         <div style="display:flex;gap:8px">
@@ -1053,6 +1132,15 @@ window.cmSave = async function(isNew) {
   })).filter(p => p.project_name);
   const ai_use_case_ids = [...document.querySelectorAll('#cmAIList input[type=checkbox]:checked')].map(cb => cb.value);
   const initiative_ids  = [...document.querySelectorAll('#cmInitList input[type=checkbox]:checked')].map(cb => cb.value);
+  // Parse skills JSON from textarea (one skill per line: "Studio 3" or "Studio,3")
+  const rawSkills = (document.getElementById('cmSkills')?.value || '').split('\n').map(l => l.trim()).filter(Boolean);
+  const skills = rawSkills.map(line => {
+    const parts = line.split(/[,\s]+/);
+    const level = parseInt(parts[parts.length - 1]) || 3;
+    const name = isNaN(parseInt(parts[parts.length - 1])) ? line.trim() : parts.slice(0, -1).join(' ').trim();
+    return { name: name || line.trim(), level: Math.min(Math.max(level, 1), 5) };
+  }).filter(s => s.name);
+
   const body = {
     name,
     email:           document.getElementById('cmEmail')?.value?.trim() || '',
@@ -1065,6 +1153,9 @@ window.cmSave = async function(isNew) {
     active_projects: parseInt(document.getElementById('cmProjects')?.value) || 0,
     modules:         splitLines('cmModules'),
     certifications:  splitLines('cmCerts'),
+    skills,
+    industries:      splitLines('cmIndustries'),
+    availability:    document.getElementById('cmAvailability')?.value || 'staffed',
     project_assignments,
     ai_use_case_ids,
     initiative_ids,
@@ -1088,18 +1179,18 @@ window.cmSave = async function(isNew) {
 function renderAssets() { filterAssets('all', 'all'); }
 
 window.filterAssets = function(area, status) {
-  const prev = state.currentAssetFilter || { area: 'all', status: 'all' };
+  const prev = state.currentAssetFilter || { area: 'all', status: 'all', search: '' };
   const curArea   = area   !== null ? area   : prev.area;
   const curStatus = status !== null ? status : prev.status;
-  state.currentAssetFilter = { area: curArea, status: curStatus };
+  const curSearch = (document.getElementById('assetSearch')?.value || '').toLowerCase().trim();
+  state.currentAssetFilter = { area: curArea, status: curStatus, search: curSearch };
 
-  // Area filter row — first filter-row in the assets view
   document.querySelectorAll('#view-assets .filter-row:first-of-type .filter-btn').forEach(b => {
     const t = b.textContent.toLowerCase().trim();
     b.classList.toggle('active', (curArea === 'all' && t === 'all') || t === curArea);
   });
-  // Status filter row
-  const statusMap = { 'all': 'all statuses', 'published': 'published', 'in_progress': 'in progress', 'draft': 'draft' };
+  // Status map: support both legacy "published" and new "active" values
+  const statusMap = { 'all': 'all statuses', 'active': 'active', 'published': 'active', 'in_progress': 'in progress', 'draft': 'draft' };
   document.querySelectorAll('#assetStatusRow .filter-btn').forEach(b => {
     const t = b.textContent.toLowerCase().trim();
     b.classList.toggle('active', t === (statusMap[curStatus] || curStatus));
@@ -1107,37 +1198,82 @@ window.filterAssets = function(area, status) {
 
   let assets = state.assets || [];
   if (curArea !== 'all') assets = assets.filter(a => a.focus_area === curArea);
-  if (curStatus !== 'all') assets = assets.filter(a => a.status === curStatus);
+  if (curStatus !== 'all') {
+    // Treat "active" and "published" as equivalent
+    if (curStatus === 'active' || curStatus === 'published') {
+      assets = assets.filter(a => a.status === 'active' || a.status === 'published');
+    } else {
+      assets = assets.filter(a => a.status === curStatus);
+    }
+  }
+  if (curSearch) {
+    assets = assets.filter(a => {
+      const fields = [a.name, a.description, a.format, a.type, a.asset_kind,
+                      (a.tags||[]).join(' '), a.focus_area].join(' ').toLowerCase();
+      return fields.includes(curSearch);
+    });
+  }
+
   const el = document.getElementById('assetGrid');
   if (!el) return;
   el.innerHTML = assets.map(a => {
     const hasFile = a.file_path && a.file_path !== null;
     const downloadBtn = hasFile
-      ? `<a class="asset-download-btn" href="../${a.file_path}" download title="Download real asset file">↓ Download</a>`
-      : `<span class="asset-tenant-note" title="${a.file_note || 'Tenant-specific — no portable file'}">Tenant-specific</span>`;
-    const portableBadge = hasFile
-      ? `<span class="portable-badge">Portable</span>`
+      ? `<a class="asset-download-btn" href="../${a.file_path}" download>↓ Download</a>`
+      : `<span class="asset-tenant-note" title="${a.file_note || 'Tenant-specific'}">Tenant-specific</span>`;
+    const portableBadge = hasFile ? `<span class="portable-badge">Portable</span>` : '';
+    const kindBadge = a.asset_kind ? `<span class="asset-kind-badge">${a.asset_kind}</span>` : '';
+    const reuseCount = a.reuseCount || a.deployments || 0;
+    const methodLinks = (a.relatedMethodologyIds || []).map(key => {
+      const labels = { plan:'Plan', build:'Build', test:'Test', deploy:'Deploy', stabilize:'Stabilize' };
+      return `<span class="method-phase-chip" onclick="switchView('methodology')" title="Used in ${labels[key]||key} phase">${labels[key]||key}</span>`;
+    }).join('');
+    const srcLink = a.sourceUrl
+      ? `<a href="${a.sourceUrl}" target="_blank" rel="noopener" class="asset-src-link" title="Open source document">↗</a>`
       : '';
     return `
       <div class="asset-card ${hasFile ? 'has-file' : ''}">
         <div class="asset-card-header">
-          <div class="asset-name">${a.name} ${portableBadge}</div>
-          <div class="asset-status-badge status-${a.status}">${a.status.replace('_',' ')}</div>
+          <div class="asset-name">${a.name} ${portableBadge}${srcLink}</div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            ${kindBadge}
+            <div class="asset-status-badge status-${a.status}">${a.status.replace('_',' ')}</div>
+          </div>
         </div>
         <div class="asset-format">${a.format} · ${a.type.replace(/_/g,' ')}</div>
         <div class="asset-desc">${a.description}</div>
         ${a.file_note && !hasFile ? `<div class="asset-file-note">${a.file_note}</div>` : ''}
+        ${methodLinks ? `<div class="asset-method-links">${methodLinks}</div>` : ''}
         <div class="asset-footer">
           <div class="asset-tags">
             ${(a.tags||[]).slice(0,4).map(t => `<div class="asset-tag">${t}</div>`).join('')}
           </div>
           <div class="asset-actions">
             ${downloadBtn}
-            <div class="asset-deployments"><span class="dep-count">${a.deployments}</span> deployed</div>
+            <button class="log-usage-btn" onclick="logAssetUsage('${a.id}')" title="Record that you used this asset on an engagement">+ Log Use</button>
+            <div class="asset-deployments"><span class="dep-count">${reuseCount}</span> uses</div>
           </div>
         </div>
       </div>`;
   }).join('') || '<div class="empty-state">No assets match this filter.</div>';
+};
+
+window.logAssetUsage = async function(assetId) {
+  try {
+    const resp = await apiFetch(`${API_BASE}/assets/${assetId}/reuse`, { method: 'POST', body: '{}' });
+    if (resp.ok) {
+      const data = await resp.json();
+      // Update count in local state
+      if (state.assets) {
+        const idx = state.assets.findIndex(a => a.id === assetId);
+        if (idx !== -1) {
+          state.assets[idx].reuseCount = data.reuse_count;
+          state.assets[idx].deployments = data.reuse_count;
+        }
+      }
+      filterAssets(null, null); // re-render
+    }
+  } catch(_) { /* offline — silently ignore */ }
 };
 
 // ── Asset Manager ────────────────────────────────────────────────────────────
@@ -1208,8 +1344,27 @@ function amRenderForm(a) {
     `<option value="${o}"${v('focus_area','integrations')===o?' selected':''}>${o}</option>`).join('');
   const typeOpts = ['conversion_template','integration_template','document_template','report_package','standards_document','tooling','extend_application','analytics_model','other'].map(o =>
     `<option value="${o}"${v('type','document_template')===o?' selected':''}>${o.replace(/_/g,' ')}</option>`).join('');
-  const statusOpts = ['published','in_progress','draft','deprecated'].map(o =>
+  const statusOpts = ['active','in_progress','draft','deprecated'].map(o =>
     `<option value="${o}"${v('status','draft')===o?' selected':''}>${o.replace('_',' ')}</option>`).join('');
+  const methodPhases = [
+    { key: 'plan', label: 'Plan (Discovery & Design)' },
+    { key: 'build', label: 'Build & Configure' },
+    { key: 'test', label: 'Testing' },
+    { key: 'deploy', label: 'Deploy (Cutover & Go-Live)' },
+    { key: 'stabilize', label: 'Stabilize & Optimize' },
+  ];
+  const selectedPhases = v('relatedMethodologyIds', []);
+  const methodCheckboxes = methodPhases.map(ph => `
+    <label class="cm-check-label">
+      <input type="checkbox" class="am-method-cb" value="${ph.key}" ${selectedPhases.includes(ph.key)?'checked':''}>
+      <span class="cm-check-title">${ph.label}</span>
+    </label>`).join('');
+  const selectedInits = v('relatedInitiativeIds', []);
+  const initCheckboxes = (state.initiatives||[]).map(i => `
+    <label class="cm-check-label">
+      <input type="checkbox" class="am-init-cb" value="${i.id}" ${selectedInits.includes(i.id)?'checked':''}>
+      <span class="cm-check-title">${i.title}</span>
+    </label>`).join('');
 
   fp.innerHTML = `
     <div class="pm-form-scroll">
@@ -1268,7 +1423,27 @@ function amRenderForm(a) {
           <label class="pm-field-label">Tags <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">— comma-separated</span></label>
           <input class="pm-input" id="amTags" type="text" value="${(v('tags',[])).join(', ').replace(/"/g,'&quot;')}" placeholder="tag1, tag2, tag3">
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="pm-field">
+            <label class="pm-field-label">Asset Kind <span style="font-size:10px;color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">— short label</span></label>
+            <input class="pm-input" id="amKind" type="text" value="${v('asset_kind','').replace(/"/g,'&quot;')}" placeholder="e.g. Template, Runbook, Accelerator">
+          </div>
+          <div class="pm-field">
+            <label class="pm-field-label">Source URL</label>
+            <input class="pm-input" id="amSourceUrl" type="url" value="${v('sourceUrl','').replace(/"/g,'&quot;')}" placeholder="https://sharepoint/...">
+          </div>
+        </div>
       </div>
+
+      <div class="pm-section">
+        <div class="pm-section-label">Methodology Phases</div>
+        <div class="cm-checkbox-list">${methodCheckboxes}</div>
+      </div>
+
+      ${initCheckboxes ? `<div class="pm-section">
+        <div class="pm-section-label">Related Initiatives</div>
+        <div class="cm-checkbox-list">${initCheckboxes}</div>
+      </div>` : ''}
 
       <div class="pm-form-footer" id="amFormFooter">
         <button class="pm-cancel-btn" onclick="amCancel()">Cancel</button>
@@ -1302,16 +1477,20 @@ window.amSave = async function(isNew) {
   const rawPath = document.getElementById('amFilePath')?.value?.trim();
   const body = {
     name,
-    description:  document.getElementById('amDesc')?.value?.trim() || '',
-    focus_area:   document.getElementById('amArea')?.value || 'integrations',
-    type:         document.getElementById('amType')?.value || 'document_template',
-    format:       document.getElementById('amFormat')?.value?.trim() || '',
-    status:       document.getElementById('amStatus')?.value || 'draft',
-    version:      document.getElementById('amVersion')?.value?.trim() || '1.0',
-    deployments:  parseInt(document.getElementById('amDeploys')?.value) || 0,
-    file_path:    rawPath || null,
-    file_note:    document.getElementById('amFileNote')?.value?.trim() || '',
-    tags:         (document.getElementById('amTags')?.value||'').split(',').map(t=>t.trim()).filter(Boolean),
+    description:           document.getElementById('amDesc')?.value?.trim() || '',
+    focus_area:            document.getElementById('amArea')?.value || 'integrations',
+    type:                  document.getElementById('amType')?.value || 'document_template',
+    format:                document.getElementById('amFormat')?.value?.trim() || '',
+    status:                document.getElementById('amStatus')?.value || 'draft',
+    version:               document.getElementById('amVersion')?.value?.trim() || '1.0',
+    deployments:           parseInt(document.getElementById('amDeploys')?.value) || 0,
+    file_path:             rawPath || null,
+    file_note:             document.getElementById('amFileNote')?.value?.trim() || '',
+    tags:                  (document.getElementById('amTags')?.value||'').split(',').map(t=>t.trim()).filter(Boolean),
+    asset_kind:            document.getElementById('amKind')?.value?.trim() || '',
+    sourceUrl:             document.getElementById('amSourceUrl')?.value?.trim() || '',
+    relatedMethodologyIds: [...document.querySelectorAll('.am-method-cb:checked')].map(cb => cb.value),
+    relatedInitiativeIds:  [...document.querySelectorAll('.am-init-cb:checked')].map(cb => cb.value),
   };
   const url = isNew ? `${API_BASE}/assets` : `${API_BASE}/assets/${_amActiveId}`;
   let result = { id: (_amActiveId && _amActiveId !== 'new') ? _amActiveId : ('local-'+Date.now()), ...body };
@@ -1502,11 +1681,33 @@ document.addEventListener('click', e => {
 });
 
 // ── Methodology ─────────────────────────────────────────────────────────────
-function renderMethodology() {
-  const phases = getMethodologyPhases();
+async function renderMethodology() {
   const el = document.getElementById('methodologyPhases');
   if (!el) return;
-  el.innerHTML = phases.map((p, idx) => `
+
+  let phases;
+  try {
+    const res = await apiFetch(`${API_BASE}/methodology/phases`);
+    if (res.ok) phases = await res.json();
+    else phases = getMethodologyPhases();
+  } catch (_) {
+    phases = getMethodologyPhases();
+  }
+
+  el.innerHTML = phases.map((p, idx) => {
+    const linkedAssets = p.linked_assets || [];
+    const assetsHTML = linkedAssets.length
+      ? `<div>
+          <div class="phase-section-label">CoP Assets</div>
+          ${linkedAssets.map(a => `
+            <div class="phase-asset-row" onclick="switchView('assets')" title="View in Asset Library">
+              <span class="phase-asset-kind">${a.asset_kind || a.type?.replace(/_/g,' ') || 'asset'}</span>
+              <span class="phase-asset-name">${a.name}</span>
+              <span class="phase-asset-uses">${a.reuseCount || a.deployments || 0} uses</span>
+            </div>`).join('')}
+        </div>`
+      : '';
+    return `
     <div class="phase-card">
       <div class="phase-header" onclick="togglePhase(${idx})">
         <div class="phase-num">${p.phase}</div>
@@ -1527,8 +1728,10 @@ function renderMethodology() {
           <div class="phase-section-label">Phase Gates</div>
           ${(p.gates||[]).map(g => `<div class="phase-gate">${g}</div>`).join('')}
         </div>
+        ${assetsHTML}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 window.togglePhase = function(idx) {
