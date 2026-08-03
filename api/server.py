@@ -651,9 +651,10 @@ class AgentQuery(BaseModel):
 
 @app.post("/api/agent/query")
 async def query_agent(body: AgentQuery):
-    """Send a query to the appropriate agent and get a response."""
-    from agents.base_agent import _get_anthropic_key, _get_groq_key, _get_ollama_model
+    """Send a query to the appropriate agent. Returns AgentAnswer with citations."""
+    from agents.base_agent import _get_anthropic_key, _get_groq_key, _get_ollama_model, BaseAgent
 
+    query_id = str(_uuid.uuid4())
     has_key = bool(_get_anthropic_key())
     has_groq = bool(_get_groq_key())
     has_ollama = bool(_get_ollama_model())
@@ -662,25 +663,45 @@ async def query_agent(body: AgentQuery):
     if not has_key and not has_groq and not has_ollama:
         from agents.rule_based_agent import query as rule_query
         response = rule_query(body.query)
-        return {"response": response, "agent_used": "rule_based", "mode": "offline"}
+        _save_gap(body.query, [])
+        return {
+            "response": response,
+            "answer": response,
+            "citations": [],
+            "unanswered": True,
+            "query_id": query_id,
+            "agent_used": "rule_based",
+            "mode": "offline",
+        }
 
     try:
-        # Create a fresh orchestrator per request — prevents conversation history
-        # from leaking between concurrent users sharing the same agent instance.
+        # Fresh orchestrator per request — prevents history leaking between users
         cop = CoPOrchestrator(api_key=_get_live_anthropic_key())
         force = None if body.agent == "auto" else body.agent
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
+        raw_response = await loop.run_in_executor(
             _PROC_POOL,
             lambda: cop.run(body.query, force_agent=force, verbose=False),
         )
-        if has_key:
-            backend = "anthropic"
-        elif has_groq:
-            backend = "groq"
-        else:
-            backend = "ollama"
-        return {"response": response, "agent_used": body.agent, "backend": backend}
+
+        # Extract structured citation block appended by the LLM
+        answer, citations, unanswered = BaseAgent.extract_citations(raw_response)
+
+        # Log content gap when agent couldn't find a grounded answer
+        if unanswered:
+            closest = [c.get("title", "") for c in citations if c.get("title")]
+            _save_gap(body.query, closest)
+
+        backend = "anthropic" if has_key else ("groq" if has_groq else "ollama")
+        return {
+            "response": answer,       # backward-compat key
+            "answer": answer,
+            "citations": citations,
+            "unanswered": unanswered,
+            "query_id": query_id,
+            "agent_used": body.agent,
+            "backend": backend,
+        }
     except Exception as e:
         raise HTTPException(500, f"Agent error: {str(e)}")
 
@@ -1103,6 +1124,8 @@ async def restore_object(object_type: str, object_id: str):
 # ── Content gaps (Agent "not found" log) ─────────────────────────────────────
 
 GAPS_FILE = DATA_DIR / "content_gaps.json"
+FEEDBACK_FILE = DATA_DIR / "agent_feedback.json"
+STRATEGY_DOCS_FILE = DATA_DIR / "strategy_docs.json"
 
 
 def _load_gaps() -> list:
@@ -1193,3 +1216,127 @@ async def save_sharepoint_config(body: SharePointConfigBody):
     cfg["updated_at"] = datetime.datetime.now().isoformat()
     _save_config(cfg)
     return {"saved": True, "configured": all(sp.get(k) for k in ("site_url", "tenant_id", "client_id", "client_secret"))}
+
+
+# ── Agent feedback ────────────────────────────────────────────────────────────
+
+class FeedbackBody(BaseModel):
+    query_id: str
+    query: str
+    answer: str
+    rating: str  # "up" | "down"
+
+
+@app.post("/api/agent/feedback")
+async def submit_feedback(body: FeedbackBody):
+    """Save a thumbs-up or thumbs-down rating for an agent answer."""
+    import datetime
+    if body.rating not in ("up", "down"):
+        raise HTTPException(400, "rating must be 'up' or 'down'")
+    feedback: list = []
+    if FEEDBACK_FILE.exists():
+        try:
+            feedback = json.loads(FEEDBACK_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            feedback = []
+    feedback.append({
+        "id": str(_uuid.uuid4()),
+        "query_id": body.query_id,
+        "query": body.query,
+        "answer": body.answer[:500],
+        "rating": body.rating,
+        "timestamp": datetime.datetime.now().isoformat(),
+    })
+    with _write_lock:
+        FEEDBACK_FILE.write_text(json.dumps(feedback, indent=2), encoding="utf-8")
+    return {"saved": True}
+
+
+@app.get("/api/agent/feedback")
+async def get_feedback():
+    """Return recent agent feedback with up/down counts."""
+    feedback: list = []
+    if FEEDBACK_FILE.exists():
+        try:
+            feedback = json.loads(FEEDBACK_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    up = sum(1 for f in feedback if f.get("rating") == "up")
+    down = sum(1 for f in feedback if f.get("rating") == "down")
+    return {"count": len(feedback), "up": up, "down": down, "items": feedback[-50:]}
+
+
+# ── Strategy documents ────────────────────────────────────────────────────────
+
+class StrategyDocBody(BaseModel):
+    title: str
+    description: str = ""
+    pillar: str = ""
+    status: str = "active"
+    owner: str | dict = "CoP Manager"
+    sourceUrl: str = ""
+    summary: str = ""
+    visibility: str = "internal"
+    linkedInitiativeIds: list[str] = []
+    tags: list[str] = []
+
+
+def _load_strategy_docs() -> list:
+    if not STRATEGY_DOCS_FILE.exists():
+        return []
+    try:
+        return json.loads(STRATEGY_DOCS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+@app.get("/api/strategy-docs")
+async def get_strategy_docs(status: str = "all"):
+    docs = _load_strategy_docs()
+    if status != "all":
+        docs = [d for d in docs if d.get("status") == status]
+    return docs
+
+
+@app.post("/api/strategy-docs")
+async def create_strategy_doc(body: StrategyDocBody):
+    import datetime
+    docs = _load_strategy_docs()
+    now = datetime.datetime.now().isoformat()
+    review_by = (datetime.date.today().replace(year=datetime.date.today().year + 1)).isoformat()
+    doc = {
+        "id": str(_uuid.uuid4()),
+        "object_type": "strategyDoc",
+        "createdAt": now,
+        "updatedAt": now,
+        "reviewBy": review_by,
+        **body.model_dump(),
+    }
+    docs.append(doc)
+    with _write_lock:
+        STRATEGY_DOCS_FILE.write_text(json.dumps(docs, indent=2), encoding="utf-8")
+    return doc
+
+
+@app.put("/api/strategy-docs/{doc_id}")
+async def update_strategy_doc(doc_id: str, body: StrategyDocBody):
+    import datetime
+    docs = _load_strategy_docs()
+    for i, d in enumerate(docs):
+        if d.get("id") == doc_id:
+            docs[i] = {**d, "updatedAt": datetime.datetime.now().isoformat(), **body.model_dump()}
+            with _write_lock:
+                STRATEGY_DOCS_FILE.write_text(json.dumps(docs, indent=2), encoding="utf-8")
+            return docs[i]
+    raise HTTPException(404, "Strategy doc not found")
+
+
+@app.delete("/api/strategy-docs/{doc_id}")
+async def delete_strategy_doc(doc_id: str):
+    docs = _load_strategy_docs()
+    filtered = [d for d in docs if d.get("id") != doc_id]
+    if len(filtered) == len(docs):
+        raise HTTPException(404, "Strategy doc not found")
+    with _write_lock:
+        STRATEGY_DOCS_FILE.write_text(json.dumps(filtered, indent=2), encoding="utf-8")
+    return {"deleted": doc_id}

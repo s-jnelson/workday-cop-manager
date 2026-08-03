@@ -858,6 +858,30 @@ body::before {
 }
 .chat-message.error { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.35); color: var(--red); align-self: flex-start; }
 
+/* Citation chips */
+.chat-citations { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cite-label { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-right: 2px; }
+.cite-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 99px; text-decoration: none; transition: opacity 0.14s; cursor: default; }
+.cite-chip.internal { background: rgba(161,0,255,0.18); border: 1px solid rgba(161,0,255,0.35); color: var(--accent-light); }
+.cite-chip.web { background: rgba(0,200,140,0.12); border: 1px solid rgba(0,200,140,0.30); color: #4fd1a5; cursor: pointer; }
+.cite-chip.web:hover { opacity: 0.8; }
+
+/* Gap badge */
+.chat-gap-badge { margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--amber);
+  background: var(--amber-dim); border: 1px solid rgba(251,191,36,0.3); border-radius: var(--radius-sm);
+  padding: 4px 10px; display: inline-block; }
+
+/* Feedback row */
+.chat-feedback { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+.feedback-label { font-size: 11px; color: var(--text-muted); }
+.feedback-btn { background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 14px; cursor: pointer; padding: 2px 8px; transition: all 0.14s; }
+.feedback-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); color: var(--text); }
+.feedback-btn.selected-up { background: rgba(0,200,140,0.18); border-color: rgba(0,200,140,0.5); color: #4fd1a5; }
+.feedback-btn.selected-down { background: var(--red-dim); border-color: rgba(248,113,113,0.35); color: var(--red); }
+.feedback-thanks { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
 .chat-input-row {
   display: flex; gap: 10px; padding: 14px 20px;
   border-top: 1px solid rgba(161,0,255,0.18);

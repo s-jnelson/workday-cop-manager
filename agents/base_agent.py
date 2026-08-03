@@ -22,6 +22,12 @@ GROQ_DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 _agent_write_lock = threading.Lock()  # shared across all agent instances
 
+# Appended to every LLM system prompt so all answers carry traceable citations.
+CITATION_INSTRUCTION = """
+CITATION REQUIREMENT — append this block after every response, on its own line:
+[CITATIONS]{"citations":[{"objectId":"<[ID:xxx] value or null>","title":"<source name>","kind":"<internal|web>","url":"<url or empty>"}],"unanswered":<true|false>}[/CITATIONS]
+Rules: use the [ID:xxx] tag values for internal CoP objects; set unanswered:true only when the question genuinely cannot be answered from available data; empty citations array with unanswered:false is allowed for general-knowledge answers. Do NOT include this block in the visible answer text."""
+
 
 # ── Backend detection ──────────────────────────────────────────────────────────
 
@@ -214,20 +220,21 @@ class BaseAgent:
                         f"{g.get('current_value')}/{g.get('target_value')} {g.get('unit')} ({pct}%)"
                     )
 
-        # Initiatives (active first, then planning)
+        # Initiatives (active first, then planning) — include IDs for citations
         sorted_inits = sorted(
             initiatives,
             key=lambda i: (0 if i.get("status") == "active" else 1 if i.get("status") == "planning" else 2)
         )
         lines.append(f"\nINITIATIVES ({len(initiatives)} total):")
         for i in sorted_inits[:8]:
+            oid = i.get("id", "")
+            id_tag = f"[ID:{oid[:8]}] " if oid else ""
             lines.append(
-                f"  [{i.get('status')}] {i['title']}: {i.get('progress_pct')}%"
+                f"  [{i.get('status')}] {id_tag}{i['title']}: {i.get('progress_pct')}%"
                 f" ({i.get('priority')} priority)"
-                + (f", owner {i.get('owner')}" if i.get("owner") else "")
             )
 
-        # Consultants summary
+        # Consultants — include IDs for citations
         if consultants:
             avg_util = round(sum(c.get("utilization_pct", 0) for c in consultants) / len(consultants))
             by_area: dict[str, list] = {}
@@ -235,28 +242,51 @@ class BaseAgent:
                 by_area.setdefault(c.get("focus_area", "other"), []).append(c)
             lines.append(f"\nCONSULTANTS: {len(consultants)} total, avg utilization {avg_util}%")
             for area, members in by_area.items():
-                names = ", ".join(m["name"] for m in members[:5])
+                member_strs = []
+                for m in members[:5]:
+                    oid = m.get("id", "")
+                    id_tag = f"[ID:{oid[:8]}] " if oid else ""
+                    member_strs.append(f"{id_tag}{m['name']} ({m.get('level','')}, {m.get('utilization_pct',0)}%)")
                 extra = f" +{len(members)-5} more" if len(members) > 5 else ""
-                lines.append(f"  {area}: {names}{extra}")
+                lines.append(f"  {area}: {', '.join(member_strs)}{extra}")
 
-        # Assets summary
+        # Assets — include IDs for citations
         if assets:
-            by_status: dict[str, int] = {}
-            for a in assets:
-                by_status[a.get("status", "?")] = by_status.get(a.get("status", "?"), 0) + 1
-            status_str = ", ".join(f"{v} {k}" for k, v in by_status.items())
-            lines.append(f"\nASSETS: {len(assets)} total ({status_str})")
-            for a in [x for x in assets if x.get("status") == "published"][:5]:
-                lines.append(f"  - {a['name']} [{a.get('focus_area')}] v{a.get('version')} — {a.get('deployments')} deployments")
+            published = [a for a in assets if a.get("status") == "published"]
+            lines.append(f"\nASSETS: {len(assets)} total, {len(published)} published")
+            for a in published[:8]:
+                oid = a.get("id", "")
+                id_tag = f"[ID:{oid[:8]}] " if oid else ""
+                lines.append(
+                    f"  {id_tag}{a['name']} [{a.get('focus_area')}]"
+                    f" v{a.get('version')} — {a.get('deployments')} deployments"
+                )
 
-        # AI use cases
+        # AI use cases — include IDs for citations
         if ai_cases:
             lines.append(f"\nAI USE CASES ({len(ai_cases)}):")
             for uc in ai_cases:
+                oid = uc.get("id", "")
+                id_tag = f"[ID:{oid[:8]}] " if oid else ""
                 lines.append(
-                    f"  [{uc.get('status')}] {uc['title']}"
+                    f"  [{uc.get('status')}] {id_tag}{uc['title']}"
                     f" ({uc.get('focus_area')}) — ROI: {uc.get('estimated_roi', 'TBD')}"
                     + (" [CLIENT DEPLOYED]" if uc.get("client_deployed") else "")
+                )
+
+        # Strategy docs — include IDs for citations
+        strategy_docs = [
+            d for d in (self._load_json("strategy_docs.json") or [])
+            if d.get("status") != "deprecated"
+        ]
+        if strategy_docs:
+            lines.append(f"\nSTRATEGY DOCS ({len(strategy_docs)}):")
+            for d in strategy_docs:
+                oid = d.get("id", "")
+                id_tag = f"[ID:{oid[:8]}] " if oid else ""
+                lines.append(
+                    f"  [{d.get('status','active')}] {id_tag}{d['title']}"
+                    + (f" — {d.get('summary','')[:100]}" if d.get("summary") else "")
                 )
 
         return "\n".join(lines)
@@ -275,6 +305,7 @@ class BaseAgent:
             "say 'For the latest information, I recommend checking Workday Community (community.workday.com).'"
             "\n\n## Current Dashboard Data\n"
             + data_context
+            + "\n" + CITATION_INSTRUCTION
         )
         messages = [
             {"role": "system", "content": system},
@@ -353,7 +384,7 @@ class BaseAgent:
         kwargs: dict = {
             "model": self.model,
             "max_tokens": 8192,
-            "system": self.system_prompt,
+            "system": self.system_prompt + "\n" + CITATION_INSTRUCTION,
             "messages": self.conversation_history,
         }
         if self.tool_definitions:
@@ -574,6 +605,26 @@ class BaseAgent:
             break  # unexpected stop_reason
 
         return "Agent reached maximum iterations without completing."
+
+    @staticmethod
+    def extract_citations(response: str) -> tuple[str, list[dict], bool]:
+        """Parse [CITATIONS]...[/CITATIONS] block from an LLM response.
+
+        Returns (clean_answer, citations_list, unanswered).
+        Falls back to (original_response, [], False) if block is missing or malformed.
+        """
+        import re as _re
+        match = _re.search(r'\[CITATIONS\](.*?)\[/CITATIONS\]', response, _re.DOTALL)
+        if not match:
+            return response.strip(), [], False
+        clean = response[:match.start()].strip()
+        try:
+            data = json.loads(match.group(1).strip())
+            citations = data.get("citations", [])
+            unanswered = bool(data.get("unanswered", False))
+            return clean, citations, unanswered
+        except Exception:
+            return clean, [], False
 
     def reset(self) -> None:
         self.conversation_history = []

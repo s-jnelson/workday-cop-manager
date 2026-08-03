@@ -82,10 +82,15 @@ function switchView(name) {
     const win = document.getElementById('chatWindow');
     if (win) {
       win.innerHTML = '';
-      state.chatHistory.forEach(m => appendChat(m.role, m.text));
+      state.chatHistory.forEach(m => appendChat(m.role, m.text, {
+        citations: m.citations || [],
+        unanswered: m.unanswered || false,
+        queryId: m.queryId || '',
+      }));
     }
   }
   if (name === 'settings') { loadSettings(); loadSharePointStatus(); }
+  if (name === 'methodology') { loadStrategyDocs(); }
 }
 
 // ── Overview ───────────────────────────────────────────────────────────────
@@ -1533,6 +1538,47 @@ window.togglePhase = function(idx) {
   if (toggle) toggle.textContent = body?.classList.contains('open') ? '▲' : '▼';
 };
 
+// ── Strategy Documents ───────────────────────────────────────────────────────
+async function loadStrategyDocs() {
+  const el = document.getElementById('strategyDocsList');
+  if (!el) return;
+  try {
+    const res = await apiFetch(`${API_BASE}/strategy-docs`);
+    if (!res.ok) throw new Error('API error');
+    const docs = await res.json();
+    if (!docs.length) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">No strategy documents found.</div>';
+      return;
+    }
+    el.innerHTML = docs.map(d => {
+      const ownerName = _ownerName(d.owner);
+      const updated = d.updatedAt ? d.updatedAt.slice(0,10) : '';
+      const pillarBadge = d.pillar ? `<span class="badge badge-info">${d.pillar}</span>` : '';
+      const srcLink = d.sourceUrl
+        ? `<a href="${d.sourceUrl}" target="_blank" rel="noopener" style="color:var(--accent-light);font-size:11px;text-decoration:none">↗ Open document</a>`
+        : `<span style="font-size:11px;color:var(--text-muted);font-style:italic">No source URL — add one to make this linkable</span>`;
+      const linked = (d.linkedInitiativeIds || []).length;
+      return `
+        <div class="panel" style="padding:16px 18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+            <div style="font-weight:700;font-size:14px;color:var(--text)">${d.title}</div>
+            <span class="badge ${d.status === 'active' ? 'badge-ok' : 'badge-warn'}" style="white-space:nowrap">${d.status}</span>
+          </div>
+          ${pillarBadge}
+          <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.5">${d.summary || d.description || ''}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:6px">
+            ${srcLink}
+            <div style="font-size:11px;color:var(--text-muted)">
+              Owner: ${ownerName}${updated ? ' · Updated ' + updated : ''}${linked ? ' · ' + linked + ' initiative(s)' : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (_) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Strategy documents unavailable — API server not running.</div>';
+  }
+}
+
 // ── Agent Console ───────────────────────────────────────────────────────────
 window.handleChatKey = function(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentQuery(); }
@@ -1542,6 +1588,9 @@ window.quickPrompt = function(text) {
   document.getElementById('chatInput').value = text;
   sendAgentQuery();
 };
+
+// Per-message metadata store for feedback submissions (query, answer keyed by queryId)
+const _feedbackStore = new Map();
 
 window.sendAgentQuery = async function() {
   const input = document.getElementById('chatInput');
@@ -1566,13 +1615,18 @@ window.sendAgentQuery = async function() {
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (data.mode === 'offline') {
-      appendChat('assistant', '[Offline mode — answering from local data]\n\n' + data.response);
-      state.chatHistory.push({role:'assistant', text: '[Offline mode — answering from local data]\n\n' + data.response});
-    } else {
-      appendChat('assistant', data.response);
-      state.chatHistory.push({role:'assistant', text: data.response});
+    const answer = data.answer || data.response || '';
+    const citations = data.citations || [];
+    const unanswered = data.unanswered || false;
+    const queryId = data.query_id || '';
+    const prefix = data.mode === 'offline' ? '[Offline] ' : '';
+
+    if (queryId) {
+      _feedbackStore.set(queryId, { query, answer });
     }
+
+    appendChat('assistant', prefix + answer, { citations, unanswered, queryId });
+    state.chatHistory.push({ role: 'assistant', text: prefix + answer, citations, unanswered, queryId });
   } catch (err) {
     appendChat('error',
       'Could not reach the CoP Agent.\n\n' +
@@ -1585,13 +1639,94 @@ window.sendAgentQuery = async function() {
   }
 };
 
-function appendChat(role, text) {
+function appendChat(role, text, { citations = [], unanswered = false, queryId = '' } = {}) {
   const win = document.getElementById('chatWindow');
-  const msg = document.createElement('div');
-  msg.className = `chat-message ${role}`;
-  msg.textContent = text;
-  win.appendChild(msg);
+  const wrapper = document.createElement('div');
+  wrapper.className = `chat-message ${role}`;
+
+  // Main answer text
+  const textDiv = document.createElement('div');
+  textDiv.className = 'chat-text';
+  textDiv.textContent = text;
+  wrapper.appendChild(textDiv);
+
+  if (role === 'assistant') {
+    // Citation chips
+    if (citations.length > 0) {
+      const citeDiv = document.createElement('div');
+      citeDiv.className = 'chat-citations';
+      const label = document.createElement('span');
+      label.className = 'cite-label';
+      label.textContent = 'Sources:';
+      citeDiv.appendChild(label);
+      citations.forEach(c => {
+        const chip = document.createElement(c.kind === 'web' && c.url ? 'a' : 'span');
+        chip.className = `cite-chip ${c.kind === 'web' ? 'web' : 'internal'}`;
+        chip.textContent = c.title || 'Source';
+        if (c.kind === 'web' && c.url) {
+          chip.href = c.url;
+          chip.target = '_blank';
+          chip.rel = 'noopener noreferrer';
+        }
+        citeDiv.appendChild(chip);
+      });
+      wrapper.appendChild(citeDiv);
+    }
+
+    // Gap badge
+    if (unanswered) {
+      const gapBadge = document.createElement('div');
+      gapBadge.className = 'chat-gap-badge';
+      gapBadge.textContent = '⚠ Content gap logged — no grounded source found for this query';
+      wrapper.appendChild(gapBadge);
+    }
+
+    // Feedback buttons
+    if (queryId) {
+      const feedbackDiv = document.createElement('div');
+      feedbackDiv.className = 'chat-feedback';
+      const lbl = document.createElement('span');
+      lbl.className = 'feedback-label';
+      lbl.textContent = 'Helpful?';
+      const upBtn = document.createElement('button');
+      upBtn.className = 'feedback-btn';
+      upBtn.title = 'Yes, helpful';
+      upBtn.textContent = '👍';
+      upBtn.onclick = () => submitFeedback(queryId, 'up', feedbackDiv);
+      const downBtn = document.createElement('button');
+      downBtn.className = 'feedback-btn';
+      downBtn.title = 'Not helpful';
+      downBtn.textContent = '👎';
+      downBtn.onclick = () => submitFeedback(queryId, 'down', feedbackDiv);
+      feedbackDiv.append(lbl, upBtn, downBtn);
+      wrapper.appendChild(feedbackDiv);
+    }
+  }
+
+  win.appendChild(wrapper);
   win.scrollTop = win.scrollHeight;
+}
+
+async function submitFeedback(queryId, rating, feedbackDiv) {
+  const stored = _feedbackStore.get(queryId) || {};
+  try {
+    await apiFetch(`${API_BASE}/agent/feedback`, {
+      method: 'POST',
+      body: JSON.stringify({
+        query_id: queryId,
+        query: stored.query || '',
+        answer: (stored.answer || '').slice(0, 500),
+        rating,
+      }),
+    });
+    const thanks = document.createElement('span');
+    thanks.className = 'feedback-thanks';
+    thanks.textContent = rating === 'up' ? '✓ Thanks!' : '✓ Noted — we\'ll improve.';
+    feedbackDiv.innerHTML = '';
+    feedbackDiv.appendChild(thanks);
+  } catch (_) {
+    // silently ignore — feedback is best-effort
+  }
 }
 
 // ── Seed Data (standalone mode) ─────────────────────────────────────────────
