@@ -14,10 +14,10 @@ import threading
 import uuid as _uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from orchestrator import CoPOrchestrator
 
@@ -672,6 +672,7 @@ async def get_dashboard_data():
 class AgentQuery(BaseModel):
     query: str
     agent: str = "auto"  # auto | main | integrations | conversion | reporting | extend
+    history: list[dict] = []  # [{role: "user"|"assistant", content: "..."}]
 
 
 @app.post("/api/agent/query")
@@ -703,10 +704,11 @@ async def query_agent(body: AgentQuery):
         # Fresh orchestrator per request — prevents history leaking between users
         cop = CoPOrchestrator(api_key=_get_live_anthropic_key())
         force = None if body.agent == "auto" else body.agent
+        history = body.history or []
         loop = asyncio.get_event_loop()
         raw_response = await loop.run_in_executor(
             _PROC_POOL,
-            lambda: cop.run(body.query, force_agent=force, verbose=False),
+            lambda: cop.run(body.query, force_agent=force, history=history, verbose=False),
         )
 
         # Extract structured citation block appended by the LLM
@@ -1560,3 +1562,97 @@ async def sync_sharepoint():
     if matched:
         _save("assets.json", assets)
     return {"ok": True, "documents_found": len(docs), "assets_linked": matched}
+
+
+# ── Staffing Roster endpoints ──────────────────────────────────────────────────
+
+class StaffingManualBody(BaseModel):
+    specialties: str = ""
+    interests: str = ""
+    notes: str = ""
+    role_type: list[str] = []        # ["Technical", "Functional"]
+    capabilities: list[str] = []     # ["Data", "Integrations", "Reporting", ...]
+
+
+@app.post("/api/staffing/import")
+async def import_staffing(file: UploadFile = File(...)):
+    """
+    Accept an S&D Excel report upload, process WBG Supply + Assignments tabs,
+    and update staffing_roster.json. Manual fields in staffing_manual.json
+    are never touched.
+    """
+    from api.staffing import process_sd_report
+    content = await file.read()
+    try:
+        result = process_sd_report(content)
+        return result
+    except Exception as exc:
+        import traceback
+        raise HTTPException(status_code=400, detail=f"Failed to process file: {exc}\n{traceback.format_exc()}")
+
+
+@app.get("/api/staffing/roster")
+async def get_staffing_roster():
+    """Return the staffing roster merged with manual fields."""
+    from api.staffing import get_merged_roster
+    return get_merged_roster()
+
+
+@app.post("/api/staffing/manual/{personnel_number}")
+async def update_staffing_manual(personnel_number: str, body: StaffingManualBody):
+    """
+    Update the protected manual fields for one worker.
+    These fields survive every S&D re-import unchanged.
+    """
+    from api.staffing import update_manual
+    result = update_manual(personnel_number, body.model_dump())
+    return result
+
+
+@app.get("/api/staffing/report")
+async def get_staffing_report(
+    fmt: str = "json",
+    name: str = "",
+    entity_l3: str = "",
+    client: str = "",
+    role_type: str = "",
+    capabilities: str = "",
+    min_pct: float = 0,
+    max_pct: float = 500,
+    in_supply_only: bool = False,
+):
+    """
+    Return filtered staffing data. fmt=csv returns a downloadable CSV.
+    """
+    from api.staffing import get_report_data
+    data = get_report_data(
+        name=name, entity_l3=entity_l3, client=client,
+        role_type=role_type, capabilities=capabilities,
+        min_pct=min_pct, max_pct=max_pct, in_supply_only=in_supply_only,
+    )
+
+    if fmt == "csv":
+        import csv, io as _io
+        buf = _io.StringIO()
+        fields = [
+            "name", "personnel_number", "email", "entity_l3", "job_profile",
+            "level_group", "management_level", "metro_city", "country",
+            "current_client", "current_project", "current_start", "current_end",
+            "current_pct", "total_pct",
+            "role_type", "capabilities", "specialties", "interests", "notes",
+            "in_assignments", "in_supply", "staffable_status", "last_import",
+        ]
+        w = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in data:
+            row = dict(r)
+            row["role_type"] = ", ".join(r.get("role_type") or [])
+            row["capabilities"] = ", ".join(r.get("capabilities") or [])
+            w.writerow(row)
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="staffing_report.csv"'},
+        )
+
+    return data

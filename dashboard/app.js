@@ -92,6 +92,7 @@ function switchView(name) {
   if (name === 'settings') { loadSettings(); loadSharePointStatus(); }
   if (name === 'methodology') { loadStrategyDocs(); renderMethodology(); }
   if (name === 'agent') { _refreshGapBadge(); }
+  if (name === 'staffing') { initStaffingView(); }
 }
 
 // ── Overview ───────────────────────────────────────────────────────────────
@@ -106,19 +107,13 @@ function renderOverview() {
     const item = document.getElementById(`health-${area}`);
     if (item) {
       item.className = `health-item tile-link ${h.health || 'good'}`;
-      document.getElementById(`score-${area}`).textContent = h.score ?? '—';
-      document.getElementById(`status-${area}`).textContent =
-        (h.health || '—').replace('_',' ').toUpperCase();
-      const bd = h.score_breakdown || {};
-      const bdEl = document.getElementById(`breakdown-${area}`);
-      if (bdEl && bd.goals_total) {
-        const sign = v => v >= 0 ? `<span class="bd-pos">+${v}</span>` : `<span class="bd-neg">${v}</span>`;
-        bdEl.innerHTML =
-          `<span class="bd-row">Goals <span>${sign(bd.goal_progress_pts)}</span></span>` +
-          `<span class="bd-row">Util <span>${sign(bd.utilization_pts)}</span></span>` +
-          `<span class="bd-row">Done <span>${sign(bd.milestone_pts)}</span></span>` +
-          `<span class="bd-row">Risks <span>${sign(bd.risk_deduction)}</span></span>`;
-      }
+      document.getElementById(`score-${area}`).textContent =
+        (h.health || '—').replace('_', ' ').toUpperCase();
+      const risks = h.open_risks ?? 0;
+      const riskCls = risks === 0 ? 'risk-none' : risks >= 3 ? 'risk-alert' : 'risk-warn';
+      const riskLabel = risks === 0 ? 'No open risks' : `${risks} Open Risk${risks !== 1 ? 's' : ''}`;
+      document.getElementById(`status-${area}`).innerHTML =
+        `<span class="risk-count ${riskCls}">${riskLabel}</span>`;
     }
   });
 
@@ -126,21 +121,19 @@ function renderOverview() {
   const dm = m.deployment_metrics || {};
   const am = m.asset_metrics || {};
   const ai = m.ai_metrics || {};
+  const qm = m.quality_metrics || {};
 
-  // KPI bars
-  setKpi('methodology', pm.methodology_adoption_pct, 90, '%');
-  setKpi('reuse',  am.asset_reuse_rate_pct, 80, '%');
-  setKpi('cutover', dm.cutover_success_rate_pct, 95, '%');
-  setKpiCount('ai', ai.use_cases_deployed, ai.use_cases_target || 10, '');
+  // Row 1 — Strategic priority KPIs (with bars)
+  setKpi('tooling',    pm.tooling_standardization_pct ?? pm.methodology_adoption_pct, 100, '%');
+  setKpi('ai-engage',  ai.ai_enabled_engagements_pct ?? 0, ai.ai_enabled_engagements_target ?? 80, '%');
+  setKpiCount('ip',    am.commercial_ip_assets ?? 0, am.commercial_ip_target ?? 12, '');
+  setKpi('reuse',      am.asset_reuse_rate_pct, am.target_reuse_pct ?? 90, '%');
 
-  // Blue stats
-  setText('kpi-headcount', pm.total_consultants);
-  setText('kpi-util', `${pm.avg_utilization_pct}%`);
-  setText('kpi-assets', am.published_assets);
-  setText('kpi-assets-total', am.total_assets);
-  const activeInit = (state.initiatives||[]).filter(i => i.status === 'active').length;
-  setText('kpi-initiatives', activeInit);
+  // Row 2 — Operational health KPIs
+  setText('kpi-csat',   `${qm.avg_client_satisfaction ?? '—'}/10`);
   setText('kpi-deploy', `${dm.reduction_pct ?? 0}%`);
+  setKpi('cutover',     dm.cutover_success_rate_pct, 95, '%');
+  setKpi('util-pct',    pm.avg_utilization_pct, pm.target_utilization_pct ?? 85, '%');
 
   // Practice goals list
   const goalsEl = document.getElementById('overviewGoalsList');
@@ -324,12 +317,11 @@ function renderInitCard(i) {
   const hasRelated = relGoals.length || relConsults.length || relAssets.length || relAi.length;
 
   return `
-    <div class="init-card" id="init-card-${safeId}">
+    <div class="init-card" id="init-card-${safeId}" onclick="openInitDetail('${safeId}')">
       <div class="init-card-header">
         <div class="init-card-title">${i.title}</div>
         <div style="display:flex;align-items:center;gap:8px">
           <div class="goal-card-badge badge-${i.status}">${i.status.replace('_',' ')}</div>
-          <button class="init-expand-btn" onclick="toggleInitExpand('${safeId}')" title="Show details">⌄</button>
         </div>
       </div>
       <div class="init-card-meta">
@@ -345,41 +337,7 @@ function renderInitCard(i) {
         </div>
         <div class="init-progress-pct">${i.progress_pct || 0}% complete</div>
       </div>
-
-      <div class="init-expanded" id="init-exp-${safeId}" style="display:none">
-        ${i.deliverables?.length ? `
-          <div class="init-section">
-            <div class="init-section-label">Deliverables</div>
-            <div class="init-deliverable-list">
-              ${i.deliverables.map(d => `<div class="deliverable-item">◦ ${d}</div>`).join('')}
-            </div>
-          </div>` : ''}
-
-        ${i.notes ? `
-          <div class="init-section">
-            <div class="init-section-label">Notes</div>
-            <div class="init-notes-text">${i.notes}</div>
-          </div>` : ''}
-
-        ${hasRelated ? `
-          <div class="init-section">
-            <div class="init-section-label">Related Resources</div>
-            ${relSection('◎', 'Goals & KPIs', relGoals,   "switchView('goals');switchGoalTab('practice')")}
-            ${relSection('◉', 'Consultants',  relConsults, "switchView('consultants')")}
-            ${relSection('▣', 'Assets',       relAssets,   "switchView('assets')")}
-            ${relSection('◈', 'AI Pipeline',  relAi,       "switchView('ai')")}
-            <div class="init-related-group">
-              <div class="init-related-label">▥ Methodology</div>
-              <div class="init-related-items">
-                <span class="init-related-chip" onclick="switchView('methodology')">View Methodology Phases →</span>
-              </div>
-            </div>
-          </div>` : ''}
-
-        <div class="init-card-actions">
-          <button class="init-edit-btn" onclick="openInitiativeManager();imOpenEditById('${i.id || safeId}')">✎ Edit Initiative</button>
-        </div>
-      </div>
+      <div class="tile-link-hint">View details →</div>
     </div>`;
 }
 
@@ -1219,21 +1177,22 @@ window.filterAssets = function(area, status) {
   if (!el) return;
   el.innerHTML = assets.map(a => {
     const hasFile = a.file_path && a.file_path !== null;
+    const assetKey = (a.id || a.name || '').replace(/[^a-z0-9]/gi, '_');
     const downloadBtn = hasFile
-      ? `<a class="asset-download-btn" href="../${a.file_path}" download>↓ Download</a>`
+      ? `<a class="asset-download-btn" href="../${a.file_path}" download onclick="event.stopPropagation()">↓ Download</a>`
       : `<span class="asset-tenant-note" title="${a.file_note || 'Tenant-specific'}">Tenant-specific</span>`;
     const portableBadge = hasFile ? `<span class="portable-badge">Portable</span>` : '';
     const kindBadge = a.asset_kind ? `<span class="asset-kind-badge">${a.asset_kind}</span>` : '';
     const reuseCount = a.reuseCount || a.deployments || 0;
     const methodLinks = (a.relatedMethodologyIds || []).map(key => {
       const labels = { plan:'Plan', build:'Build', test:'Test', deploy:'Deploy', stabilize:'Stabilize' };
-      return `<span class="method-phase-chip" onclick="switchView('methodology')" title="Used in ${labels[key]||key} phase">${labels[key]||key}</span>`;
+      return `<span class="method-phase-chip" onclick="event.stopPropagation();switchView('methodology')" title="Used in ${labels[key]||key} phase">${labels[key]||key}</span>`;
     }).join('');
     const srcLink = a.sourceUrl
-      ? `<a href="${a.sourceUrl}" target="_blank" rel="noopener" class="asset-src-link" title="Open source document">↗</a>`
+      ? `<a href="${a.sourceUrl}" target="_blank" rel="noopener" class="asset-src-link" title="Open source document" onclick="event.stopPropagation()">↗</a>`
       : '';
     return `
-      <div class="asset-card ${hasFile ? 'has-file' : ''}">
+      <div class="asset-card ${hasFile ? 'has-file' : ''}" onclick="openAssetDetail('${assetKey}')">
         <div class="asset-card-header">
           <div class="asset-name">${a.name} ${portableBadge}${srcLink}</div>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
@@ -1251,10 +1210,11 @@ window.filterAssets = function(area, status) {
           </div>
           <div class="asset-actions">
             ${downloadBtn}
-            <button class="log-usage-btn" onclick="logAssetUsage('${a.id}')" title="Record that you used this asset on an engagement">+ Log Use</button>
+            <button class="log-usage-btn" onclick="event.stopPropagation();logAssetUsage('${a.id}')" title="Record that you used this asset on an engagement">+ Log Use</button>
             <div class="asset-deployments"><span class="dep-count">${reuseCount}</span> uses</div>
           </div>
         </div>
+        <div class="tile-link-hint">View details →</div>
       </div>`;
   }).join('') || '<div class="empty-state">No assets match this filter.</div>';
 };
@@ -1264,7 +1224,6 @@ window.logAssetUsage = async function(assetId) {
     const resp = await apiFetch(`${API_BASE}/assets/${assetId}/reuse`, { method: 'POST', body: '{}' });
     if (resp.ok) {
       const data = await resp.json();
-      // Update count in local state
       if (state.assets) {
         const idx = state.assets.findIndex(a => a.id === assetId);
         if (idx !== -1) {
@@ -1272,9 +1231,235 @@ window.logAssetUsage = async function(assetId) {
           state.assets[idx].deployments = data.reuse_count;
         }
       }
-      filterAssets(null, null); // re-render
+      filterAssets(null, null);
     }
   } catch(_) { /* offline — silently ignore */ }
+};
+
+// ── Detail Drawer ────────────────────────────────────────────────────────────
+let _drawerInitSafeId = null;
+
+window.closeDetailDrawer = function() {
+  document.getElementById('detailDrawer').classList.remove('open');
+  document.getElementById('detailOverlay').classList.remove('open');
+  _drawerInitSafeId = null;
+};
+
+window.drawerUpdateProgress = function(val) {
+  const pct = document.getElementById('drawerProgressPct');
+  const fill = document.getElementById('drawerProgressFill');
+  const label = document.getElementById('drawerSliderVal');
+  if (pct)   pct.textContent   = val + '%';
+  if (fill)  fill.style.width  = val + '%';
+  if (label) label.textContent = val + '%';
+};
+
+window.saveInitProgress = async function() {
+  const slider = document.getElementById('drawerProgressSlider');
+  if (!slider || !_drawerInitSafeId) return;
+  const val = parseInt(slider.value);
+  const i = (state.initiatives || []).find(x =>
+    (x.id || x.title || '').replace(/[^a-z0-9]/gi, '_') === _drawerInitSafeId
+  );
+  if (i) i.progress_pct = val;
+  renderInitiatives();
+  const btn = document.querySelector('.drawer-save-btn');
+  if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { if (btn) btn.textContent = 'Save'; }, 2000); }
+  try {
+    await apiFetch(`${API_BASE}/initiatives/${i?.id || _drawerInitSafeId}`, {
+      method: 'PATCH', body: JSON.stringify({ progress_pct: val })
+    });
+  } catch(_) {}
+};
+
+window.openInitDetail = function(safeId) {
+  const i = (state.initiatives || []).find(x =>
+    (x.id || x.title || '').replace(/[^a-z0-9]/gi, '_') === safeId
+  );
+  if (!i) return;
+  _drawerInitSafeId = safeId;
+
+  const priorityColor = i.priority === 'critical' ? 'var(--red)' : i.priority === 'high' ? 'var(--amber)' : 'var(--blue)';
+  const pct = i.progress_pct || 0;
+  const areas = i.focus_areas || [];
+  const relGoals    = _getRelatedGoals(areas, i.related_goals);
+  const relConsults = _getRelatedConsultants(areas, i.related_consultants);
+  const relAssets   = _getRelatedAssets(areas, i.related_assets);
+  const relAi       = _getRelatedAi(areas, i.related_ai);
+
+  document.getElementById('drawerTitle').textContent = i.title;
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="drawer-chips">
+      <div class="goal-card-badge badge-${i.status}">${i.status.replace('_',' ')}</div>
+      <span class="meta-chip" style="color:${priorityColor}">Priority: ${i.priority}</span>
+      <span class="meta-chip">Owner: ${_ownerName(i.owner)}</span>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-label">Description</div>
+      <div class="drawer-desc">${i.description}</div>
+    </div>
+
+    <div class="drawer-meta-grid">
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Start Date</div>
+        <div class="drawer-meta-val">${i.start_date || '—'}</div>
+      </div>
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Target Completion</div>
+        <div class="drawer-meta-val">${i.target_completion || '—'}</div>
+      </div>
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Domains</div>
+        <div class="drawer-meta-val" style="font-size:12px;text-transform:capitalize">${areas.join(', ') || 'All'}</div>
+      </div>
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Type</div>
+        <div class="drawer-meta-val" style="font-size:12px">${(i.type || '—').replace(/_/g,' ')}</div>
+      </div>
+    </div>
+
+    <div class="drawer-progress-wrap">
+      <div class="drawer-progress-headline">
+        <div class="drawer-progress-label">Progress</div>
+        <div class="drawer-progress-pct" id="drawerProgressPct">${pct}%</div>
+      </div>
+      <div class="drawer-progress-bar">
+        <div class="drawer-progress-fill" id="drawerProgressFill" style="width:${pct}%"></div>
+      </div>
+      <div class="drawer-slider-row">
+        <input type="range" class="drawer-slider" id="drawerProgressSlider"
+          min="0" max="100" value="${pct}"
+          oninput="drawerUpdateProgress(this.value)">
+        <span class="drawer-slider-val" id="drawerSliderVal">${pct}%</span>
+        <button class="drawer-save-btn" onclick="saveInitProgress()">Save</button>
+      </div>
+    </div>
+
+    ${i.deliverables?.length ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Deliverables (${i.deliverables.length})</div>
+      <div class="drawer-deliverable-list">
+        ${i.deliverables.map(d => `<div class="drawer-deliverable">${d}</div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${i.notes ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Notes</div>
+      <div class="drawer-desc">${i.notes}</div>
+    </div>` : ''}
+
+    ${relGoals.length || relConsults.length || relAssets.length || relAi.length ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Related Resources</div>
+      ${relGoals.length ? `<div class="drawer-related-group">
+        <div class="drawer-related-group-label">◎ Goals & KPIs</div>
+        <div class="drawer-related-chips">${relGoals.map(r => `<span class="drawer-related-chip" onclick="closeDetailDrawer();switchView('goals');switchGoalTab('practice')">${r}</span>`).join('')}</div>
+      </div>` : ''}
+      ${relConsults.length ? `<div class="drawer-related-group">
+        <div class="drawer-related-group-label">◉ Consultants</div>
+        <div class="drawer-related-chips">${relConsults.map(r => `<span class="drawer-related-chip" onclick="closeDetailDrawer();switchView('consultants')">${r}</span>`).join('')}</div>
+      </div>` : ''}
+      ${relAssets.length ? `<div class="drawer-related-group">
+        <div class="drawer-related-group-label">▣ Assets</div>
+        <div class="drawer-related-chips">${relAssets.map(r => `<span class="drawer-related-chip" onclick="closeDetailDrawer();switchView('assets')">${r}</span>`).join('')}</div>
+      </div>` : ''}
+      ${relAi.length ? `<div class="drawer-related-group">
+        <div class="drawer-related-group-label">◈ AI Pipeline</div>
+        <div class="drawer-related-chips">${relAi.map(r => `<span class="drawer-related-chip" onclick="closeDetailDrawer();switchView('ai')">${r}</span>`).join('')}</div>
+      </div>` : ''}
+    </div>` : ''}
+
+    <div class="drawer-actions">
+      <button class="drawer-action-btn primary" onclick="closeDetailDrawer();openInitiativeManager();setTimeout(()=>imOpenEditById('${i.id || safeId}'),100)">✎ Edit Initiative</button>
+      <button class="drawer-action-btn secondary" onclick="closeDetailDrawer()">Close</button>
+    </div>
+  `;
+
+  document.getElementById('detailDrawer').classList.add('open');
+  document.getElementById('detailOverlay').classList.add('open');
+};
+
+window.openAssetDetail = function(key) {
+  const a = (state.assets || []).find(x =>
+    (x.id || x.name || '').replace(/[^a-z0-9]/gi, '_') === key
+  );
+  if (!a) return;
+
+  const hasFile = a.file_path && a.file_path !== null;
+  const reuseCount = a.reuseCount || a.deployments || 0;
+  const methodLabels = { plan:'Plan', build:'Build', test:'Test', deploy:'Deploy', stabilize:'Stabilize' };
+
+  document.getElementById('drawerTitle').textContent = a.name;
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="drawer-chips">
+      <div class="asset-status-badge status-${a.status}">${a.status.replace('_',' ')}</div>
+      <span class="meta-chip">${a.format}</span>
+      <span class="meta-chip">${(a.type||'').replace(/_/g,' ')}</span>
+      ${a.version ? `<span class="meta-chip">v${a.version}</span>` : ''}
+      ${hasFile ? `<span class="portable-badge">Portable</span>` : ''}
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-label">Description</div>
+      <div class="drawer-desc">${a.description}</div>
+    </div>
+
+    ${a.file_note ? `<div class="drawer-note">${a.file_note}</div>` : ''}
+
+    <div class="drawer-meta-grid">
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Focus Area</div>
+        <div class="drawer-meta-val" style="text-transform:capitalize">${a.focus_area || '—'}</div>
+      </div>
+      <div class="drawer-meta-item">
+        <div class="drawer-meta-key">Version</div>
+        <div class="drawer-meta-val">${a.version ? 'v' + a.version : '—'}</div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-label">Usage</div>
+      <div class="drawer-use-wrap">
+        <div class="drawer-use-count" id="drawerUseCount">${reuseCount}</div>
+        <div class="drawer-use-label">times used<br>across engagements</div>
+      </div>
+    </div>
+
+    ${a.tags?.length ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Tags</div>
+      <div class="drawer-tags">${a.tags.map(t => `<span class="drawer-tag">${t}</span>`).join('')}</div>
+    </div>` : ''}
+
+    ${a.relatedMethodologyIds?.length ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Used in Methodology Phases</div>
+      <div class="drawer-chips">
+        ${a.relatedMethodologyIds.map(k => `<span class="method-phase-chip" onclick="closeDetailDrawer();switchView('methodology')">${methodLabels[k]||k}</span>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${a.sourceUrl ? `
+    <div class="drawer-section">
+      <div class="drawer-section-label">Source Document</div>
+      <a href="${a.sourceUrl}" target="_blank" rel="noopener" class="drawer-link">${a.sourceUrl}</a>
+    </div>` : ''}
+
+    <div class="drawer-actions">
+      ${hasFile ? `<a class="drawer-action-btn teal" href="../${a.file_path}" download>↓ Download</a>` : ''}
+      <button class="drawer-action-btn primary" onclick="
+        logAssetUsage('${a.id}');
+        const c=document.getElementById('drawerUseCount');
+        if(c) c.textContent=parseInt(c.textContent||0)+1;
+      ">+ Log Use</button>
+      <button class="drawer-action-btn secondary" onclick="closeDetailDrawer();openAssetManager();setTimeout(()=>amOpenEdit('${a.id||a.name}'),100)">✎ Edit Asset</button>
+    </div>
+  `;
+
+  document.getElementById('detailDrawer').classList.add('open');
+  document.getElementById('detailOverlay').classList.add('open');
 };
 
 // ── Asset Manager ────────────────────────────────────────────────────────────
@@ -1793,6 +1978,107 @@ window.quickPrompt = function(text) {
   sendAgentQuery();
 };
 
+window.clearChat = function() {
+  const win = document.getElementById('chatWindow');
+  win.innerHTML = '';
+  state.chatHistory = [];
+  appendChat('system', 'Chat cleared. How can I help you?');
+};
+
+// ── Markdown renderer ────────────────────────────────────────────────────────
+function renderMarkdown(raw) {
+  if (!raw) return '';
+  const ESC = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const blocks = [];
+  const save = html => { const i = blocks.length; blocks.push(html); return `\x00BLK${i}\x00`; };
+
+  // Protect fenced code blocks
+  let t = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+    save(`<pre class="md-pre"><code class="md-code lang-${lang || 'text'}">${ESC(code.trim())}</code></pre>`)
+  );
+
+  // Protect inline code
+  t = t.replace(/`([^`\n]+)`/g, (_, code) =>
+    save(`<code class="md-ic">${ESC(code)}</code>`)
+  );
+
+  // Inline formatting: escape text parts, keep BLK placeholders intact
+  const inlineFmt = s => {
+    const parts = s.split(/(\x00BLK\d+\x00)/);
+    return parts.map(p => {
+      if (/^\x00BLK\d+\x00$/.test(p)) return p;
+      return ESC(p)
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>')
+        .replace(/~~(.+?)~~/g, '<del>$1</del>');
+    }).join('');
+  };
+
+  const lines = t.split('\n');
+  const out = [];
+  let inUl = false, inOl = false;
+
+  const closeList = () => {
+    if (inUl) { out.push('</ul>'); inUl = false; }
+    if (inOl) { out.push('</ol>'); inOl = false; }
+  };
+
+  for (const line of lines) {
+    let m;
+    if ((m = line.match(/^### (.+)/)))  { closeList(); out.push(`<h4 class="md-h3">${inlineFmt(m[1])}</h4>`); continue; }
+    if ((m = line.match(/^## (.+)/)))   { closeList(); out.push(`<h3 class="md-h2">${inlineFmt(m[1])}</h3>`); continue; }
+    if ((m = line.match(/^# (.+)/)))    { closeList(); out.push(`<h2 class="md-h1">${inlineFmt(m[1])}</h2>`); continue; }
+    if (/^[-*_]{3,}$/.test(line.trim())) { closeList(); out.push('<hr class="md-hr">'); continue; }
+    if ((m = line.match(/^> (.+)/)))    { closeList(); out.push(`<blockquote class="md-bq">${inlineFmt(m[1])}</blockquote>`); continue; }
+
+    if ((m = line.match(/^[ \t]*[-*+] (.+)/))) {
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      if (!inUl) { out.push('<ul class="md-ul">'); inUl = true; }
+      out.push(`<li>${inlineFmt(m[1])}</li>`);
+      continue;
+    }
+    if ((m = line.match(/^[ \t]*\d+[.)]\s+(.+)/))) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (!inOl) { out.push('<ol class="md-ol">'); inOl = true; }
+      out.push(`<li>${inlineFmt(m[1])}</li>`);
+      continue;
+    }
+
+    if (line.trim() === '') { closeList(); out.push('<div class="md-gap"></div>'); continue; }
+
+    // Line that is purely a code-block placeholder
+    if (/^\x00BLK\d+\x00$/.test(line.trim())) { closeList(); out.push(line.trim()); continue; }
+
+    closeList();
+    out.push(`<div class="md-p">${inlineFmt(line)}</div>`);
+  }
+
+  closeList();
+
+  // Restore saved blocks
+  let html = out.join('\n');
+  html = html.replace(/\x00BLK(\d+)\x00/g, (_, i) => blocks[+i]);
+  return html;
+}
+
+// ── Typing indicator ─────────────────────────────────────────────────────────
+function showTypingIndicator() {
+  const win = document.getElementById('chatWindow');
+  const el = document.createElement('div');
+  el.className = 'chat-message assistant';
+  el.id = 'typingIndicator';
+  el.innerHTML = '<div class="chat-typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span class="typing-label">Thinking...</span></div>';
+  win.appendChild(el);
+  win.scrollTop = win.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
 // Per-message metadata store for feedback submissions (query, answer keyed by queryId)
 const _feedbackStore = new Map();
 
@@ -1802,6 +2088,10 @@ window.sendAgentQuery = async function() {
   if (!query) return;
 
   appendChat('user', query);
+  // Build history from prior turns (exclude the current user message we just appended)
+  const historyToSend = state.chatHistory
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => ({ role: m.role, content: m.text }));
   state.chatHistory.push({role:'user', text: query});
   input.value = '';
 
@@ -1810,11 +2100,13 @@ window.sendAgentQuery = async function() {
   if (statusEl) { statusEl.textContent = 'Thinking...'; statusEl.className = 'agent-status thinking'; }
   if (sendBtn) sendBtn.disabled = true;
 
+  showTypingIndicator();
+
   try {
     const agent = document.getElementById('agentSelector').value;
     const res = await apiFetch(`${API_BASE}/agent/query`, {
       method: 'POST',
-      body: JSON.stringify({ query, agent }),
+      body: JSON.stringify({ query, agent, history: historyToSend }),
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1834,12 +2126,13 @@ window.sendAgentQuery = async function() {
       }).catch(() => {});
     }
 
+    removeTypingIndicator();
     appendChat('assistant', prefix + answer, { citations, unanswered, queryId });
     state.chatHistory.push({ role: 'assistant', text: prefix + answer, citations, unanswered, queryId });
   } catch (err) {
+    removeTypingIndicator();
     appendChat('error',
-      'Could not reach the CoP Agent.\n\n' +
-      'Make sure the API server is running, then reload this page.\n\n' +
+      'Could not reach the CoP Agent. Make sure the API server is running, then reload this page.\n\n' +
       `Error: ${err.message}`);
     state.chatHistory.push({role:'error', text: '(error)'});
   } finally {
@@ -1853,10 +2146,14 @@ function appendChat(role, text, { citations = [], unanswered = false, queryId = 
   const wrapper = document.createElement('div');
   wrapper.className = `chat-message ${role}`;
 
-  // Main answer text
+  // Main answer text — render markdown for assistant messages, plain text for user/system
   const textDiv = document.createElement('div');
   textDiv.className = 'chat-text';
-  textDiv.textContent = text;
+  if (role === 'assistant') {
+    textDiv.innerHTML = renderMarkdown(text);
+  } else {
+    textDiv.textContent = text;
+  }
   wrapper.appendChild(textDiv);
 
   if (role === 'assistant') {
@@ -1938,15 +2235,391 @@ async function submitFeedback(queryId, rating, feedbackDiv) {
   }
 }
 
+// ── Staffing Roster ──────────────────────────────────────────────────────────
+
+// Local state for staffing
+const staffing = {
+  roster: [],       // full loaded roster (merged with manual fields)
+  filtered: [],     // currently displayed subset
+  tab: 'cards',     // 'cards' | 'report'
+  dirty: new Set(), // personnel numbers with unsaved card changes
+};
+
+// Capability options for checkboxes
+const CAPABILITIES = ['Data', 'Integrations', 'Reporting', 'Extend', 'Adaptive', 'Accounting Center'];
+const ROLE_TYPES = ['Technical', 'Functional'];
+
+// ── View init ─────────────────────────────────────────────────────────────────
+async function initStaffingView() {
+  try {
+    const res = await apiFetch(`${API_BASE}/staffing/roster`);
+    if (res.ok) {
+      const data = await res.json();
+      staffing.roster = Array.isArray(data) ? data : [];
+    }
+  } catch (_) {
+    staffing.roster = [];
+  }
+  renderStaffingView();
+}
+
+function renderStaffingView() {
+  const hasData = staffing.roster.length > 0;
+  document.getElementById('staffingEmptyState').style.display = hasData ? 'none' : 'block';
+  document.getElementById('staffingGrid').style.display = hasData ? '' : 'none';
+  document.getElementById('staffingFilterBar').style.display = hasData ? 'flex' : 'none';
+  document.getElementById('staffingTabRow').style.display = hasData ? '' : 'none';
+  document.getElementById('staffingExportBtn').style.display = hasData ? '' : 'none';
+
+  if (hasData) {
+    // Update report client dropdown
+    const clients = [...new Set(staffing.roster.map(r => r.current_client).filter(Boolean))].sort();
+    const sel = document.getElementById('rptClientFilter');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All Clients</option>' +
+        clients.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+    }
+
+    filterStaffingCards();
+    if (staffing.tab === 'report') renderStaffingReport();
+
+    // Update import badge
+    const firstImport = staffing.roster[0];
+    if (firstImport?.last_import) {
+      const badge = document.getElementById('staffingImportDate');
+      badge.textContent = `Last import: ${firstImport.last_import}`;
+      badge.style.display = '';
+    }
+    const sub = document.getElementById('staffingViewSub');
+    sub.textContent = `${staffing.roster.length} workers loaded — Finance + Supply-only`;
+  }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+window.switchStaffingTab = function(tab) {
+  staffing.tab = tab;
+  document.getElementById('staffPanel-cards').style.display = tab === 'cards' ? '' : 'none';
+  document.getElementById('staffPanel-report').style.display = tab === 'report' ? '' : 'none';
+  document.querySelectorAll('#staffingTabRow .agent-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`staffTab-${tab}`)?.classList.add('active');
+  if (tab === 'report') renderStaffingReport();
+};
+
+// ── Import S&D Report ─────────────────────────────────────────────────────────
+window.handleSDImport = async function(event) {
+  const file = event.target.files[0];
+  event.target.value = '';  // allow re-selecting same file
+  if (!file) return;
+
+  document.getElementById('staffingImportProgress').style.display = 'flex';
+  document.getElementById('staffingEmptyState').style.display = 'none';
+  document.getElementById('staffingGrid').style.display = 'none';
+  document.getElementById('staffingProgressMsg').textContent = 'Reading WBG Supply and Assignments tabs…';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch(`${API_BASE}/staffing/import`, { method: 'POST', body: formData });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    staffing.roster = data.roster || [];
+    document.getElementById('staffingProgressMsg').textContent =
+      `Loaded ${data.total} workers (${data.finance_workers} Finance, ${data.supply_only} supply-only)`;
+    await new Promise(r => setTimeout(r, 900));
+    document.getElementById('staffingImportProgress').style.display = 'none';
+    renderStaffingView();
+  } catch (err) {
+    document.getElementById('staffingImportProgress').style.display = 'none';
+    document.getElementById('staffingEmptyState').style.display = 'block';
+    document.getElementById('staffingProgressMsg').textContent = 'Processing…';
+    alert(`Import failed: ${err.message}`);
+  }
+};
+
+// ── Filter + render cards ─────────────────────────────────────────────────────
+window.filterStaffingCards = function() {
+  const nameQ = (document.getElementById('staffSearch')?.value || '').toLowerCase();
+  const clientQ = (document.getElementById('staffClientFilter')?.value || '').toLowerCase();
+  const roleTypeQ = document.getElementById('staffRoleTypeFilter')?.value || '';
+  const capQ = document.getElementById('staffCapFilter')?.value || '';
+  const supplyOnly = document.getElementById('staffSupplyOnlyFilter')?.checked || false;
+
+  staffing.filtered = staffing.roster.filter(r => {
+    if (nameQ && !r.name?.toLowerCase().includes(nameQ) && !r.job_profile?.toLowerCase().includes(nameQ)) return false;
+    if (clientQ && !r.current_client?.toLowerCase().includes(clientQ)) return false;
+    if (roleTypeQ && !(r.role_type || []).includes(roleTypeQ)) return false;
+    if (capQ && !(r.capabilities || []).includes(capQ)) return false;
+    if (supplyOnly && r.in_assignments) return false;
+    return true;
+  });
+
+  document.getElementById('staffingCardCount').textContent =
+    `Showing ${staffing.filtered.length} of ${staffing.roster.length}`;
+
+  renderStaffingCards();
+};
+
+// ── Render card grid ──────────────────────────────────────────────────────────
+function renderStaffingCards() {
+  const grid = document.getElementById('staffingGrid');
+  if (!grid) return;
+
+  if (!staffing.filtered.length) {
+    grid.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0">No workers match the current filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = staffing.filtered.map(r => buildStaffingCard(r)).join('');
+}
+
+function buildStaffingCard(r) {
+  const pnum = r.personnel_number;
+  const safeId = `sc_${pnum}`;
+  const levelBadge = r.level_group || r.management_level || '';
+
+  // Allocation bar color
+  const pct = r.total_pct || 0;
+  const pctColor = pct >= 100 ? 'var(--teal)' : pct >= 50 ? 'var(--amber)' : 'var(--text-muted)';
+  const pctBarW = Math.min(pct, 200) / 200 * 100;
+
+  // Source badges
+  const srcBadges = [
+    r.in_assignments ? '<span class="staff-badge badge-fin">Finance</span>' : '',
+    r.in_supply ? '<span class="staff-badge badge-sup">Supply</span>' : '',
+    !r.in_assignments ? '<span class="staff-badge badge-so">Supply Only</span>' : '',
+  ].filter(Boolean).join('');
+
+  // Assignments list (max 3 shown)
+  const assignRows = (r.assignments || []).slice(0, 3).map(a => {
+    const dateRange = [a.calendar_start, a.calendar_end].filter(Boolean).join(' → ') || '—';
+    return `<div class="staff-assign-row">
+      <div class="staff-assign-client">${a.client || '—'}</div>
+      <div class="staff-assign-project">${a.project || '—'}</div>
+      <div class="staff-assign-meta">${dateRange} <span class="staff-assign-pct">${a.percent_allocated || 0}%</span></div>
+    </div>`;
+  }).join('');
+  const moreAssign = (r.assignments || []).length > 3
+    ? `<div class="staff-assign-more">+${(r.assignments||[]).length - 3} more assignment(s)</div>` : '';
+
+  // Role type checkboxes
+  const roleTypeBoxes = ROLE_TYPES.map(rt => {
+    const chk = (r.role_type || []).includes(rt) ? 'checked' : '';
+    return `<label class="staff-checkbox-label">
+      <input type="checkbox" ${chk} onchange="staffMarkDirty('${pnum}','role_type','${rt}',this.checked)"> ${rt}
+    </label>`;
+  }).join('');
+
+  // Capabilities checkboxes
+  const capBoxes = CAPABILITIES.map(cap => {
+    const chk = (r.capabilities || []).includes(cap) ? 'checked' : '';
+    return `<label class="staff-checkbox-label">
+      <input type="checkbox" ${chk} onchange="staffMarkDirty('${pnum}','cap','${cap}',this.checked)"> ${cap}
+    </label>`;
+  }).join('');
+
+  return `
+  <div class="staffing-card" id="${safeId}">
+    <div class="staffing-card-header">
+      <div>
+        <div class="staffing-card-name">${r.name || 'Unknown'}</div>
+        <div class="staffing-card-role">${r.job_profile || ''}</div>
+        <div class="staffing-card-loc">${[r.metro_city, r.country].filter(Boolean).join(', ')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${levelBadge ? `<div class="staffing-level-badge">${levelBadge}</div>` : ''}
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${srcBadges}</div>
+      </div>
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-label">Assignments</div>
+      ${assignRows || '<div style="color:var(--text-dim);font-size:12px">No assignments on record</div>'}
+      ${moreAssign}
+      <div class="staffing-alloc-row">
+        <span style="font-size:11px;color:var(--text-muted)">Total Allocation</span>
+        <div class="staffing-alloc-bar-wrap">
+          <div class="staffing-alloc-bar" style="width:${pctBarW}%;background:${pctColor}"></div>
+        </div>
+        <span class="staffing-alloc-pct" style="color:${pctColor}">${pct}%</span>
+      </div>
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-label">Role Type <span style="color:var(--text-dim)">(multi-select)</span></div>
+      <div class="staff-checkbox-group" id="${safeId}_roleType">${roleTypeBoxes}</div>
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-label">Capabilities <span style="color:var(--text-dim)">(multi-select)</span></div>
+      <div class="staff-checkbox-group" id="${safeId}_cap">${capBoxes}</div>
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-label">Specialties</div>
+      <textarea class="staff-text-input" id="${safeId}_spec" rows="2"
+        placeholder="e.g. GL, AP, Revenue Recognition…"
+        oninput="staffTextDirty('${pnum}')">${r.specialties || ''}</textarea>
+    </div>
+    <div class="staffing-section">
+      <div class="staffing-section-label">Interests</div>
+      <textarea class="staff-text-input" id="${safeId}_int" rows="2"
+        placeholder="e.g. AI automation, Extend development…"
+        oninput="staffTextDirty('${pnum}')">${r.interests || ''}</textarea>
+    </div>
+    <div class="staffing-section">
+      <div class="staffing-section-label">Notes</div>
+      <textarea class="staff-text-input" id="${safeId}_notes" rows="2"
+        placeholder="Any notes about this resource…"
+        oninput="staffTextDirty('${pnum}')">${r.notes || ''}</textarea>
+    </div>
+
+    <div class="staffing-card-footer" id="${safeId}_footer" style="display:none">
+      <button class="staffing-save-btn" onclick="saveStaffingManual('${pnum}')">Save Changes</button>
+      <span class="staffing-save-hint">Unsaved — will survive next import</span>
+    </div>
+  </div>`;
+}
+
+// ── Manual field change tracking ──────────────────────────────────────────────
+window.staffMarkDirty = function(pnum, type, value, checked) {
+  const r = staffing.roster.find(x => x.personnel_number === pnum);
+  if (!r) return;
+
+  if (type === 'role_type') {
+    r.role_type = r.role_type || [];
+    if (checked) { if (!r.role_type.includes(value)) r.role_type.push(value); }
+    else { r.role_type = r.role_type.filter(v => v !== value); }
+  } else if (type === 'cap') {
+    r.capabilities = r.capabilities || [];
+    if (checked) { if (!r.capabilities.includes(value)) r.capabilities.push(value); }
+    else { r.capabilities = r.capabilities.filter(v => v !== value); }
+  }
+
+  staffing.dirty.add(pnum);
+  const footer = document.getElementById(`sc_${pnum}_footer`);
+  if (footer) footer.style.display = 'flex';
+};
+
+window.staffTextDirty = function(pnum) {
+  staffing.dirty.add(pnum);
+  const footer = document.getElementById(`sc_${pnum}_footer`);
+  if (footer) footer.style.display = 'flex';
+};
+
+// ── Save manual fields ────────────────────────────────────────────────────────
+window.saveStaffingManual = async function(pnum) {
+  const r = staffing.roster.find(x => x.personnel_number === pnum);
+  if (!r) return;
+
+  const safeId = `sc_${pnum}`;
+  const specialties = document.getElementById(`${safeId}_spec`)?.value || '';
+  const interests = document.getElementById(`${safeId}_int`)?.value || '';
+  const notes = document.getElementById(`${safeId}_notes`)?.value || '';
+
+  // Update local state
+  r.specialties = specialties;
+  r.interests = interests;
+  r.notes = notes;
+
+  try {
+    const res = await apiFetch(`${API_BASE}/staffing/manual/${pnum}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        specialties, interests, notes,
+        role_type: r.role_type || [],
+        capabilities: r.capabilities || [],
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    staffing.dirty.delete(pnum);
+    const footer = document.getElementById(`${safeId}_footer`);
+    if (footer) {
+      footer.style.display = 'flex';
+      footer.querySelector('.staffing-save-hint').textContent = '✓ Saved';
+      footer.querySelector('.staffing-save-hint').style.color = 'var(--green)';
+      setTimeout(() => { footer.style.display = 'none'; }, 2000);
+    }
+  } catch (err) {
+    alert(`Save failed: ${err.message}`);
+  }
+};
+
+// ── Report / Table view ───────────────────────────────────────────────────────
+function renderStaffingReport() {
+  const nameQ = (document.getElementById('rptSearch')?.value || '').toLowerCase();
+  const entityQ = document.getElementById('rptEntityFilter')?.value || '';
+  const clientQ = document.getElementById('rptClientFilter')?.value || '';
+  const roleTypeQ = document.getElementById('rptRoleTypeFilter')?.value || '';
+  const capQ = document.getElementById('rptCapFilter')?.value || '';
+
+  let data = staffing.roster.filter(r => {
+    if (nameQ && !r.name?.toLowerCase().includes(nameQ)) return false;
+    if (entityQ && !r.entity_l3?.toLowerCase().includes(entityQ.toLowerCase())) return false;
+    if (clientQ && r.current_client !== clientQ) return false;
+    if (roleTypeQ && !(r.role_type || []).includes(roleTypeQ)) return false;
+    if (capQ && !(r.capabilities || []).includes(capQ)) return false;
+    return true;
+  });
+
+  document.getElementById('rptCount').textContent = `${data.length} of ${staffing.roster.length} workers`;
+
+  const cols = [
+    { key: 'name', label: 'Name' },
+    { key: 'level_group', label: 'Level' },
+    { key: 'metro_city', label: 'City' },
+    { key: 'entity_l3', label: 'Entity L3' },
+    { key: 'job_profile', label: 'Job Profile' },
+    { key: 'current_client', label: 'Client' },
+    { key: 'current_project', label: 'Project' },
+    { key: 'current_start', label: 'Start' },
+    { key: 'current_end', label: 'End' },
+    { key: 'total_pct', label: 'Total %' },
+    { key: 'role_type', label: 'Role Type', fmt: v => (v||[]).join(', ') },
+    { key: 'capabilities', label: 'Capabilities', fmt: v => (v||[]).join(', ') },
+    { key: 'specialties', label: 'Specialties' },
+    { key: 'interests', label: 'Interests' },
+    { key: 'notes', label: 'Notes' },
+  ];
+
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const thead = `<tr>${cols.map(c => `<th class="rpt-th">${c.label}</th>`).join('')}</tr>`;
+  const tbody = data.map(r =>
+    `<tr class="rpt-row">${cols.map(c => {
+      const raw = r[c.key];
+      const val = c.fmt ? c.fmt(raw) : (raw ?? '');
+      return `<td class="rpt-td">${esc(val)}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+
+  document.getElementById('staffingReportTable').innerHTML =
+    `<table class="rpt-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
+}
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+window.exportStaffingCSV = async function() {
+  const url = `${API_BASE}/staffing/report?fmt=csv`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'staffing_report.csv';
+  a.click();
+};
+
 // ── Seed Data (standalone mode) ─────────────────────────────────────────────
 function getSeedMetrics() {
   return {
     last_updated: new Date().toISOString().slice(0,10),
-    practice_summary: { total_consultants: 11, active_projects: 8, methodology_adoption_pct: 62, avg_utilization_pct: 77, assets_published: 12, assets_in_progress: 4 },
+    practice_summary: { total_consultants: 11, active_projects: 8, methodology_adoption_pct: 62, tooling_standardization_pct: 62, avg_utilization_pct: 77, target_utilization_pct: 85, assets_published: 12, assets_in_progress: 4 },
     deployment_metrics: { avg_deployment_weeks_current: 24.2, avg_deployment_weeks_baseline: 26.0, reduction_pct: 6.9, cutover_success_rate_pct: 87 },
     quality_metrics: { defect_escape_rate_pct: 8.2, avg_client_satisfaction: 8.1, data_defect_rate_pct: 11.0 },
-    asset_metrics: { total_assets: 27, published_assets: 22, total_deployments_across_assets: 145, asset_reuse_rate_pct: 45 },
-    ai_metrics: { use_cases_identified: 12, use_cases_in_development: 4, use_cases_deployed: 3, use_cases_target: 10 },
+    asset_metrics: { total_assets: 27, published_assets: 22, total_deployments_across_assets: 145, asset_reuse_rate_pct: 45, target_reuse_pct: 90, commercial_ip_assets: 3, commercial_ip_target: 12 },
+    ai_metrics: { use_cases_identified: 12, use_cases_in_development: 4, use_cases_deployed: 3, use_cases_target: 10, ai_enabled_engagements_pct: 38, ai_enabled_engagements_target: 80 },
     focus_area_health: {
       integrations: { health: 'good',    score: 74, open_risks: 1 },
       conversion:   { health: 'at_risk', score: 58, open_risks: 3 },
@@ -1960,10 +2633,11 @@ function getSeedGoals() {
   return {
     practice_goals: [
       { id: 'pg-1', title: 'Reduce Average Deployment Timeline by 20%', description: 'Reduce full-suite Finance deployment from 26 weeks to 20 weeks by end of FY2026.', kpi: 'time_to_deploy_reduction', target_value: 20, current_value: 7, unit: 'percent', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
-      { id: 'pg-2', title: 'Achieve 90% Methodology Adoption Rate', description: 'Ensure 90% of all active projects follow the standard CoP deployment methodology.', kpi: 'methodology_adoption', target_value: 90, current_value: 62, unit: 'percent', due_date: '2026-09-30', owner: 'CoP Manager', status: 'in_progress' },
-      { id: 'pg-3', title: 'Deploy 10 AI Use Cases to Clients', description: 'Identify, build, and deploy at least 10 production AI use cases for Workday Financials.', kpi: 'ai_use_cases_deployed', target_value: 10, current_value: 2, unit: 'count', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
+      { id: 'pg-2', title: 'Achieve 100% Tooling Standardization', description: 'Mandate and enforce a consistent CoP-approved toolset across every active Finance engagement.', kpi: 'tooling_standardization', target_value: 100, current_value: 62, unit: 'percent', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
+      { id: 'pg-3', title: 'Achieve 80% AI-Enabled Engagement Rate', description: 'Ensure 80% of active Finance engagements are running at least one deployed AI capability by EOY 2026.', kpi: 'ai_enabled_engagements', target_value: 80, current_value: 38, unit: 'percent', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
       { id: 'pg-4', title: 'Achieve 95% Cutover Success Rate', description: 'Zero rollbacks on go-live cutovers through improved testing frameworks.', kpi: 'cutover_success_rate', target_value: 95, current_value: 87, unit: 'percent', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
-      { id: 'pg-5', title: 'Achieve 80%+ Asset Reuse Rate', description: 'Ensure 80% of deployment work reuses existing CoP-approved assets.', kpi: 'asset_reuse_rate', target_value: 80, current_value: 45, unit: 'percent', due_date: '2026-09-30', owner: 'CoP Manager', status: 'in_progress' },
+      { id: 'pg-5', title: 'Achieve 90%+ Asset Reuse Rate', description: 'Ensure 90% of deployment work reuses CoP-approved assets — making from-scratch development the exception.', kpi: 'asset_reuse_rate', target_value: 90, current_value: 45, unit: 'percent', due_date: '2026-09-30', owner: 'CoP Manager', status: 'in_progress' },
+      { id: 'pg-6', title: 'Build 12 Revenue-Generating IP Accelerators', description: 'Package 12 CoP-developed tools as commercial-grade accelerators deployed in client engagements and tracked as revenue-attributable assets.', kpi: 'commercial_ip_assets', target_value: 12, current_value: 3, unit: 'count', due_date: '2026-12-31', owner: 'CoP Manager', status: 'in_progress' },
     ],
     subagent_goals: {
       integrations: [

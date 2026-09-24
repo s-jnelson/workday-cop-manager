@@ -58,13 +58,14 @@ class CoPOrchestrator:
             self._sub_agents[area] = cls(api_key=self._api_key)
         return self._sub_agents[area]
 
-    def run(self, query: str, force_agent: str | None = None, verbose: bool = True) -> str:
+    def run(self, query: str, force_agent: str | None = None, history: list | None = None, verbose: bool = True) -> str:
         """
         Route the query to the best agent.
 
         Args:
             query: The question or task.
             force_agent: One of 'main', 'integrations', 'conversion', 'reporting', 'extend'.
+            history: Prior conversation turns [{role, content}] for multi-turn context.
             verbose: Print tool call traces.
         """
         if force_agent == "main" or force_agent is None:
@@ -80,7 +81,7 @@ class CoPOrchestrator:
         else:
             agent = self._get_sub_agent(force_agent) if force_agent != "main" else self._main
 
-        return agent.run(query, verbose=verbose)
+        return agent.run(query, history=history or [], verbose=verbose)
 
     def collect_all_status_reports(self, verbose: bool = True) -> dict:
         """Pull status reports from all four sub-agents and return compiled results."""

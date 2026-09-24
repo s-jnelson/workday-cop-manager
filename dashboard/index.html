@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workday Finance Tech CoP Manager</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body>
 
@@ -30,6 +30,9 @@
     </a>
     <a class="nav-item" data-view="consultants" onclick="switchView('consultants')">
       <span class="nav-icon">◉</span> Consultants
+    </a>
+    <a class="nav-item" data-view="staffing" onclick="switchView('staffing')">
+      <span class="nav-icon">▤</span> Staffing Roster
     </a>
     <a class="nav-item" data-view="assets" onclick="switchView('assets')">
       <span class="nav-icon">▣</span> Asset Library
@@ -61,6 +64,7 @@
   <div id="view-overview" class="view active">
     <div class="view-header">
       <h1>Practice Overview</h1>
+      <div class="view-header-bar"></div>
       <div class="view-sub">Workday Finance & Technical Sub-Community of Practice</div>
     </div>
 
@@ -96,63 +100,65 @@
       </div>
     </div>
 
-    <!-- KPI cards row 1 -->
+    <!-- KPI cards row 1 — Strategic Priorities -->
     <div class="card-grid cols-4">
       <div class="kpi-card tile-link" onclick="switchView('methodology')" title="View Methodology">
-        <div class="kpi-label">Methodology Adoption</div>
-        <div class="kpi-value" id="kpi-methodology">—</div>
-        <div class="kpi-target">Target: 90%</div>
-        <div class="kpi-bar"><div class="kpi-fill" id="bar-methodology"></div></div>
+        <div class="kpi-label">Tooling Standardization</div>
+        <div class="kpi-value" id="kpi-tooling">—</div>
+        <div class="kpi-target">Target: 100% all projects</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-tooling"></div></div>
         <div class="tile-link-hint">View methodology →</div>
+      </div>
+      <div class="kpi-card tile-link" onclick="switchView('ai')" title="View AI Pipeline">
+        <div class="kpi-label">AI-Enabled Engagements</div>
+        <div class="kpi-value" id="kpi-ai-engage">—</div>
+        <div class="kpi-target">Target: 80% by EOY</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-ai-engage"></div></div>
+        <div class="tile-link-hint">View AI pipeline →</div>
+      </div>
+      <div class="kpi-card tile-link" onclick="switchView('assets')" title="View Asset Library">
+        <div class="kpi-label">Commercial IP Assets</div>
+        <div class="kpi-value" id="kpi-ip">—</div>
+        <div class="kpi-target">Target: 12 by EOY</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-ip"></div></div>
+        <div class="tile-link-hint">View assets →</div>
       </div>
       <div class="kpi-card tile-link" onclick="switchView('assets')" title="View Asset Library">
         <div class="kpi-label">Asset Reuse Rate</div>
         <div class="kpi-value" id="kpi-reuse">—</div>
-        <div class="kpi-target">Target: 80%</div>
+        <div class="kpi-target">Target: 90%</div>
         <div class="kpi-bar"><div class="kpi-fill" id="bar-reuse"></div></div>
         <div class="tile-link-hint">View assets →</div>
       </div>
-      <div class="kpi-card tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
-        <div class="kpi-label">Cutover Success Rate</div>
-        <div class="kpi-value" id="kpi-cutover">—</div>
-        <div class="kpi-target">Target: 95%</div>
-        <div class="kpi-bar"><div class="kpi-fill" id="bar-cutover"></div></div>
-        <div class="tile-link-hint">View goals →</div>
-      </div>
-      <div class="kpi-card tile-link" onclick="switchView('ai')" title="View AI Pipeline">
-        <div class="kpi-label">AI Use Cases Deployed</div>
-        <div class="kpi-value" id="kpi-ai">—</div>
-        <div class="kpi-target">Target: 10 by EOY</div>
-        <div class="kpi-bar"><div class="kpi-fill" id="bar-ai"></div></div>
-        <div class="tile-link-hint">View AI pipeline →</div>
-      </div>
     </div>
 
-    <!-- KPI cards row 2 -->
+    <!-- KPI cards row 2 — Operational Health -->
     <div class="card-grid cols-4">
-      <div class="kpi-card accent-blue tile-link" onclick="switchView('consultants')" title="View Consultant Roster">
-        <div class="kpi-label">Total Consultants</div>
-        <div class="kpi-value" id="kpi-headcount">—</div>
-        <div class="kpi-target">Avg Utilization: <span id="kpi-util">—</span></div>
-        <div class="tile-link-hint">View roster →</div>
-      </div>
-      <div class="kpi-card accent-blue tile-link" onclick="switchView('assets')" title="View Asset Library">
-        <div class="kpi-label">Published Assets</div>
-        <div class="kpi-value" id="kpi-assets">—</div>
-        <div class="kpi-target">Total in library: <span id="kpi-assets-total">—</span></div>
-        <div class="tile-link-hint">View assets →</div>
-      </div>
-      <div class="kpi-card accent-blue tile-link" onclick="switchView('initiatives')" title="View Initiatives">
-        <div class="kpi-label">Active Initiatives</div>
-        <div class="kpi-value" id="kpi-initiatives">—</div>
-        <div class="kpi-target">Across all domains</div>
-        <div class="tile-link-hint">View initiatives →</div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
+        <div class="kpi-label">Client Satisfaction</div>
+        <div class="kpi-value" id="kpi-csat">—</div>
+        <div class="kpi-target">Target: 9.0 / 10</div>
+        <div class="tile-link-hint">View goals →</div>
       </div>
       <div class="kpi-card accent-blue tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
         <div class="kpi-label">Deploy Time Reduction</div>
         <div class="kpi-value" id="kpi-deploy">—</div>
         <div class="kpi-target">Target: 20% (20 wks)</div>
         <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('goals');switchGoalTab('practice')" title="View Goals & KPIs">
+        <div class="kpi-label">Cutover Success Rate</div>
+        <div class="kpi-value" id="kpi-cutover">—</div>
+        <div class="kpi-target">Target: 95%</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-cutover"></div></div>
+        <div class="tile-link-hint">View goals →</div>
+      </div>
+      <div class="kpi-card accent-blue tile-link" onclick="switchView('consultants')" title="View Skills Directory">
+        <div class="kpi-label">Consultant Utilization</div>
+        <div class="kpi-value" id="kpi-util-pct">—</div>
+        <div class="kpi-target">Target: 85%</div>
+        <div class="kpi-bar"><div class="kpi-fill" id="bar-util"></div></div>
+        <div class="tile-link-hint">View roster →</div>
       </div>
     </div>
 
@@ -174,6 +180,7 @@
     <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <h1>Goals &amp; KPIs</h1>
+        <div class="view-header-bar"></div>
         <div class="view-sub">Practice-wide and sub-agent measurable goals</div>
       </div>
       <button class="pm-trigger-btn" onclick="openGoalManager()">⊕ Manage Goals &amp; KPIs</button>
@@ -193,6 +200,7 @@
     <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <h1>Practice Initiatives</h1>
+        <div class="view-header-bar"></div>
         <div class="view-sub">Firm-wide programs driving deployment excellence and AI innovation</div>
       </div>
       <button class="pm-trigger-btn" onclick="openInitiativeManager()">⊕ Manage Initiatives</button>
@@ -211,6 +219,7 @@
     <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <h1>Skills Directory</h1>
+        <div class="view-header-bar"></div>
         <div class="view-sub">Find consultants by skill, availability, and industry — updated in real time</div>
       </div>
       <div style="display:flex;gap:8px">
@@ -242,6 +251,7 @@
     <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <h1>Asset Library</h1>
+        <div class="view-header-bar"></div>
         <div class="view-sub">CoP-approved templates, tools, and reusable components</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -274,6 +284,7 @@
     <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <h1>AI Use Case Pipeline</h1>
+        <div class="view-header-bar"></div>
         <div class="view-sub">AI innovations for Workday Financials — internal tools and client deployments</div>
       </div>
       <button class="pm-trigger-btn" onclick="openPipelineManager()">⚙ Manage Solutions</button>
@@ -286,6 +297,7 @@
   <div id="view-methodology" class="view">
     <div class="view-header">
       <h1>Deployment Methodology</h1>
+      <div class="view-header-bar"></div>
       <div class="view-sub">Standard 5-phase Workday Finance deployment framework</div>
     </div>
     <div class="methodology-phases" id="methodologyPhases"></div>
@@ -302,10 +314,116 @@
     </div>
   </div>
 
+  <!-- STAFFING ROSTER VIEW -->
+  <div id="view-staffing" class="view">
+    <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Staffing Roster</h1>
+        <div class="view-header-bar"></div>
+        <div class="view-sub" id="staffingViewSub">Upload a Supply &amp; Demand report to populate the roster</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="staffingImportDate" class="staffing-import-badge" style="display:none"></span>
+        <input type="file" id="sdFileInput" accept=".xlsx,.xls" style="display:none" onchange="handleSDImport(event)">
+        <button class="pm-trigger-btn" onclick="document.getElementById('sdFileInput').click()">↑ Import S&amp;D Report</button>
+        <button class="pm-trigger-btn" id="staffingExportBtn" onclick="exportStaffingCSV()" style="display:none">↓ Export CSV</button>
+      </div>
+    </div>
+
+    <!-- Tab row -->
+    <div class="agent-tab-row" id="staffingTabRow" style="display:none">
+      <button class="agent-tab-btn active" id="staffTab-cards" onclick="switchStaffingTab('cards')">Roster Cards</button>
+      <button class="agent-tab-btn" id="staffTab-report" onclick="switchStaffingTab('report')">Report &amp; Filter</button>
+    </div>
+
+    <!-- CARDS PANEL -->
+    <div id="staffPanel-cards">
+      <!-- Filter bar (shown after data loads) -->
+      <div id="staffingFilterBar" style="display:none;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input type="search" id="staffSearch" class="pm-input" style="width:220px;margin-bottom:0" placeholder="Search name or job profile…" oninput="filterStaffingCards()">
+          <input type="text" id="staffClientFilter" class="pm-input" style="width:180px;margin-bottom:0" placeholder="Filter by client…" oninput="filterStaffingCards()">
+          <select id="staffRoleTypeFilter" class="pm-select" onchange="filterStaffingCards()">
+            <option value="">All Role Types</option>
+            <option value="Technical">Technical</option>
+            <option value="Functional">Functional</option>
+          </select>
+          <select id="staffCapFilter" class="pm-select" onchange="filterStaffingCards()">
+            <option value="">All Capabilities</option>
+            <option value="Data">Data</option>
+            <option value="Integrations">Integrations</option>
+            <option value="Reporting">Reporting</option>
+            <option value="Extend">Extend</option>
+            <option value="Adaptive">Adaptive</option>
+            <option value="Accounting Center">Accounting Center</option>
+          </select>
+          <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px">
+            <input type="checkbox" id="staffSupplyOnlyFilter" onchange="filterStaffingCards()"> Supply-only
+          </label>
+          <span id="staffingCardCount" style="font-size:12px;color:var(--text-dim);margin-left:auto"></span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="staffingEmptyState" class="staffing-empty">
+        <div class="staffing-empty-icon">▤</div>
+        <div class="staffing-empty-title">No Staffing Data Loaded</div>
+        <div class="staffing-empty-desc">Import a Workday Supply &amp; Demand report (.xlsx) to populate this view.<br>The roster will update automatically with each new import while preserving manual edits.</div>
+        <button class="send-btn" style="margin-top:18px" onclick="document.getElementById('sdFileInput').click()">↑ Import S&amp;D Report</button>
+      </div>
+
+      <!-- Import progress overlay -->
+      <div id="staffingImportProgress" class="staffing-import-overlay" style="display:none">
+        <div class="staffing-import-box">
+          <div class="chat-typing" style="justify-content:center;margin-bottom:12px">
+            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+          </div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Processing S&amp;D Report…</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="staffingProgressMsg">Reading WBG Supply and Assignments tabs</div>
+        </div>
+      </div>
+
+      <!-- Cards grid -->
+      <div id="staffingGrid" class="staffing-grid"></div>
+    </div>
+
+    <!-- REPORT PANEL -->
+    <div id="staffPanel-report" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <input type="search" id="rptSearch" class="pm-input" style="width:200px;margin-bottom:0" placeholder="Name search…" oninput="renderStaffingReport()">
+        <select id="rptEntityFilter" class="pm-select" onchange="renderStaffingReport()">
+          <option value="">All Entity L3</option>
+          <option value="Finance">Finance</option>
+        </select>
+        <select id="rptClientFilter" class="pm-select" onchange="renderStaffingReport()" style="width:180px">
+          <option value="">All Clients</option>
+        </select>
+        <select id="rptRoleTypeFilter" class="pm-select" onchange="renderStaffingReport()">
+          <option value="">All Role Types</option>
+          <option value="Technical">Technical</option>
+          <option value="Functional">Functional</option>
+        </select>
+        <select id="rptCapFilter" class="pm-select" onchange="renderStaffingReport()">
+          <option value="">All Capabilities</option>
+          <option value="Data">Data</option>
+          <option value="Integrations">Integrations</option>
+          <option value="Reporting">Reporting</option>
+          <option value="Extend">Extend</option>
+          <option value="Adaptive">Adaptive</option>
+          <option value="Accounting Center">Accounting Center</option>
+        </select>
+        <button class="pm-trigger-btn" onclick="exportStaffingCSV()">↓ Export CSV</button>
+        <span id="rptCount" style="font-size:12px;color:var(--text-dim);margin-left:auto"></span>
+      </div>
+      <div id="staffingReportTable" class="staffing-report-wrap"></div>
+    </div>
+  </div>
+
   <!-- AGENT VIEW -->
   <div id="view-agent" class="view">
     <div class="view-header">
       <h1>CoP Agent Console</h1>
+      <div class="view-header-bar"></div>
       <div class="view-sub">Interact with the main CoP Manager agent or any sub-agent directly</div>
     </div>
     <div class="agent-tab-row">
@@ -325,24 +443,25 @@
           <option value="extend">Extend Sub-agent</option>
         </select>
         <div class="agent-status" id="agentStatus">Ready</div>
+        <button class="clear-chat-btn" onclick="clearChat()" title="Clear conversation">↺ Clear</button>
       </div>
       <div class="chat-window" id="chatWindow">
         <div class="chat-message system">
-          <strong>CoP Manager Agent</strong> — Ask me anything about the practice, deployment methodology, Workday financials, integration design, conversion planning, report design, or AI use cases. I'll route your question to the right expert.
+          <strong>CoP Agent</strong> — Your expert guide for Workday deployment, transformation strategy, and technology problem-solving. Ask about architecture decisions, integration design, conversion planning, reporting solutions, AI use cases, or anything else — I'll walk you to the best solution step by step.
         </div>
       </div>
       <div class="chat-input-row">
-        <textarea id="chatInput" placeholder="Ask the CoP agent..." rows="2" onkeydown="handleChatKey(event)"></textarea>
+        <textarea id="chatInput" placeholder="Describe your problem or question..." rows="2" onkeydown="handleChatKey(event)"></textarea>
         <button class="send-btn" onclick="sendAgentQuery()">Send</button>
       </div>
       <div class="quick-prompts">
-        <div class="quick-prompt-label">Quick prompts:</div>
-        <button class="qp-btn" onclick="quickPrompt('Give me a full practice health report')">Practice health report</button>
-        <button class="qp-btn" onclick="quickPrompt('What are our top risks across all sub-agents?')">Top risks</button>
-        <button class="qp-btn" onclick="quickPrompt('Design a Studio integration for GL journal entry outbound to a data warehouse')">Design a GL integration</button>
-        <button class="qp-btn" onclick="quickPrompt('What conversion objects still need iLoad templates?')">Conversion template gaps</button>
-        <button class="qp-btn" onclick="quickPrompt('Recommend an AI use case for accounts payable that we could build with Workday Extend')">AI use case idea</button>
-        <button class="qp-btn" onclick="quickPrompt('Assess the Conversion sub-agent status and recommend priority actions')">Conversion status</button>
+        <div class="quick-prompt-label">Try asking:</div>
+        <button class="qp-btn" onclick="quickPrompt('We need to send GL journal entries to our data warehouse in near real-time. What is the best integration approach and why?')">GL integration design</button>
+        <button class="qp-btn" onclick="quickPrompt('Our client has 500k open AP invoices to migrate. Walk me through the conversion strategy and key risks.')">AP conversion strategy</button>
+        <button class="qp-btn" onclick="quickPrompt('How can we use AI to reduce time spent on invoice exception handling in Workday?')">AI for AP automation</button>
+        <button class="qp-btn" onclick="quickPrompt('What are our top practice risks right now and what should we prioritize?')">Practice risk review</button>
+        <button class="qp-btn" onclick="quickPrompt('Design a Workday Extend solution to automate the 3-way PO match exception workflow')">Extend automation idea</button>
+        <button class="qp-btn" onclick="quickPrompt('Give me a full practice health report with recommendations')">Full health report</button>
       </div>
     </div>
     <!-- Knowledge Gaps panel -->
@@ -366,6 +485,7 @@
   <div id="view-settings" class="view">
     <div class="view-header">
       <h1>Settings</h1>
+      <div class="view-header-bar"></div>
       <div class="view-sub">Configure API connections for AI-powered features</div>
     </div>
 
@@ -569,6 +689,16 @@
 
 
 </main>
+
+<!-- ── Detail Drawer ─────────────────────────────────────────────────── -->
+<div id="detailOverlay" class="detail-overlay" onclick="closeDetailDrawer()"></div>
+<div id="detailDrawer" class="detail-drawer">
+  <div class="detail-drawer-header">
+    <div class="detail-drawer-title" id="drawerTitle"></div>
+    <button class="detail-drawer-close" onclick="closeDetailDrawer()">✕</button>
+  </div>
+  <div class="detail-drawer-body" id="drawerBody"></div>
+</div>
 
 <!-- ── Consultant Manager Modal ──────────────────────────────────────── -->
 <div id="consultantManager" class="pm-overlay" onclick="if(event.target===this)closeConsultantManager()">

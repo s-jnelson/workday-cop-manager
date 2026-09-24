@@ -548,8 +548,15 @@ class BaseAgent:
 
     # ── Agentic loop ──────────────────────────────────────────────────────────
 
-    def run(self, user_message: str, verbose: bool = True) -> str:
-        """Run the agent. Priority: Anthropic → Groq → Ollama → rule-based message."""
+    def run(self, user_message: str, history: list[dict] | None = None, verbose: bool = True) -> str:
+        """Run the agent. Priority: Anthropic → Groq → Ollama → rule-based message.
+
+        Args:
+            user_message: The current user query.
+            history: Prior conversation turns [{role, content}] for multi-turn context.
+                     These are prepended before the current message.
+            verbose: Print tool call traces.
+        """
         if not self._api_key and not self._groq_key and not self._ollama_model:
             return (
                 "No AI backend configured. Options:\n"
@@ -570,6 +577,15 @@ class BaseAgent:
                 return self._ollama_run_direct(user_message)
             except Exception as exc:
                 return f"Ollama call failed: {exc}"
+
+        # Seed conversation history from prior turns, then append the current user message.
+        # Filter to only valid roles; keep content as-is (strings for prior turns).
+        self.conversation_history = []
+        for turn in (history or []):
+            role = turn.get("role", "")
+            content = turn.get("content", "")
+            if role in ("user", "assistant") and content:
+                self.conversation_history.append({"role": role, "content": content})
 
         self.conversation_history.append({"role": "user", "content": user_message})
 
